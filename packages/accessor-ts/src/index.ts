@@ -20,7 +20,7 @@ interface User {
 }
 
 // Sample User
-const bob: User = { name: "bob", id: 1, connections: [] };
+const bob: User = { name: "bob", id: 1, connections: [1, 2] };
 
 // We can store accessors which are bound to the interface by type
 const userProps = prop<User>();
@@ -75,16 +75,16 @@ console.log(
 );
 
 interface Friends {
-  xs: Friend[];
+  friends: Friend[];
 }
 
-const baz: Friends = { xs: [myFriendBob, myFriendShari] };
+const baz: Friends = { friends: [myFriendBob, myFriendShari] };
 
 const isOdd = (a: number): boolean => a % 2 === 1;
 
 // accessor chain as reusable value
 const oddConnectionsOfFriends = comp(
-  prop<Friends>()("xs"),
+  prop<Friends>()("friends"),
   all(),
   friendProps("user"),
   userProps("connections"),
