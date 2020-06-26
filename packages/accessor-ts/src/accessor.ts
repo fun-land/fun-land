@@ -122,20 +122,3 @@ export const after = <A>(i: number): Accessor<A[], A> => ({
  */
 export const set = <S, A>(acc: Accessor<S, A>): ((x: A) => (s: S) => S) =>
   B(acc.mod)(K);
-
-/**
- * query using an Accessor, returning an array of any results
- * @deprecated should probably just use the method on the Accessor instead
- */
-export const query = <S, A>(acc: Accessor<S, A>): typeof acc.query => acc.query;
-
-/**
- * Run a function on value(s) targeted by the accessor, returning the immutably modified object
- * @deprecated should probably just use the method on the Accessor instead
- */
-export const mod = <S, A>(acc: Accessor<S, A>): typeof acc.mod => acc.mod;
-
-export const getWith = <S, A, B>(
-  acc: Accessor<S, A>,
-  transform: (x: A[]) => B
-): ((s: S) => B) => B(transform)(acc.query);

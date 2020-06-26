@@ -156,6 +156,75 @@ set(oddConnectionsOfFriends)(NaN)(baz)); /* =>
   ]} */
 ```
 
+## API
+
+### set
+
+Immutably assign using an Accessor
+
+```ts
+const set: <S, A>(acc: Accessor<S, A>) => (x: A) => (s: S) => S;
+```
+
+### prop
+
+Create Accessor that points to a property of an object
+
+```ts
+const prop: <Obj>() => <K extends keyof Obj>(k: K) => Accessor<Obj, Obj[K]>;
+```
+
+### index
+
+Create Accessor that points to an index of an array
+
+```ts
+const index: <A>(i: number) => Accessor<A[], A>;
+```
+
+### comp
+
+Compose 2 or more Accessors (overloaded up to 8)
+
+```ts
+function comp<A, B, C>(
+  acc1: Accessor<A, B>,
+  acc2: Accessor<B, C>
+): Accessor<A, C>;
+```
+
+### all
+
+Create Accessor focused on all items in an array. `query` unwraps them, `mod` changes each item.
+
+```ts
+const all: <A>() => Accessor<A[], A>;
+```
+
+### filter
+
+Create Accessor that targets items in an array that match the passed predicate. `query` returns the matched items, `mod` modifies matched items.
+
+```ts
+const filter: <A>(pred: (x: A) => boolean) => Accessor<A[], A>;
+```
+
+### before
+
+Create Accessor that targets items in an array before the passed index
+
+```ts
+const before: <A>(i: number) => Accessor<A[], A>;
+```
+
+### after
+
+Create Accessor that targets items in an array after the passed index
+
+```ts
+const after: <A>(i: number) => Accessor<A[], A>;
+```
+
 ## Weaknesses
 
 - Documentation is incomplete
