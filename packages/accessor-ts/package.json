@@ -2,15 +2,14 @@
   "name": "accessorts",
   "version": "1.0.0",
   "description": "",
-  "main": "index.html",
+  "main": "src/accessor.ts",
   "scripts": {
-    "start": "parcel index.html --open",
-    "build": "parcel build index.html"
+    "build": "tsc -p ./tsconfig.json"
   },
   "dependencies": {},
   "devDependencies": {
-    "parcel-bundler": "^1.10.3",
-    "typescript": "~3.9.0"
+    "typescript": "~3.9.0",
+    "jest": "~26.0.0"
   },
   "keywords": []
 }

@@ -92,8 +92,7 @@ set(friendName)("Robert")(myFriendBob); // => {user: {name: "Robert", id: 1, con
 We can use Accessor.mod to run a function on the targeted value
 
 ```ts
-comp(userProp("id")).mod(a => a + 1)(bob) // => { name: "bob", id: 2, connections: [1, 2] }
-);
+comp(userProp("id")).mod(a => a + 1)(bob); // => { name: "bob", id: 2, connections: [1, 2] }
 ```
 
 `index` can be used to focus a specific element of an array
@@ -110,7 +109,7 @@ comp(friendProps("user"), userProps("connections"), index(1)).query(
 comp(friendProps("user"), userProps("connections"), all()).query(myFriendBob); // => [1, 2]
 ```
 
-All gets much more interesting when we have Arrays within Arrays
+`all` gets much more interesting when we have Arrays within Arrays
 
 ```ts
 interface Friends {
@@ -122,7 +121,21 @@ const shari: User = { name: "Shari", id: 0, connections: [3, 4] };
 const myFriendShari: Friend = { user: shari };
 
 const baz: Friends = { friends: [myFriendBob, myFriendShari] };
+const makeAllFriendsCool = set(
+  comp(
+    prop<Friends>()("friends"),
+    all(),
+    friendProps("user"),
+    userProps("cool")
+  )
+)(true);
 
+makeAllFriendsCool(baz); // => Sets "cool" to true for all the users within
+```
+
+`filter` can be used to reduce the scope of an accessor to items which pass a test function. This doesn't remove items from the data structure but just changes what you get from queries or modify.
+
+```ts
 const isOdd = (a: number): boolean => a % 2 === 1;
 
 // accessor chain as reusable value
@@ -142,3 +155,18 @@ set(oddConnectionsOfFriends)(NaN)(baz)); /* =>
     {user: {name: "Shari", id: 0, connections: [NaN, 4]}}
   ]} */
 ```
+
+## Weaknesses
+
+- Documentation is incomplete
+- More useful functions should be added
+- Unit testing is WIP.
+- This is just a prototype at this point and isn't used in production anywhere.
+- This library does not allow you to change the type of interfaces via `set` or `mod`. This doesn't come up often, however.
+- Since `query` returns an array of results, users must be careful about the array being empty.
+- Performance hasn't of this library hasn't been evaluated or optimized yet.
+
+## Comparisons to other libries
+
+- shades: Shades' usage is more terse, and doesn't require bind the types of it's optics to interfaces. Shades' types are harder to understand and leverage, especially since its source isn't in TypeScript. Accessor-ts only has one type so users don't have to understand the differences between Lenses, Isomorphisms, and Traversals. Accessor-ts doesn't have a massive generated type file that is impossible to read and understand.
+- monacle-ts: Accessor-ts' usage is simpler as there is only one composition operator. monacle-ts has way more concepts to learn and use. monacle-ts has dependencies on fp-ts which is difficult to learn and understand. monacle-ts is more expressive, mature, and powerful however.
