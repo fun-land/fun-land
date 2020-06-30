@@ -122,3 +122,12 @@ export const after = <A>(i: number): Accessor<A[], A> => ({
  */
 export const set = <S, A>(acc: Accessor<S, A>): ((x: A) => (s: S) => S) =>
   B(acc.mod)(K);
+
+/**
+ * No-op Accessor
+ * Makes Accessors a monoid in conjunction with `comp`
+ */
+export const unit = <A>(): Accessor<A, A> => ({
+  query: (xs): A[] => [xs],
+  mod: transform => (xs): A => xs
+});

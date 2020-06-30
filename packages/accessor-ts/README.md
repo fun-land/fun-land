@@ -225,17 +225,25 @@ Create Accessor that targets items in an array after the passed index
 const after: <A>(i: number) => Accessor<A[], A>;
 ```
 
+### unit
+
+No-op Accessor  
+Makes Accessors a monoid in conjunction with `comp`
+
+```ts
+const unit = <A>(): Accessor<A, A>
+```
+
 ## Weaknesses
 
-- Documentation is incomplete
+- Documentation needs examples
 - More useful functions should be added
 - Unit testing is WIP.
-- This is just a prototype at this point and isn't used in production anywhere.
-- This library does not allow you to change the type of interfaces via `set` or `mod`. This doesn't come up often, however.
-- Since `query` returns an array of results, users must be careful about the array being empty.
-- Performance hasn't of this library hasn't been evaluated or optimized yet.
+- This is a prototype and isn't used in production anywhere.
+- Since `query` returns an array of results, users must be careful about the array being empty. This is a weakness of TypeScript that will hopefully be fixed in the future.
+- Performance of this library hasn't been evaluated or optimized yet.
 
 ## Comparisons to other libries
 
-- shades: Shades' usage is more terse, and doesn't require bind the types of it's optics to interfaces. Shades' types are harder to understand and leverage, especially since its source isn't in TypeScript. Accessor-ts only has one type so users don't have to understand the differences between Lenses, Isomorphisms, and Traversals. Accessor-ts doesn't have a massive generated type file that is impossible to read and understand.
-- monacle-ts: Accessor-ts' usage is simpler as there is only one composition operator. monacle-ts has way more concepts to learn and use. monacle-ts has dependencies on fp-ts which is difficult to learn and understand. monacle-ts is more expressive, mature, and powerful however.
+- shades: Shades' usage is more terse, and doesn't require binding the types of its optics to interfaces. Shades' types are harder to understand and leverage, especially since its source isn't in TypeScript. Accessor-ts only has one type so users don't have to understand the differences between Lenses, Isomorphisms, and Traversals. Shades has a massive generated type file that is impossible to grok and slows down the TS compiler (in my experience).
+- monacle-ts: Accessor-ts' usage is simpler as there is only one composition operator. monacle-ts has way more concepts to learn and use. monacle-ts has dependencies on fp-ts which is difficult to learn and leverage. monacle-ts is more expressive, mature, and powerful.
