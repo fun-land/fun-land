@@ -1,4 +1,4 @@
-import { prop, index, filter, set, all, comp } from "./accessor";
+import { prop, index, filter, set, all, comp, unit } from "./accessor";
 
 interface User {
   name: string;
@@ -93,5 +93,12 @@ describe("index", () => {
         myFriendBob
       )
     ).toEqual([2]);
+  });
+});
+
+describe("unit", () => {
+  it("composes with other accessors", () => {
+    expect(comp(userProps("id"), unit()).query(bob)).toEqual([1]);
+    expect(comp(unit<User>(), userProps("id")).query(bob)).toEqual([1]);
   });
 });
