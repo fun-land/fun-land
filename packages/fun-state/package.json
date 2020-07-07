@@ -4,7 +4,7 @@
   "description": "",
   "keywords": [],
   "homepage": "https://codesandbox.io/s/new",
-  "main": "src/index.js",
+  "main": "examples/index.js",
   "dependencies": {
     "react": "16.8.6",
     "react-dom": "16.8.6",
