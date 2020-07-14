@@ -49,7 +49,7 @@ const App = () => {
     <div>
       {/* Child components can either get the root state directly: */}
       <MyComponent {...funState} />
-      {/* Or you can select down to a subset of the state using subState and an Accessor: */}
+      {/* Or you can select down to a subset of the state using `.sub()` and an `Accessor`: */}
       <MyChildComponent {...funState.sub('childProp')} />
     </div>
   );
@@ -72,24 +72,15 @@ export const MyChildComponent: React.FC<FunState<ChildState>> = ({setKey, state:
 
 # Tips
 
-- Keep your FunState Apps simple and delegate the complex logic to pure child components, using `subState` where possible.
-- You can create and pass more than one subState if child components need multiple focus.
+- Keep your FunState Apps simple and delegate the complex logic to pure child components, using `.sub()` where practical.
 - Use Accessor composition to drill down into deep parts of your tree or operate on multiple items. See `./TodoApp` or <a href="https://github.com/jethrolarson/accessor-ts">accessor-ts docs</a> for examples.
+- If child components need data from multiple places in the state tree, you can create and pass more than one FunState or just pass the root and then query out what you need with Accessors.
 - Unit test your updaters and snapshot test your components.
 - As usual, memoizing event handlers can help if you run into rendering performance problems.
 
 # Basic Architecture
 
-<div style={{ width: 640, height: 480, margin: 10, position: 'relative' }}>
-  <iframe
-    title="diagram"
-    frameBorder="0"
-    allowFullScreen
-    style={{ width: 640, height: 480 }}
-    src="https://app.lucidchart.com/documents/embeddedchart/cd3f1a6d-9d60-4a68-8252-e9e203802450"
-    id="mv4.4XhOp1E0"
-  />
-</div>
+https://app.lucidchart.com/invitations/accept/657b566b-5302-49c2-a5fa-d0e5957b4899
 
 # API
 
