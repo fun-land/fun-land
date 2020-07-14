@@ -1,19 +1,19 @@
 Don't you hate when you have to update 4 different files (constants, actions, reducer, component, and interface) to make a checkbox do something?
-  
+
 On top of that, updating nested data is messy and error prone:
 
 ```ts
 SET_USER_CHECKED: (state: State): State => {
   return {
     ...state,
-    users: state.users.map(user => (user.id = action.payload.id ? { ...user, checked: action.payload.checked } : user))
+    users: state.users.map(user => (user.id = action.payload.id ? {...user, checked: action.payload.checked} : user))
   }
 }
 ```
 
 And even if you do everything right redux just doesn't seem TypeScript native. It's types are like an
 afterthought.
-  
+
 <img src="https://i.imgflip.com/46vcs3.jpg" alt="matrix reference joke" />
 
 With <b>FunState</b> you can make the update in the same file as the checkbox and still have type-safety, testability, and much more concise code.
@@ -36,8 +36,7 @@ FunState works with any react 16.8+ application. Usage without TypeScript works 
 interface AppState {
   ...
 }
-//Define a bound Accessor for the state props
-const appStateProps = prop<AppState>();
+
 // Define an initial state:
 const initialAppState: AppState = {
   ...
@@ -51,7 +50,7 @@ const App = () => {
       {/* Child components can either get the root state directly: */}
       <MyComponent {...funState} />
       {/* Or you can select down to a subset of the state using subState and an Accessor: */}
-      <MyChildComponent {...subState(appStateProps('childProp'), funState)} />
+      <MyChildComponent {...funState.sub('childProp')} />
     </div>
   );
 };
@@ -63,14 +62,11 @@ const App = () => {
 // MyChildComponent.tsx
 // Should be imported into the parent state interface
 export interface ChildState {
-  checked: boolean;
+  isCool: boolean;
 }
-const childProps = prop<ChildState>();
-// boolean -> ChildState -> ChildState
-export const setChecked = set(childProps('checked'));
 
-export const MyChildComponent: React.FC<FunState<ChildState>> = ({set, state: {checked}}) => (
-  <input type="checkbox" checked={checked} onChange=(e => set(childProps('checked'))(e.currentTarget.checked))>
+export const MyChildComponent: React.FC<FunState<ChildState>> = ({setKey, state: {checked}}) => (
+  <input type="checkbox" checked={checked} onChange=(e => setKey('isCool')(e.currentTarget.checked))>
 );
 ```
 
@@ -105,11 +101,18 @@ See <a href="https://github.com/jethrolarson/accessor-ts">accessor-ts</a>
 
 ```ts
 export interface FunState<State> {
+  // Your App's state
   state: State
-  mod: Updater<State>
+  // Transform the state with the passed function
+  mod: (transform: (state: State) => State) => void
+  // Query the state using some accessor
   query: <A>(acc: Accessor<State, A>) => A[]
+  // Set the state at the passed accessor
   set: <A>(acc: Accessor<State, A>) => (val: A) => void
+  // Set state at passed key
   setKey: <K extends keyof State>(key: K) => (val: State[K]) => void
+  // return a new FunState focused at the passed accessor
+  sub: <SubState>(acc: Accessor<State, SubState>) => FunState<SubState>
 }
 ```
 
