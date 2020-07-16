@@ -1,17 +1,22 @@
 Don't you hate when you have to update 4 different files (constants, actions, reducer, component, and interface) to make a checkbox do something?
 
-On top of that, updating nested data is messy and error prone:
+On top of that, manually updating nested data immutably is messy and error prone:
 
 ```ts
 SET_USER_CHECKED: (state: State): State => {
   return {
     ...state,
-    users: state.users.map(user => (user.id = action.payload.id ? {...user, checked: action.payload.checked} : user))
+    users: state.users.map(user => {
+      if ((user.id = action.payload.id)) {
+        return {...user, checked: action.payload.checked}
+      }
+      return user
+    })
   }
 }
 ```
 
-And even if you do everything right redux just doesn't seem TypeScript native. It's types are like an
+And even if you do everything right redux just doesn't seem TypeScript native. Its types are an
 afterthought.
 
 <img src="https://i.imgflip.com/46vcs3.jpg" alt="matrix reference joke" />
@@ -116,14 +121,3 @@ function useFunState<State>(initialState: State): FunState<State>
 ```
 
 Creates an instance of the state machine with a starting state. Any component that calls this becomes an "App".
-
-## subState
-
-```ts
-const subState = <ChildState, ParentState>(
-  accessor: Accessor<ParentState, ChildState>,
-  parentState: FunState<ParentState>
-): FunState<ChildState>
-```
-
-Create a FunState focused on a subset of a parent state. <a href="https://github.com/jethrolarson/accessor-ts">Accessor</a> can point to arbitrary depth or even to multiple items.
