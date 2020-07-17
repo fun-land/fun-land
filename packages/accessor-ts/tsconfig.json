@@ -9,9 +9,6 @@
         "module": "CommonJS"
     },
     "include": [
-        "src/*.ts"
+        "src/**/*.ts"
     ],
-    "exclude": [
-        "src/**/*.test.ts"
-    ]
 }

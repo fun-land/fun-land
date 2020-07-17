@@ -7,8 +7,8 @@
   "module": "dist/esm/accessor.js",
   "author": "jethro larson <jethrolarson@users.noreply.github.com> (https://github.com/jethrolarson)",
   "scripts": {
-    "build-cjs": "tsc -p ./tsconfig.json",
-    "build-esm": "tsc -p ./tsconfig.json --module 'ESNext' --outDir 'dist/esm'",
+    "build-cjs": "tsc -p ./tsconfig.publish.json",
+    "build-esm": "tsc -p ./tsconfig.publish.json --module 'ESNext' --outDir 'dist/esm'",
     "build": "yarn build-cjs && yarn build-esm",
     "lint": "eslint . --ext .ts",
     "test": "jest"
