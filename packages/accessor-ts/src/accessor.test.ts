@@ -50,8 +50,9 @@ describe("comp", () => {
   });
   it("handles mod correctly", () => {
     expect(
-      comp(friendProps("user"), prop<User>()("id")).mod(a => a + 1)(myFriendBob)
-        .user.id
+      comp(friendProps("user"), prop<User>()("id")).mod((a) => a + 1)(
+        myFriendBob
+      ).user.id
     ).toBe(2);
   });
 });
@@ -82,7 +83,10 @@ describe("all", () => {
   it("handles deep assignment", () => {
     expect(
       allConnections.query(set(oddConnectionsOfFriends)(NaN)(baz))
-    ).toEqual([[NaN, 2], [NaN, 4]]);
+    ).toEqual([
+      [NaN, 2],
+      [NaN, 4],
+    ]);
   });
 });
 

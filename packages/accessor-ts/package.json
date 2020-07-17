@@ -1,15 +1,35 @@
 {
   "name": "accessorts",
+  "license": "MIT",
   "version": "1.0.0",
-  "description": "",
-  "main": "src/accessor.ts",
+  "description": "A TS/JS library for doing immutable updates and querying on nested data structures in a way that is composable and powerful.",
+  "main": "dist/accessor.js",
+  "module": "dist/esm/accessor.js",
+  "author": "jethro larson <jethrolarson@users.noreply.github.com> (https://github.com/jethrolarson)",
   "scripts": {
-    "build": "tsc -p ./tsconfig.json"
+    "build-cjs": "tsc -p ./tsconfig.json",
+    "build-esm": "tsc -p ./tsconfig.json --module='ESNext'",
+    "build": "yarn build-cjs && yarn build-esm",
+    "lint": "eslint . --ext .ts",
+    "test": "jest"
   },
-  "dependencies": {},
+  "keywords": [],
   "devDependencies": {
-    "typescript": "~3.9.0",
-    "jest": "~26.0.0"
-  },
-  "keywords": []
+    "@types/jest": "^26.0.4",
+    "@typescript-eslint/eslint-plugin": "^3.6.1",
+    "@typescript-eslint/parser": "^3.6.1",
+    "eslint": "^7.4.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-config-standard-with-typescript": "^18.0.2",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-jest": "^23.18.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "jest": "~26.1.0",
+    "prettier": "^2.0.5",
+    "ts-jest": "^26.1.2",
+    "typescript": "~3.9.7"
+  }
 }
