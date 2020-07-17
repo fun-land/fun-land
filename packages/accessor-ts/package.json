@@ -1,5 +1,5 @@
 {
-  "name": "accessorts",
+  "name": "accessor-ts",
   "license": "MIT",
   "version": "1.0.0",
   "description": "A TS/JS library for doing immutable updates and querying on nested data structures in a way that is composable and powerful.",
@@ -8,7 +8,7 @@
   "author": "jethro larson <jethrolarson@users.noreply.github.com> (https://github.com/jethrolarson)",
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.json",
-    "build-esm": "tsc -p ./tsconfig.json --module='ESNext'",
+    "build-esm": "tsc -p ./tsconfig.json --module 'ESNext' --outDir 'dist/esm'",
     "build": "yarn build-cjs && yarn build-esm",
     "lint": "eslint . --ext .ts",
     "test": "jest"
