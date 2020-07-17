@@ -1,7 +1,7 @@
 {
   "name": "accessor-ts",
   "license": "MIT",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A TS/JS library for doing immutable updates and querying on nested data structures in a way that is composable and powerful.",
   "main": "dist/accessor.js",
   "module": "dist/esm/accessor.js",
