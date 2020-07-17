@@ -1,4 +1,14 @@
-import { prop, index, filter, set, all, comp, unit, before, after } from "./accessor";
+import {
+  prop,
+  index,
+  filter,
+  set,
+  all,
+  comp,
+  unit,
+  before,
+  after,
+} from "./accessor";
 
 interface User {
   name: string;
@@ -100,9 +110,7 @@ describe("index", () => {
   });
   it("mods targeted item", () => {
     expect(
-      comp(userProps("connections"), index(1)).mod(a => a + 1)(
-        bob
-      )
+      comp(userProps("connections"), index(1)).mod((a) => a + 1)(bob)
     ).toEqual({ name: "bob", id: 1, connections: [1, 3] });
   });
 });
@@ -113,8 +121,10 @@ describe("unit", () => {
     expect(comp(unit<User>(), userProps("id")).query(bob)).toEqual([1]);
   });
   it("mod composes with other accessors", () => {
-    expect(comp(userProps("id"), unit()).mod(a => a+1)(bob)).toEqual(bob);
-    expect(comp(unit<User>(), userProps("id")).mod(a => a+1)(bob)).toEqual(bob);
+    expect(comp(userProps("id"), unit()).mod((a) => a + 1)(bob)).toEqual(bob);
+    expect(comp(unit<User>(), userProps("id")).mod((a) => a + 1)(bob)).toEqual(
+      bob
+    );
   });
 });
 
@@ -124,9 +134,23 @@ describe("before", () => {
     expect(before(0).query([0, 1, 2, 3, 4, 5])).toEqual([]);
   });
   it("modify items prior to index", () => {
-    const binc = (a: number) => a + 2;
-    expect(before<number>(3).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([2, 3, 4, 3, 4, 5]);
-    expect(before<number>(0).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([0, 1, 2, 3, 4, 5]);
+    const binc = (a: number): number => a + 2;
+    expect(before<number>(3).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([
+      2,
+      3,
+      4,
+      3,
+      4,
+      5,
+    ]);
+    expect(before<number>(0).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+    ]);
   });
 });
 
@@ -136,8 +160,22 @@ describe("after", () => {
     expect(after(5).query([0, 1, 2, 3, 4, 5])).toEqual([]);
   });
   it("modify items prior to index", () => {
-    const binc = (a: number) => a + 2;
-    expect(after<number>(3).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([0, 1, 2, 3, 6, 7]);
-    expect(after<number>(5).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([0, 1, 2, 3, 4, 5]);
+    const binc = (a: number): number => a + 2;
+    expect(after<number>(3).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([
+      0,
+      1,
+      2,
+      3,
+      6,
+      7,
+    ]);
+    expect(after<number>(5).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+    ]);
   });
 });
