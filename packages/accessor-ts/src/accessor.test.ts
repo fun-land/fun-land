@@ -98,12 +98,23 @@ describe("index", () => {
       )
     ).toEqual([2]);
   });
+  it("mods targeted item", () => {
+    expect(
+      comp(userProps("connections"), index(1)).mod(a => a + 1)(
+        bob
+      )
+    ).toEqual({ name: "bob", id: 1, connections: [1, 3] });
+  });
 });
 
 describe("unit", () => {
-  it("composes with other accessors", () => {
+  it("query composes with other accessors", () => {
     expect(comp(userProps("id"), unit()).query(bob)).toEqual([1]);
     expect(comp(unit<User>(), userProps("id")).query(bob)).toEqual([1]);
+  });
+  it("mod composes with other accessors", () => {
+    expect(comp(userProps("id"), unit()).mod(a => a+1)(bob)).toEqual(bob);
+    expect(comp(unit<User>(), userProps("id")).mod(a => a+1)(bob)).toEqual(bob);
   });
 });
 
