@@ -1,4 +1,4 @@
-import { prop, index, filter, set, all, comp, unit } from "./accessor";
+import { prop, index, filter, set, all, comp, unit, before, after } from "./accessor";
 
 interface User {
   name: string;
@@ -104,5 +104,29 @@ describe("unit", () => {
   it("composes with other accessors", () => {
     expect(comp(userProps("id"), unit()).query(bob)).toEqual([1]);
     expect(comp(unit<User>(), userProps("id")).query(bob)).toEqual([1]);
+  });
+});
+
+describe("before", () => {
+  it("gets items prior to index", () => {
+    expect(before(3).query([0, 1, 2, 3, 4, 5])).toEqual([0, 1, 2]);
+    expect(before(0).query([0, 1, 2, 3, 4, 5])).toEqual([]);
+  });
+  it("modify items prior to index", () => {
+    const binc = (a: number) => a + 2;
+    expect(before<number>(3).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([2, 3, 4, 3, 4, 5]);
+    expect(before<number>(0).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([0, 1, 2, 3, 4, 5]);
+  });
+});
+
+describe("after", () => {
+  it("gets items prior to index", () => {
+    expect(after(3).query([0, 1, 2, 3, 4, 5])).toEqual([4, 5]);
+    expect(after(5).query([0, 1, 2, 3, 4, 5])).toEqual([]);
+  });
+  it("modify items prior to index", () => {
+    const binc = (a: number) => a + 2;
+    expect(after<number>(3).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([0, 1, 2, 3, 6, 7]);
+    expect(after<number>(5).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([0, 1, 2, 3, 4, 5]);
   });
 });

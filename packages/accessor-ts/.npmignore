@@ -4,3 +4,4 @@ jest.config.js
 .eslintignore
 tsconfig.json
 src
+coverage
