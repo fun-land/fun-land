@@ -1,6 +1,6 @@
 import {useState} from 'react'
-import {P2} from './fun'
-import {Accessor, head, comp, set, prop} from './accessor'
+import {P2, head} from './fun'
+import {Accessor, comp, set, prop} from 'accessor-ts'
 
 export type Updater<State> = (transform: (state: State) => State) => void
 

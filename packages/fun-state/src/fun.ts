@@ -38,3 +38,7 @@ export const every = <T>(f: (x: T) => boolean) => (xs: T[]) => xs.every(f)
 
 /** removes item at passed index from array */
 export const removeAt = (index: number) => <T>(xs: T[]) => xs.filter((_, i) => index !== i)
+
+export const prepend = <A>(x: A) => (xs: A[]): A[] => [x, ...xs]
+
+export const head = <A>(xs: A[]): A => xs[0]
