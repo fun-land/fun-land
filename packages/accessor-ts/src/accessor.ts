@@ -2,8 +2,8 @@
 import { B, K, flatmap } from "./util";
 
 export interface Accessor<S, A> {
-  query(struct: S): A[];
-  mod(f: (x: A) => A): (struct: S) => S;
+  query: (struct: S) => A[];
+  mod: (f: (x: A) => A) => (struct: S) => S;
 }
 
 /**
@@ -14,13 +14,13 @@ export const prop = <Obj>() => <K extends keyof Obj>(
   k: K
 ): Accessor<Obj, Obj[K]> => ({
   query: (obj): [Obj[K]] => [obj[k]],
-  mod: transform => (obj): Obj => ({ ...obj, [k]: transform(obj[k]) })
+  mod: (transform) => (obj): Obj => ({ ...obj, [k]: transform(obj[k]) }),
 });
 
 /** Create Accessor that points to an index of an array */
 export const index = <A>(i: number): Accessor<A[], A> => ({
   query: (s): A[] => [s[i]],
-  mod: f => (xs): A[] => xs.map((x, j) => (i === j ? f(x) : x))
+  mod: (f) => (xs): A[] => xs.map((x, j) => (i === j ? f(x) : x)),
 });
 
 /** Compose two Accessors */
@@ -31,7 +31,7 @@ const _comp = <A, B, C>(
   acc2: Accessor<B, C>
 ): Accessor<A, C> => ({
   query: B(flatmap<B, C>(acc2.query))(acc1.query),
-  mod: B(acc1.mod)(acc2.mod)
+  mod: B(acc1.mod)(acc2.mod),
 });
 
 /**
@@ -77,7 +77,8 @@ export function comp<A, B, C, D, E, F, G, H>(
   acc6: Accessor<F, G>,
   acc7: Accessor<G, H>
 ): Accessor<A, H>;
-export function comp(...accs: Accessor<any, any>[]): Accessor<any, any> {
+export function comp(...accs: Array<Accessor<any, any>>): Accessor<any, any> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return accs.reduce(_comp);
 }
 
@@ -90,7 +91,7 @@ export function comp(...accs: Accessor<any, any>[]): Accessor<any, any> {
  */
 export const all = <A>(): Accessor<A[], A> => ({
   query: (xs): A[] => xs,
-  mod: transform => (xs): A[] => xs.map(transform)
+  mod: (transform) => (xs): A[] => xs.map(transform),
 });
 
 /**
@@ -98,7 +99,7 @@ export const all = <A>(): Accessor<A[], A> => ({
  */
 export const filter = <A>(pred: (x: A) => boolean): Accessor<A[], A> => ({
   query: (xs): A[] => xs.filter(pred),
-  mod: transform => (s): A[] => s.map(x => (pred(x) ? transform(x) : x))
+  mod: (transform) => (s): A[] => s.map((x) => (pred(x) ? transform(x) : x)),
 });
 
 /**
@@ -106,7 +107,7 @@ export const filter = <A>(pred: (x: A) => boolean): Accessor<A[], A> => ({
  */
 export const before = <A>(i: number): Accessor<A[], A> => ({
   query: (xs): A[] => xs.filter((_, j) => j < i),
-  mod: transform => (s): A[] => s.map((x, j) => (i < j ? transform(x) : x))
+  mod: (transform) => (s): A[] => s.map((x, j) => (i < j ? transform(x) : x)),
 });
 
 /**
@@ -114,7 +115,7 @@ export const before = <A>(i: number): Accessor<A[], A> => ({
  */
 export const after = <A>(i: number): Accessor<A[], A> => ({
   query: (xs): A[] => xs.filter((_, j) => j > i),
-  mod: transform => (s): A[] => s.map((x, j) => (i > j ? transform(x) : x))
+  mod: (transform) => (s): A[] => s.map((x, j) => (i > j ? transform(x) : x)),
 });
 
 /**
@@ -129,5 +130,5 @@ export const set = <S, A>(acc: Accessor<S, A>): ((x: A) => (s: S) => S) =>
  */
 export const unit = <A>(): Accessor<A, A> => ({
   query: (xs): A[] => [xs],
-  mod: transform => (xs): A => xs
+  mod: (transform) => (xs): A => xs,
 });
