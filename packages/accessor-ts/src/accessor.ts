@@ -107,7 +107,7 @@ export const filter = <A>(pred: (x: A) => boolean): Accessor<A[], A> => ({
  */
 export const before = <A>(i: number): Accessor<A[], A> => ({
   query: (xs): A[] => xs.filter((_, j) => j < i),
-  mod: (transform) => (s): A[] => s.map((x, j) => (i < j ? transform(x) : x)),
+  mod: (transform) => (s): A[] => s.map((x, j) => (j < i ? transform(x) : x)),
 });
 
 /**
@@ -115,7 +115,7 @@ export const before = <A>(i: number): Accessor<A[], A> => ({
  */
 export const after = <A>(i: number): Accessor<A[], A> => ({
   query: (xs): A[] => xs.filter((_, j) => j > i),
-  mod: (transform) => (s): A[] => s.map((x, j) => (i > j ? transform(x) : x)),
+  mod: (transform) => (s): A[] => s.map((x, j) => (j > i ? transform(x) : x)),
 });
 
 /**
