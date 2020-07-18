@@ -8,20 +8,6 @@ Accessor-ts is a library for doing immutable updates and querying on nested data
   npm install -S accessor-ts
 ```
 
-## Accessors
-
-Accessors are the core of this library and have the type:
-
-```ts
-// S is the type of the data structure that will be operated on, A is the type of some value(s) within
-export interface Accessor<S, A> {
-  // get an array of result(s) from the data structure
-  query(struct: S): A[];
-  // modify item(s) within the data structure using the passed function
-  mod(fn: (x: A) => A): (struct: S) => S;
-}
-```
-
 ## Examples
 
 ```
@@ -164,6 +150,20 @@ set(oddConnectionsOfFriends)(NaN)(baz)); /* =>
 
 ## API
 
+## Accessors
+
+Accessors are the core of this library and have the type:
+
+```ts
+// S is the type of the data structure that will be operated on, A is the type of some value(s) within
+export interface Accessor<S, A> {
+  // get an array of result(s) from the data structure
+  query(struct: S): A[];
+  // modify item(s) within the data structure using the passed function
+  mod(fn: (x: A) => A): (struct: S) => S;
+}
+```
+
 ### set
 
 Immutably assign using an Accessor
@@ -241,15 +241,12 @@ const unit = <A>(): Accessor<A, A>
 ```
 
 ## Weaknesses
-
-- Documentation needs examples
 - More useful functions should be added
-- Unit testing is WIP.
 - This is a prototype and isn't used in production anywhere.
-- Since `query` returns an array of results, users must be careful about the array being empty. This is a weakness of TypeScript that will hopefully be fixed in the future.
+- Since `query` returns an array of results, users must be careful about the array being empty.
 - Performance of this library hasn't been evaluated or optimized yet.
 
 ## Comparisons to other libries
 
-- shades: Shades' usage is more terse, and doesn't require binding the types of its optics to interfaces. Shades' types are harder to understand and leverage, especially since its source isn't in TypeScript. Accessor-ts only has one type so users don't have to understand the differences between Lenses, Isomorphisms, and Traversals. Shades has a massive generated type file that is impossible to grok and slows down the TS compiler (in my experience).
-- monacle-ts: Accessor-ts' usage is simpler as there is only one composition operator. monacle-ts has way more concepts to learn and use. monacle-ts has dependencies on fp-ts which is difficult to learn and leverage. monacle-ts is more expressive, mature, and powerful.
+- [shades](https://github.com/jamesmcnamara/shades): Shades' usage is more terse, and doesn't require binding the types of its optics to interfaces. Shades' types are harder to understand and leverage, especially since its source isn't in TypeScript. Accessor-ts only has one type so users don't have to understand the differences between Lenses, Isomorphisms, and Traversals. Shades has a massive generated type file that is impossible to grok and slows down the TS compiler on medium to large projects (in my experience).
+- [monacle-ts](https://github.com/gcanti/monocle-ts): Accessor-ts' usage is simpler as there is only one composition operator. monacle-ts has way more concepts to learn and use. monacle-ts has dependencies on fp-ts which is difficult to learn and leverage. monacle-ts is more expressive, mature, and powerful.
