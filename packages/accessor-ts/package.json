@@ -5,7 +5,30 @@
   "description": "A TS/JS library for doing immutable updates and querying on nested data structures in a way that is composable and powerful.",
   "main": "dist/accessor.js",
   "module": "dist/esm/accessor.js",
-  "author": "jethro larson <jethrolarson@users.noreply.github.com> (https://github.com/jethrolarson)",
+  "author": "jethro larson",
+  "maintainers": [
+    {
+      "name": "jethrolarson",
+      "email": "jethrolarson@gmail.com"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/jethrolarson/accessor-ts/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jethrolarson/accessor-ts.git"
+  },
+  "homepage": "https://github.com/jethrolarson/accessor-ts#readme",
+  "readmeFilename": "README.md",
+  "keywords": [
+    "optics",
+    "lens",
+    "traversal",
+    "state",
+    "functional",
+    "data-structure"
+  ],
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.publish.json",
     "build-esm": "tsc -p ./tsconfig.publish.json --module 'ESNext' --outDir 'dist/esm'",
@@ -18,7 +41,6 @@
       "pre-push": "yarn test --coverage && yarn lint"
     }
   },
-  "keywords": [],
   "devDependencies": {
     "@types/jest": "^26.0.4",
     "@typescript-eslint/eslint-plugin": "^3.6.1",
