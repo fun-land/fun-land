@@ -152,7 +152,7 @@ set(oddConnectionsOfFriends)(NaN)(baz)); /* =>
 
 ## Accessors
 
-Accessors are the core of this library and have the type:
+Accessors are the core of this library and have the interface:
 
 ```ts
 // S is the type of the data structure that will be operated on, A is the type of some value(s) within
@@ -163,14 +163,12 @@ export interface Accessor<S, A> {
   mod(fn: (x: A) => A): (struct: S) => S;
 }
 ```
+Since accessor-ts only provides Accessors for arrays and objects you may want to create your own if you use other data structures like `Set`, `Map` or immutable.js
 
-### prop
+### prop `: <Obj>() => <K extends keyof Obj>(k: K) => Accessor<Obj, Obj[K]>;`
 
 Create Accessor that points to a property of an object
 
-```ts
-const prop: <Obj>() => <K extends keyof Obj>(k: K) => Accessor<Obj, Obj[K]>;
-```
 Example:
 ```ts
 prop<Person>()('name').query(bob) // => ['bob']
