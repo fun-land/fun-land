@@ -165,7 +165,10 @@ export interface Accessor<S, A> {
 ```
 Since accessor-ts only provides Accessors for arrays and objects you may want to create your own if you use other data structures like `Set`, `Map` or immutable.js
 
-### prop `: <Obj>() => <K extends keyof Obj>(k: K) => Accessor<Obj, Obj[K]>;`
+### prop 
+```ts
+: <Obj>() => <K extends keyof Obj>(k: K) => Accessor<Obj, Obj[K]>;
+```
 
 Create Accessor that points to a property of an object
 
