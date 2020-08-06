@@ -1,12 +1,16 @@
 # accessor-ts
 
-Accessor-ts is a library for doing immutable updates and querying on nested data structures in a way that is composable and powerful. This is similar to lens and traversal libraries like [partial.lenses](https://github.com/calmm-js/partial.lenses), [monacle-ts](https://github.com/gcanti/monocle-ts), and [shades](https://github.com/jamesmcnamara/shades). This library aims to allow easy typed composition of optics without the bewildering functional programming jargon that usually comes with them
+Accessor-ts is a library for doing immutable updates and querying on nested data structures in a way that is composable and powerful. This is similar to lens and traversal libraries like [partial.lenses](https://github.com/calmm-js/partial.lenses), [monacle-ts](https://github.com/gcanti/monocle-ts), and [shades](https://github.com/jamesmcnamara/shades). This library aims to allow easy typed composition of optics without the bewildering functional programming jargon that usually comes with them.
 
 ## Installation
 
 ```bash
   npm install -S accessor-ts
 ```
+
+## Prerequisites
+* This library and it's examples uses [currying](https://blog.bitsrc.io/understanding-currying-in-javascript-ceb2188c339), arrow functions, and generics extensively so it'll help if you're familiar with those concepts.
+* TypeScript - While usage without TypeScript will work, you lose a lot of the benefit of this library without types. If you're looking for an optics library for use without TS check out [partial.lenses](https://github.com/calmm-js/partial.lenses).
 
 ## Examples
 
