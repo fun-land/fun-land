@@ -179,50 +179,43 @@ prop<Person>()('name').query(bob) // => ['bob']
 
 
 ### index
-
+```ts
+: <A>(i: number) => Accessor<A[], A>;
+```
 Create Accessor that points to an index of an array
 
-```ts
-const index: <A>(i: number) => Accessor<A[], A>;
-```
 Example:
 ```ts
 index(1).query([1, 2, 3]) // => [2]
 ```
 ### set
-
+```ts
+: <S, A>(acc: Accessor<S, A>) => (x: A) => (s: S) => S
+```
 Immutably assign using an Accessor
 
-```ts
-const set: <S, A>(acc: Accessor<S, A>) => (x: A) => (s: S) => S;
-```
 Example:
 ```ts
 set(prop<Person>()('name'))('Robert')(bob) // => {name: 'Robert', ...}
 ```
 
 ### comp
-
+```ts
+: <A, B, C>(acc1: Accessor<A, B>, acc2: Accessor<B, C>) => Accessor<A, C>
+```
 Compose 2 or more Accessors (overloaded up to 8)
 
-```ts
-function comp<A, B, C>(
-  acc1: Accessor<A, B>,
-  acc2: Accessor<B, C>
-): Accessor<A, C>;
-```
 Examples:
 ```ts
 comp(prop<Person>()('address'), prop<Address>()('city')).query(bob) // => ['Seattle']
 ```
 
 ### all
-
+```ts
+: <A>() => Accessor<A[], A>
+```
 Create Accessor focused on all items in an array. `query` unwraps them, `mod` changes each item.
 
-```ts
-const all: <A>() => Accessor<A[], A>;
-```
 Examples:
 ```ts
 const makeAllFriendsCool = (user: Person) => set(comp(prop<Person>()('friends'), all<Person>(), prop<Person>()('isCool'))(true).query(user)
@@ -233,49 +226,46 @@ const getFriends = (user: Person) => comp(prop<Person>()('friends'), all<Person>
 ```
 
 ### filter
-
+```ts
+: <A>(pred: (x: A) => boolean) => Accessor<A[], A>
+```
 Create Accessor that targets items in an array that match the passed predicate. `query` returns the matched items, `mod` modifies matched items.
 
-```ts
-const filter: <A>(pred: (x: A) => boolean) => Accessor<A[], A>;
-```
 Example:
 ```ts
 const getCoolFriends = (user: Person) => comp(prop<Person>()('friends'), filter<Person>(friend => friend.isCool)).query(user);
 ```
 
 ### before
-
+```ts
+: <A>(i: number) => Accessor<A[], A>
+```
 Create Accessor that targets items in an array before the passed index
 
-```ts
-const before: <A>(i: number) => Accessor<A[], A>;
-```
 Example:
 ```ts
 const getFirstTenFriends = comp(prop<Person>()('friends'), before(10)).query
 ```
 
 ### after
-
+```ts
+: <A>(i: number) => Accessor<A[], A>
+```
 Create Accessor that targets items in an array after the passed index
 
-```ts
-const after: <A>(i: number) => Accessor<A[], A>;
-```
 Example:
 ```ts
 const getMoreFriends = comp(prop<Person>()('friends'), after(9)).query
 ```
 
 ### unit
-
+```ts
+: <A>(): Accessor<A, A>
+```
 No-op Accessor  
 Makes Accessors a monoid in conjunction with `comp`. You'll probably only need this if you're writing really abstract code.
 
-```ts
-const unit = <A>(): Accessor<A, A>
-```
+
 Example:
 ```ts
 comp(prop<Person>()('name'), unit<String>()).query(bob) // => ['bob']
