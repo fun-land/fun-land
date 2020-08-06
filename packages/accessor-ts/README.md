@@ -1,6 +1,6 @@
 # accessor-ts
 
-Accessor-ts is a library for doing immutable updates and querying on nested data structures in a way that is composable and powerful. This is similar to lens and traversal libraries like partial.lenses, monacle-ts, and shades. This library aims to allow easy typed composition of optics without the bewildering functional programming jargon that usually comes with them
+Accessor-ts is a library for doing immutable updates and querying on nested data structures in a way that is composable and powerful. This is similar to lens and traversal libraries like [partial.lenses](https://github.com/calmm-js/partial.lenses), [monacle-ts](https://github.com/gcanti/monocle-ts), and [shades](https://github.com/jamesmcnamara/shades). This library aims to allow easy typed composition of optics without the bewildering functional programming jargon that usually comes with them
 
 ## Installation
 
@@ -164,14 +164,6 @@ export interface Accessor<S, A> {
 }
 ```
 
-### set
-
-Immutably assign using an Accessor
-
-```ts
-const set: <S, A>(acc: Accessor<S, A>) => (x: A) => (s: S) => S;
-```
-
 ### prop
 
 Create Accessor that points to a property of an object
@@ -179,6 +171,11 @@ Create Accessor that points to a property of an object
 ```ts
 const prop: <Obj>() => <K extends keyof Obj>(k: K) => Accessor<Obj, Obj[K]>;
 ```
+Example:
+```ts
+prop<Person>()('name').query(bob) // => ['bob']
+```
+
 
 ### index
 
@@ -186,6 +183,21 @@ Create Accessor that points to an index of an array
 
 ```ts
 const index: <A>(i: number) => Accessor<A[], A>;
+```
+Example:
+```ts
+index(1).query([1, 2, 3]) // => [2]
+```
+### set
+
+Immutably assign using an Accessor
+
+```ts
+const set: <S, A>(acc: Accessor<S, A>) => (x: A) => (s: S) => S;
+```
+Example:
+```ts
+set(prop<Person>()('name'))('Robert')(bob) // => {name: 'Robert', ...}
 ```
 
 ### comp
@@ -198,6 +210,10 @@ function comp<A, B, C>(
   acc2: Accessor<B, C>
 ): Accessor<A, C>;
 ```
+Examples:
+```ts
+comp(prop<Person>()('address'), prop<Address>()('city')).query(bob) // => ['Seattle']
+```
 
 ### all
 
@@ -205,6 +221,14 @@ Create Accessor focused on all items in an array. `query` unwraps them, `mod` ch
 
 ```ts
 const all: <A>() => Accessor<A[], A>;
+```
+Examples:
+```ts
+const makeAllFriendsCool = (user: Person) => set(comp(prop<Person>()('friends'), all<Person>(), prop<Person>()('isCool'))(true).query(user)
+// BTW you can make functions point-free if you like:
+const getFriends = comp(prop<Person>()('friends'), all<Person>()).query
+// is the same as
+const getFriends = (user: Person) => comp(prop<Person>()('friends'), all<Person>()).query(user)
 ```
 
 ### filter
@@ -214,6 +238,10 @@ Create Accessor that targets items in an array that match the passed predicate. 
 ```ts
 const filter: <A>(pred: (x: A) => boolean) => Accessor<A[], A>;
 ```
+Example:
+```ts
+const getCoolFriends = (user: Person) => comp(prop<Person>()('friends'), filter<Person>(friend => friend.isCool)).query(user);
+```
 
 ### before
 
@@ -221,6 +249,10 @@ Create Accessor that targets items in an array before the passed index
 
 ```ts
 const before: <A>(i: number) => Accessor<A[], A>;
+```
+Example:
+```ts
+const getFirstTenFriends = comp(prop<Person>()('friends'), before(10)).query
 ```
 
 ### after
@@ -230,15 +262,22 @@ Create Accessor that targets items in an array after the passed index
 ```ts
 const after: <A>(i: number) => Accessor<A[], A>;
 ```
+Example:
+```ts
+const getMoreFriends = comp(prop<Person>()('friends'), after(9)).query
+```
 
 ### unit
 
 No-op Accessor  
-Makes Accessors a monoid in conjunction with `comp`
+Makes Accessors a monoid in conjunction with `comp`. You'll probably only need this if you're writing really abstract code.
 
 ```ts
 const unit = <A>(): Accessor<A, A>
 ```
+Example:
+```ts
+comp(prop<Person>()('name'), unit<String>()).query(bob) // => ['bob']
 
 ## Weaknesses
 - More useful functions should be added
