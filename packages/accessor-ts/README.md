@@ -269,6 +269,7 @@ Makes Accessors a monoid in conjunction with `comp`. You'll probably only need t
 Example:
 ```ts
 comp(prop<Person>()('name'), unit<String>()).query(bob) // => ['bob']
+```
 
 ## Weaknesses
 - More useful functions should be added
