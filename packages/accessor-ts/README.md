@@ -1,6 +1,6 @@
 # accessor-ts
 
-Accessor-ts is a library for doing immutable updates and querying on nested data structures in a way that is composable and powerful. This is similar to lens and traversal libraries like partial.lenses, monacle-ts, and shades. This library aims to allow easy typed composition of optics without users having to know what optics even are.
+Accessor-ts is a library for doing immutable updates and querying on nested data structures in a way that is composable and powerful. This is similar to lens and traversal libraries like partial.lenses, monacle-ts, and shades. This library aims to allow easy typed composition of optics without the bewildering functional programming jargon that usually comes with them
 
 ## Installation
 
