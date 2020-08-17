@@ -1,6 +1,6 @@
-import { prop } from '../../src/accessor'
+import { prop } from 'accessor-ts'
 import React, { FC } from 'react'
-import { FunState } from '../../src/lib/useFunState'
+import { FunState } from '../../../src/useFunState'
 
 export interface TodoState {
   checked: boolean
@@ -10,7 +10,7 @@ export interface TodoState {
 export const todoProps = prop<TodoState>()
 
 // Here we're mixing in additional properies that we may need
-export const Todo: FC<FunState<TodoState> & { removeItem: () => void }> = ({ state, mod, set, removeItem }) => (
+export const Todo: FC<FunState<TodoState> & { removeItem: () => void }> = ({ state, set, removeItem }) => (
   <li>
     <input type="checkbox" checked={state.checked} onChange={e => set(todoProps('checked'))(e.currentTarget.checked)} />
     <select value={state.priority} onChange={e => set(todoProps('priority'))(+e.currentTarget.value)}>

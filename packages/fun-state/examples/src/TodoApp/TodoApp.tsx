@@ -1,8 +1,8 @@
 import React, { FC, ChangeEventHandler } from 'react'
 import { TodoState, Todo, todoProps } from './Todo'
-import useFunState, { FunState, subState } from '../../src/useFunState'
-import { P2, removeAt } from '../../src/fun'
-import { comp, prop, set, all, index, prepend } from '../../src/accessor'
+import useFunState, { FunState } from '../../../src/useFunState'
+import { pipe, removeAt, prepend } from '../../../src/fun'
+import { comp, prop, set, all, index } from 'accessor-ts'
 
 /**
  * TodoApp Model
@@ -16,14 +16,14 @@ const stateProps = prop<State>()
 
 // some business logic pulled out of the component. These are all State -> State
 const addItem = (state: State): State =>
-  stateProps('items').mod(prepend({ checked: false, label: state.value, priority: 1 }))(state)
+  stateProps('items').mod(prepend<TodoState>({ checked: false, label: state.value, priority: 1 }))(state)
 const clearValue = set(stateProps('value'))('')
 
 //modifying a bunch of child items
 const markAllDone = set(comp(stateProps('items'), all<TodoState>(), todoProps('checked')))(true)
 
 // modifying the collection
-const removeItem = P2(removeAt, stateProps('items').mod)
+const removeItem = pipe(removeAt, stateProps('items').mod)
 
 // depends on state as props but
 const Todos: FC<{ funState: FunState<State> }> = ({ funState }) => {
@@ -39,7 +39,7 @@ const Todos: FC<{ funState: FunState<State> }> = ({ funState }) => {
       <form
         onSubmit={e => {
           e.preventDefault()
-          funState.mod(P2(addItem, clearValue))
+          funState.mod(pipe(addItem, clearValue))
         }}>
         <input value={funState.state.value} onChange={onValueChange} type="input" />
         <button type="submit">Add</button>
@@ -48,7 +48,7 @@ const Todos: FC<{ funState: FunState<State> }> = ({ funState }) => {
       <ul>
         {funState.state.items.map((item, i) => (
           <Todo
-            {...subState(comp(stateProps('items'), index(i)), funState)}
+            {...funState.sub(comp(stateProps('items'), index(i)))}
             key={i}
             removeItem={() => funState.mod(removeItem(i))}
           />

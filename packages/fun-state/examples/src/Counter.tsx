@@ -10,7 +10,7 @@ const dec = (a: number) => a - 1
 export type CounterState = number
 export const initialCounterState = 0
 
-export const CounterEl: FC<FunState<CounterState>> = ({ state, mod, set }) => {
+export const Counter: FC<FunState<CounterState>> = ({ state, mod, set }) => {
   const onCountChange: ChangeEventHandler<HTMLInputElement> = e => {
     const val = +e.currentTarget.value
     if (isFinite(val)) mod(K(val))
