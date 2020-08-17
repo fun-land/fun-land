@@ -2,8 +2,34 @@
   "name": "fun-state",
   "version": "2.0.0",
   "description": "A React architecture and library for doing fractal, compositional state in a way that is typesafe, testable, and easy to refactor.",
-  "keywords": [],
-  "main": "src/useFunState.js",
+  "main": "dist/index.js",
+  "module": "dist/esm/index.js",
+  "author": "jethro larson",
+  "maintainers": [
+    {
+      "name": "jethrolarson",
+      "email": "jethrolarson@gmail.com"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/jethrolarson/fun-state/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jethrolarson/fun-state.git"
+  },
+  "homepage": "https://github.com/jethrolarson/fun-state#readme",
+  "readmeFilename": "README.md",
+  "keywords": [
+    "optics",
+    "lens",
+    "traversal",
+    "state",
+    "functional",
+    "data-structure",
+    "react",
+    "state-management"
+  ],
   "dependencies": {
     "accessor-ts": "^1.0.2"
   },
@@ -11,8 +37,37 @@
     "react": ">=16.8"
   },
   "devDependencies": {
+    "@types/react": "^16.9.46",
+    "@types/jest": "^26.0.4",
+    "@typescript-eslint/eslint-plugin": "^3.6.1",
+    "@typescript-eslint/parser": "^3.6.1",
+    "eslint": "^7.4.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-config-standard-with-typescript": "^18.0.2",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-jest": "^23.18.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "husky": "^4.2.5",
+    "jest": "~26.1.0",
+    "prettier": "^2.0.5",
     "react": "^16.9.0",
-    "react-dom": "^16.9.0"
+    "react-dom": "^16.9.0",
+    "ts-jest": "^26.1.2",
+    "typescript": "~3.9.7"
   },
-  "scripts": {}
+  "scripts": {
+    "build-cjs": "tsc -p ./tsconfig.publish.json",
+    "build-esm": "tsc -p ./tsconfig.publish.json --module 'ESNext' --outDir 'dist/esm'",
+    "build": "yarn build-cjs && yarn build-esm",
+    "lint": "eslint . --ext .ts",
+    "test": "jest"
+  },
+  "husky": {
+    "hooks": {
+      "pre-push": "yarn test --coverage && yarn lint"
+    }
+  }
 }

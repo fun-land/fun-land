@@ -1,8 +1,8 @@
 import React, { FC } from 'react'
-import { CounterEl, initialCounterState, CounterState } from './Counter'
-import useFunState, { subState } from '../src/useFunState'
+import { Counter, initialCounterState, CounterState } from './Counter'
+import useFunState from '../src/useFunState'
 import TodoApp from './TodoApp/TodoApp'
-import { prop } from '../src/accessor'
+import { prop } from 'accessor-ts'
 
 interface AppState {
   count: CounterState
@@ -20,7 +20,7 @@ const App: FC = () => {
   return (
     <div>
       <TodoApp />
-      <CounterEl {...subState(prop<AppState>()('count'), funState)} />
+      <Counter {...funState.sub(prop<AppState>()('count'))} />
     </div>
   )
 }

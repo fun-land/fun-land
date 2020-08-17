@@ -32,7 +32,7 @@ testable, and easy to refactor.
 
 FunState works with any react 16.8+ application. Usage without TypeScript works but isn't recommended.
 
-1. (npm install instructions TODO once this is published)
+1. `npm install -S fun-state`
 2. Create a component to act as the root for your FunState application (Doesn't actually have to be the root):
 
 ```ts

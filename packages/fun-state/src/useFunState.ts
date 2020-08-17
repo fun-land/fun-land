@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {P2, head} from './fun'
+import {pipe} from './fun'
 import {Accessor, comp, set, prop} from 'accessor-ts'
 
 export type Updater<State> = (transform: (state: State) => State) => void
@@ -9,46 +9,51 @@ export type Updater<State> = (transform: (state: State) => State) => void
  */
 export interface FunState<State> {
   state: State
+  /** Transform the state with the passed function */
   mod: Updater<State>
+  /** Query the state using an accessor */
   query: <A>(acc: Accessor<State, A>) => A[]
+  /** Set the state at the passed accessor */
   set: <A>(acc: Accessor<State, A>) => (val: A) => void
+  /** Set state at passed key */
   setKey: <K extends keyof State>(key: K) => (val: State[K]) => void
+  /** Create a new FunState focused at the passed accessor */
   sub: <SubState>(acc: Accessor<State, SubState>) => FunState<SubState>
 }
 
 /**
- * Small modification on React.useState that makes state more fractally composable
+ * Create a FunState instance
  */
 export default function useFunState<State>(initialState: State): FunState<State> {
   const [state, setState] = useState(initialState)
-  const modState: Updater<State> = f => setState(f(state))
+  const modState: Updater<State> = (f) => setState(f(state))
   const _set = <A>(acc: Accessor<State, A>) => (v: A): void => modState(set(acc)(v))
   const props = prop<State>()
   const fs: FunState<State> = {
     state,
     mod: modState,
-    query: acc => acc.query(state),
+    query: (acc) => acc.query(state),
     set: _set,
-    setKey: P2(props, _set),
+    setKey: pipe(props, _set),
     sub: <SubState>(acc: Accessor<State, SubState>): FunState<SubState> => subState(fs)(acc)
   }
   return fs
 }
 
 /**
- * Create a FunState focused on a child key of the passed FunState
+ * Create a new FunState focused at the passed accessor
  */
 const subState = <ParentState>({state, mod: modState}: FunState<ParentState>) => <ChildState>(
   accessor: Accessor<ParentState, ChildState>
 ): FunState<ChildState> => {
-  const _set = <A>(acc: Accessor<ChildState, A>) => (v: A) => modState(set(comp(accessor, acc))(v))
+  const _set = <A>(acc: Accessor<ChildState, A>) => (v: A): void => modState(set(comp(accessor, acc))(v))
   const props = prop<ChildState>()
   const fs: FunState<ChildState> = {
-    state: head(accessor.query(state)),
-    mod: P2(accessor.mod, modState),
-    query: acc => comp(accessor, acc).query(state),
+    state: accessor.query(state)[0],
+    mod: pipe(accessor.mod, modState),
+    query: (acc) => comp(accessor, acc).query(state),
     set: _set,
-    setKey: P2(props, _set),
+    setKey: pipe(props, _set),
     sub: <SubState>(acc: Accessor<ChildState, SubState>): FunState<SubState> => subState(fs)(acc)
   }
   return fs
