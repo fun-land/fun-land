@@ -58,7 +58,7 @@ const subState = <ParentState>({state, mod: modState}: FunState<ParentState>) =>
     get: () => fs.state,
     query: (acc) => comp(accessor, acc).query(state),
     mod: pipe(accessor.mod, modState),
-    set: (v) => set(accessor)(v)(state),
+    set: (v) => modState(set(accessor)(v)),
     focus: <SubState>(acc: Accessor<ChildState, SubState>): FunState<SubState> => subState(fs)(acc),
     prop: (k) => fs.focus(props(k))
   }
