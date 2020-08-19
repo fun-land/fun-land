@@ -17,3 +17,6 @@ export const prepend = <A>(x: A) => (xs: A[]): A[] => [x, ...xs]
 
 /** return the first item in an array */
 export const head = <A>(xs: A[]): A | undefined => xs[0]
+
+/** negate the arg */
+export const not = (a: boolean): boolean => !a
