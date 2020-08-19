@@ -144,5 +144,7 @@ Data structure that holds the state along with a stateful function that updates 
 ```
 Mutably merge a partial state into a FunState
 
-## TODO
-* There's no tests other than the examples.
+# TODO / Contributing
+
+* Give feedback!
+* Increase unit test coverage
