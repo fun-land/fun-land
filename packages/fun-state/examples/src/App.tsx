@@ -1,6 +1,6 @@
 import React, { FC } from 'react'
 import { Counter, initialCounterState, CounterState } from './Counter'
-import useFunState from '../src/useFunState'
+import useFunState from '../../src/useFunState'
 import TodoApp from './TodoApp/TodoApp'
 import { prop } from 'accessor-ts'
 
@@ -20,7 +20,7 @@ const App: FC = () => {
   return (
     <div>
       <TodoApp />
-      <Counter {...funState.sub(prop<AppState>()('count'))} />
+      <Counter {...funState.prop('count')} />
     </div>
   )
 }

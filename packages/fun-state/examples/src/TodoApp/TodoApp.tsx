@@ -29,7 +29,7 @@ const removeItem = pipe(removeAt, stateProps('items').mod)
 const Todos: FC<{ funState: FunState<State> }> = ({ funState }) => {
   // A little bit of business logic in-line for convenience
   const onValueChange: ChangeEventHandler<HTMLInputElement> = ({ currentTarget: { value } }) =>
-    funState.setKey('value')(value)
+    funState.prop('value').set(value)
   const onClickAllDone = () => funState.mod(markAllDone)
   // querying child items
   const allDone = funState.query(comp(stateProps('items'), all<TodoState>())).every(a => a.checked)
@@ -48,7 +48,7 @@ const Todos: FC<{ funState: FunState<State> }> = ({ funState }) => {
       <ul>
         {funState.state.items.map((item, i) => (
           <Todo
-            {...funState.sub(comp(stateProps('items'), index(i)))}
+            {...funState.focus(comp(stateProps('items'), index(i)))}
             key={i}
             removeItem={() => funState.mod(removeItem(i))}
           />
