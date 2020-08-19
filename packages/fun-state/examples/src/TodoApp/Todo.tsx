@@ -10,14 +10,14 @@ export interface TodoState {
 export const todoProps = prop<TodoState>()
 
 // Here we're mixing in additional properies that we may need
-export const Todo: FC<FunState<TodoState> & { removeItem: () => void }> = ({ state, set, removeItem }) => (
+export const Todo: FC<FunState<TodoState> & { removeItem: () => void }> = ({ state, removeItem, prop }) => (
   <li>
-    <input type="checkbox" checked={state.checked} onChange={e => set(todoProps('checked'))(e.currentTarget.checked)} />
-    <select value={state.priority} onChange={e => set(todoProps('priority'))(+e.currentTarget.value)}>
+    <input type="checkbox" checked={state.checked} onChange={e => prop('checked').set(e.currentTarget.checked)} />
+    <select value={state.priority} onChange={e => prop('priority').set(+e.currentTarget.value)}>
       <option value={0}>High</option>
       <option value={1}>Low</option>
     </select>
-    <input type="text" value={state.label} onChange={e => set(todoProps('label'))(e.currentTarget.value)} />
+    <input type="text" value={state.label} onChange={e => prop('label').set(e.currentTarget.value)} />
     <button onClick={removeItem}>X</button>
   </li>
 )

@@ -39,6 +39,7 @@ FunState works with any react 16.8+ application. Usage without TypeScript works 
 // App.tsx
 // Define an interface for your App's state
 interface AppState {
+  childProp: ChildState
   ...
 }
 
@@ -54,8 +55,8 @@ const App = () => {
     <div>
       {/* Child components can either get the root state directly: */}
       <MyComponent {...funState} />
-      {/* Or you can select down to a subset of the state using `.sub()` and an `Accessor`: */}
-      <MyChildComponent {...funState.sub('childProp')} />
+      {/* Or you can select down to a subset of the state using `.prop` of `.focus`: */}
+      <MyChildComponent {...funState.prop('childProp')} />
     </div>
   );
 };
@@ -70,10 +71,22 @@ export interface ChildState {
   isCool: boolean;
 }
 
-export const MyChildComponent: React.FC<FunState<ChildState>> = ({setKey, state: {checked}}) => (
-  <input type="checkbox" checked={checked} onChange=(e => setKey('isCool')(e.currentTarget.checked))>
+export const MyChildComponent: React.FC<FunState<ChildState>> = ({prop, state: {checked}}) => (
+  <input type="checkbox" checked={checked} onChange=(e => prop('isCool').set(e.currentTarget.checked))>
 );
 ```
+
+# When to useFunState
+
+* When you're in a situation where you would gain benefit from redux or other state-managment libraries.
+* You want composable/modular state
+* You want to gradually try out another state management system without fully converting your app.
+
+# When not to useFunState
+
+* When your data or component heirachy is mostly flat.
+* When our app is not as complex as the token TodoApp then adding these concepts and tools is probably overkill.
+* You're avoiding `FunctionComponent`s
 
 # Tips
 
@@ -89,6 +102,15 @@ https://app.lucidchart.com/invitations/accept/657b566b-5302-49c2-a5fa-d0e5957b48
 
 # API
 
+## useFunState
+
+```ts
+<State>(initialState: State) => FunState<State>
+```
+
+Creates an instance of the state machine with a starting state. Any component that calls this becomes an "App".
+
+
 ## Accessor
 
 See <a href="https://github.com/jethrolarson/accessor-ts">accessor-ts</a>
@@ -96,28 +118,31 @@ See <a href="https://github.com/jethrolarson/accessor-ts">accessor-ts</a>
 ## FunState
 
 ```ts
-export interface FunState<State> {
-  // Your App's state
+interface FunState<State> {
   state: State
-  // Transform the state with the passed function
-  mod: (transform: (state: State) => State) => void
-  // Query the state using some accessor
+  /** Query the state using an accessor */
   query: <A>(acc: Accessor<State, A>) => A[]
-  // Set the state at the passed accessor
-  set: <A>(acc: Accessor<State, A>) => (val: A) => void
-  // Set state at passed key
-  setKey: <K extends keyof State>(key: K) => (val: State[K]) => void
-  // return a new FunState focused at the passed accessor
-  sub: <SubState>(acc: Accessor<State, SubState>) => FunState<SubState>
+  /** Get the state */
+  get: () => State
+  /** Transform the state with the passed function */
+  mod: Updater<State>
+  /** Replace the state (sugar over `mod(K(v))`) */
+  set: (val: State) => void
+  /** Create a new FunState focused at the passed accessor */
+  focus: <SubState>(acc: Accessor<State, SubState>) => FunState<SubState>
+  /** focus state at passed key (sugar over `focus(prop(k))`) */
+  prop: <K extends keyof State>(key: K) => FunState<State[K]>
 }
 ```
 
 Data structure that holds the state along with a stateful function that updates it.
 
-## useFunState
+## merge
 
 ```ts
-function useFunState<State>(initialState: State): FunState<State>
+<State>(fs: FunState<State>) => (part: Partial<State>): void
 ```
+Mutably merge a partial state into a FunState
 
-Creates an instance of the state machine with a starting state. Any component that calls this becomes an "App".
+## TODO
+* There's no tests other than the examples.
