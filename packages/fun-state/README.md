@@ -6,7 +6,7 @@ On top of that, manually updating nested data immutably is messy and error prone
 SET_USER_CHECKED: (state: State): State => {
   return {
     ...state,
-    users: state.users.map(user => {
+    users: state.users.map((user) => {
       if ((user.id = action.payload.id)) {
         return {...user, checked: action.payload.checked}
       }
@@ -78,15 +78,15 @@ export const MyChildComponent: React.FC<FunState<ChildState>> = ({prop, state: {
 
 # When to useFunState
 
-* When you're in a situation where you would gain benefit from redux or other state-managment libraries.
-* You want composable/modular state
-* You want to gradually try out another state management system without fully converting your app.
+- When you're in a situation where you would gain benefit from redux or other state-managment libraries.
+- You want composable/modular state
+- You want to gradually try out another state management system without fully converting your app.
 
 # When not to useFunState
 
-* When your data or component heirachy is mostly flat.
-* When our app is not as complex as the token TodoApp then adding these concepts and tools is probably overkill.
-* You're avoiding `FunctionComponent`s
+- When your data or component heirachy is mostly flat.
+- When our app is not as complex as the token TodoApp then adding these concepts and tools is probably overkill.
+- You're avoiding `FunctionComponent`s
 
 # Tips
 
@@ -108,8 +108,23 @@ https://app.lucidchart.com/invitations/accept/657b566b-5302-49c2-a5fa-d0e5957b48
 <State>(initialState: State) => FunState<State>
 ```
 
-Creates an instance of the state machine with a starting state. Any component that calls this becomes an "App".
+Creates an react-hooks instance of the state machine with a starting state. Any component that calls this becomes an "App".
 
+## funState
+
+```ts
+<State>(initialState: State) => FunState<State>
+```
+
+Creates a library-agnostic instance of the state machine with a starting state.
+
+## pureState
+
+```ts
+<State>({getState, modState}: StateEngine<State>): FunState<State>
+```
+
+Creates an instance of funState given a custom StateEngine. If you want to add support for preact or other libraries with things like hooks you want this.
 
 ## Accessor
 
@@ -118,15 +133,13 @@ See <a href="https://github.com/jethrolarson/accessor-ts">accessor-ts</a>
 ## FunState
 
 ```ts
-interface FunState<State> {
-  state: State
+export interface FunState<State> {
+  get: () => State
   /** Query the state using an accessor */
   query: <A>(acc: Accessor<State, A>) => A[]
-  /** Get the state */
-  get: () => State
   /** Transform the state with the passed function */
   mod: Updater<State>
-  /** Replace the state (sugar over `mod(K(v))`) */
+  /** Replace the state */
   set: (val: State) => void
   /** Create a new FunState focused at the passed accessor */
   focus: <SubState>(acc: Accessor<State, SubState>) => FunState<SubState>
@@ -142,9 +155,14 @@ Data structure that holds the state along with a stateful function that updates 
 ```ts
 <State>(fs: FunState<State>) => (part: Partial<State>): void
 ```
+
 Mutably merge a partial state into a FunState
 
 # TODO / Contributing
 
-* Give feedback!
-* Increase unit test coverage
+- Give feedback!
+- Increase unit test coverage
+- Add performance benchmarks
+- File bugs
+- Improve documentation
+- Add examples
