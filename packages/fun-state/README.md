@@ -153,10 +153,66 @@ Data structure that holds the state along with a stateful function that updates 
 ## merge
 
 ```ts
-<State>(fs: FunState<State>) => (part: Partial<State>): void
+<State>(fs: FunState<State>) => (part: Partial<State>) => void
 ```
 
 Mutably merge a partial state into a FunState
+
+## append
+
+```ts
+<A>(x: A) => (xs: A[]) => A[]
+```
+
+Append and item to an array.
+
+## prepend
+
+```ts
+<A>(x: A) => (xs: A[]) => A[]
+```
+
+Prepend and item to an array.
+
+## head
+
+```ts
+;<A>(xs: A[]) => A | undefined
+```
+
+Returns the first item in an array
+
+## tail
+
+```ts
+<A>(xs: A[]) => A[]
+```
+
+Returns all elements of an array excluding the first.
+
+## removeAt
+
+```ts
+(index: number) => <T>(xs: T[]) => T[]
+```
+
+remove item from array at passed index
+
+## not
+
+```ts
+(a: boolean): boolean
+```
+
+Refutes its argument.
+
+# pipe
+
+```ts
+;<A, B, C>(f: (x: A) => B, g: (y: B) => C) => (x: A) => C
+```
+
+Compose two functions left to right.
 
 # TODO / Contributing
 

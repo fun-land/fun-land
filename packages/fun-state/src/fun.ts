@@ -26,3 +26,6 @@ export const tail = <A>(xs: A[]): A[] => xs.slice(0)
 
 /** negate the arg */
 export const not = (a: boolean): boolean => !a
+
+/** merge  */
+export const mergeInto = <State>(part: Partial<State>) => (s: State): State => ({...s, ...part})

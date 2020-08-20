@@ -1,14 +1,12 @@
-import {pipe} from './fun'
+import {pipe, mergeInto} from './fun'
 import {Accessor, comp, set, prop} from 'accessor-ts'
 
 export type Updater<State> = (transform: (state: State) => State) => void
 
-const _merge = <State>(part: Partial<State>) => (s: State): State => ({...s, ...part})
-
 type UnpackState<FS> = FS extends FunState<infer State> ? State : never
 
 export const merge = <FState extends FunState<any>>(fs: FState) => (part: Partial<UnpackState<FState>>): void =>
-  fs.mod(_merge(part))
+  fs.mod(mergeInto(part))
 
 export interface StateEngine<State> {
   getState: () => State
