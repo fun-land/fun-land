@@ -1,2 +1,3 @@
-export {default, FunState, Updater} from './useFunState'
-export {pipe, head, prepend, removeAt} from './fun'
+export {default} from './useFunState'
+export {FunState, Updater} from './FunState'
+export {pipe, head, prepend, removeAt, not} from './fun'
