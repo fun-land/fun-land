@@ -217,7 +217,6 @@ Compose two functions left to right.
 # TODO / Contributing
 
 - Give feedback!
-- Increase unit test coverage
 - Add performance benchmarks
 - File bugs
 - Improve documentation
