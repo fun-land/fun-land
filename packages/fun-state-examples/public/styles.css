@@ -1,0 +1,23 @@
+/*
+TODO make this pretty
+*/
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.4;
+  background: hsl(300, 40%, 10%);
+  color: #bbb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#root {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+ul,
+ol {
+  padding: 0 0 0 1.2em;
+}
