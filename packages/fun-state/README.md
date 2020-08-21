@@ -88,6 +88,10 @@ export const MyChildComponent: React.FC<FunState<ChildState>> = ({prop, state: {
 - When our app is not as complex as the token TodoApp then adding these concepts and tools is probably overkill.
 - You're avoiding `FunctionComponent`s
 
+# More examples
+
+There's a separate repository [fun-state-examples](https://github.com/jethrolarson/fun-state-examples) if you want to see how to use it in a react app.
+
 # Tips
 
 - Keep your FunState Apps simple and delegate the complex logic to pure child components, using `.sub()` where practical.
