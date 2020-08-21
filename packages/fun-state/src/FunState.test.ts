@@ -1,13 +1,36 @@
-import {pureState, standaloneEngine, funState} from './FunState'
+import {pureState, standaloneEngine, funState, merge} from './FunState'
 import {comp, all, prop} from 'accessor-ts'
 import {prepend} from './fun'
 
-describe('mockEngine', () => {
+describe('standaloneEngine', () => {
   it('sets', () => {
     const me = standaloneEngine(1)
     expect(me.getState()).toBe(1)
     me.modState(() => 3)
     expect(me.getState()).toBe(3)
+  })
+})
+
+describe('merge', () => {
+  it('merges a partial state into a funstate', () => {
+    interface Obj {
+      a: number
+      b: boolean
+    }
+    const fs = funState<Obj>({a: 1, b: false})
+
+    merge(fs)({b: true})
+    expect(fs.get()).toEqual({a: 1, b: true})
+  })
+  it('handles undefined values correctly', () => {
+    interface Obj {
+      a: number | undefined
+      b: boolean | undefined
+    }
+    const fs = funState<Obj>({a: 1, b: false})
+
+    merge(fs)({b: undefined})
+    expect(fs.get()).toEqual({a: 1, b: undefined})
   })
 })
 
@@ -61,9 +84,6 @@ describe('funState', () => {
     // focusing down still gives state (multi-items are reduced to one)
     expect(fs.query(acc)).toEqual([1, 2])
     expect(fs.focus(prop<Iface>()('a')).get()).toEqual(initial.a)
-    // mutating root doesnt break sub states
-    // fs.set({a: {b: 3}})
-    // expect(afs.get()).toEqual({b: 3})
     // mutating subs works
     afs.mod((a) => a + 1)
     expect(afs.get()).toEqual(2)
@@ -74,5 +94,26 @@ describe('funState', () => {
 
     expect(afs.get()).toEqual(0)
     expect(fs.query(acc)).toEqual([0, 2, 3])
+  })
+  it('focus works recurrsively', () => {
+    interface Jface {
+      b: number
+    }
+    interface Iface {
+      a: Jface[]
+    }
+    const initial = Object.freeze({a: [{b: 1}, {b: 2}]})
+    const fs = funState(initial)
+    const afs = fs.focus(prop<Iface>()('a')).focus(all<Jface>()).focus(prop<Jface>()('b'))
+    // mutating subs works
+    afs.mod((a) => a + 1)
+    expect(afs.get()).toEqual(2)
+    expect(fs.get()).toEqual({a: [{b: 2}, {b: 3}]})
+    // adding items to traversal still works
+    fs.prop('a').mod(prepend({b: 0}))
+    expect(fs.get()).toEqual({a: [{b: 0}, {b: 2}, {b: 3}]})
+    expect(afs.get()).toEqual(0)
+
+    expect(fs.focus(prop<Iface>()('a')).focus(all<Jface>()).query(prop<Jface>()('b'))).toEqual([0, 2, 3])
   })
 })
