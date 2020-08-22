@@ -30,6 +30,9 @@
     "react",
     "state-management"
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "dependencies": {
     "accessor-ts": "^1.0.3"
   },
