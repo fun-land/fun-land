@@ -19,6 +19,9 @@
     "type": "git",
     "url": "git+https://github.com/jethrolarson/accessor-ts.git"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "homepage": "https://github.com/jethrolarson/accessor-ts#readme",
   "readmeFilename": "README.md",
   "keywords": [
