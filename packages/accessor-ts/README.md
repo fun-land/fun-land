@@ -73,7 +73,7 @@ interface Friend {
 const friendProps = prop<Friend>();
 const myFriendBob: Friend = { user: bob };
 
-comp(friendProps("user"), userProps("id")).query(myFriendBob); // => 1
+comp(friendProps("user"), userProps("id")).query(myFriendBob); // => [1]
 ```
 
 This is the same as `myFriendBob.user.id`.
