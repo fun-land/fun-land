@@ -132,3 +132,21 @@ export const unit = <A>(): Accessor<A, A> => ({
   query: (xs): A[] => [xs],
   mod: (transform) => (xs): A => xs,
 });
+
+const _pick = <Obj, Keys extends keyof Obj>(
+  keys: Keys[],
+  obj: Obj
+): Pick<Obj, Keys> => {
+  const out: Partial<Obj> = {};
+  keys.forEach((k) => {
+    out[k] = obj[k];
+  });
+  return out as Pick<Obj, Keys>;
+};
+
+export const sub = <SSub, S extends SSub = never>(
+  keys: Array<keyof SSub>
+): Accessor<S, SSub> => ({
+  query: (obj): SSub[] => [_pick(keys, obj)],
+  mod: (f) => (obj: S): S => ({ ...obj, ...f(_pick(keys, obj)) }),
+});
