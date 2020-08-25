@@ -8,6 +8,7 @@ import {
   unit,
   before,
   after,
+  sub,
 } from "./accessor";
 
 interface User {
@@ -177,5 +178,25 @@ describe("after", () => {
       4,
       5,
     ]);
+  });
+});
+
+describe("sub", () => {
+  interface SubUser {
+    name: string;
+    connections: number[];
+  }
+  it("query a subset of the keys of an object", () => {
+    expect(
+      sub<SubUser, User>(["name", "connections"]).query(bob)
+    ).toEqual([{ name: "bob", connections: [1, 2] }]);
+  });
+  it("modifies only a subset of an object", () => {
+    expect(
+      sub<SubUser, User>(["name", "connections"]).mod((s) => ({
+        ...s,
+        name: "Robert",
+      }))(bob)
+    ).toEqual({ name: "Robert", connections: [1, 2], id: 1 });
   });
 });
