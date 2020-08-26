@@ -15,8 +15,9 @@
   "bugs": {
     "url": "https://github.com/jethrolarson/accessor-ts/issues"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jethrolarson/accessor-ts.git"
   },
   "homepage": "https://github.com/jethrolarson/accessor-ts#readme",
   "readmeFilename": "README.md",
