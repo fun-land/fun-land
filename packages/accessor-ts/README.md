@@ -262,6 +262,25 @@ Example:
 const getMoreFriends = comp(prop<Person>()('friends'), after(9)).query
 ```
 
+### sub
+
+```ts
+<SSub, S extends SSub = never>(keys: Array<keyof SSub>) => Accessor<S, SSub>
+```
+
+Create an accessor that targets a subset of properties of an object.
+
+Example: 
+```ts
+interface Entity {
+  name: string;
+  id: number;
+}
+const entityAcc = sub<Entity, User>(['name', 'id'])
+
+entityAcc.query(bob) // => [{name: 'bob', id: 1}]
+```
+
 ### unit
 ```ts
 : <A>(): Accessor<A, A>
