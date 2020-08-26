@@ -15,10 +15,6 @@
   "bugs": {
     "url": "https://github.com/jethrolarson/accessor-ts/issues"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jethrolarson/accessor-ts.git"
-  },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
