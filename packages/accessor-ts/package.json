@@ -3,8 +3,8 @@
   "license": "MIT",
   "version": "1.3.0",
   "description": "A TS/JS library for doing immutable updates and querying on nested data structures in a way that is composable and powerful.",
-  "main": "dist/accessor.js",
-  "module": "dist/esm/accessor.js",
+  "main": "dist/index.js",
+  "module": "dist/esm/index.js",
   "author": "jethro larson",
   "maintainers": [
     {
