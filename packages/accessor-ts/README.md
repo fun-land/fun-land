@@ -294,6 +294,75 @@ Example:
 comp(prop<Person>()('name'), unit<String>()).query(bob) // => ['bob']
 ```
 
+## Utilities
+
+### flow
+```ts
+<A, B, C>(f: (x: A) => B, g: (y: B) => C) => (x: A) => C
+```
+Compose two functions left to right.
+
+### K
+```ts
+<A>(a: A) => (_b: unknown) => A
+```
+Constant combinator. Returns a function that ignores its argument and returns the original one.
+
+### empty
+```ts
+<A>() => A[]
+```
+Returns an empty array.
+
+### flatmap
+```ts
+<T, U>(f: (x: T) => U[]) => (xs: T[]) => U[]
+```
+Apply an array returning function to each item in an array and return an unnested array.
+
+### removeAt
+```ts
+(index: number) => <T>(xs: T[]) => T[]
+```
+Removes item at passed index from array.
+
+### prepend
+```ts
+<A>(x: A) => (xs: A[]): A[]
+```
+Prepend an item to an array.
+
+### append
+```ts
+<A>(x: A) => (xs: A[]): A[]
+```
+Append an item to the end of an array
+
+### head
+```ts
+<A>(xs: A[]) => A | undefined
+```
+Return the first item in an array
+
+### tail
+```ts
+<A>(xs: A[]) => A[]
+```
+Return a copy of the array excluding the first item.
+
+### not
+```ts
+(a: boolean) => boolean
+```
+Logically negate the argument.
+
+### mergeInto
+```ts
+<State>(part: Partial<State>) => (s: State) => State
+```
+Merge a partial object into the full one. Useful for updating a subset of properties of an object.
+
+
 ## Weaknesses
 - More useful functions should be added
 - This is a prototype and isn't used in production anywhere.

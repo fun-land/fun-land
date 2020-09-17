@@ -1,5 +1,5 @@
 /** @module accessor This is the actual "optics" library */
-import { B, K, flatmap } from "./util";
+import { flow, K, flatmap } from "./util";
 
 export interface Accessor<S, A> {
   query: (struct: S) => A[];
@@ -30,8 +30,8 @@ const _comp = <A, B, C>(
   acc1: Accessor<A, B>,
   acc2: Accessor<B, C>
 ): Accessor<A, C> => ({
-  query: B(flatmap<B, C>(acc2.query))(acc1.query),
-  mod: B(acc1.mod)(acc2.mod),
+  query: flow(acc1.query, flatmap<B, C>(acc2.query)),
+  mod: flow(acc2.mod, acc1.mod),
 });
 
 /**
@@ -122,7 +122,7 @@ export const after = <A>(i: number): Accessor<A[], A> => ({
  * Immutably assign to an Accessor
  */
 export const set = <S, A>(acc: Accessor<S, A>): ((x: A) => (s: S) => S) =>
-  B(acc.mod)(K);
+  flow(K, acc.mod);
 
 /**
  * No-op Accessor
@@ -144,6 +144,7 @@ const _pick = <Obj, Keys extends keyof Obj>(
   return out as Pick<Obj, Keys>;
 };
 
+/** Create an accessor that targets a subset of properties of an object. */
 export const sub = <SSub, S extends SSub = never>(
   keys: Array<keyof SSub>
 ): Accessor<S, SSub> => ({
