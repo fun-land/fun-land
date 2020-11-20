@@ -364,8 +364,6 @@ Merge a partial object into the full one. Useful for updating a subset of proper
 
 
 ## Weaknesses
-- More useful functions should be added
-- This is a prototype and isn't used in production anywhere.
 - Since `query` returns an array of results, users must be careful about the array being empty.
 - Performance of this library hasn't been evaluated or optimized yet.
 
