@@ -3,5 +3,4 @@ jest.config.js
 .eslintrc.js
 .eslintignore
 tsconfig.json
-src
 coverage
