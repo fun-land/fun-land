@@ -67,12 +67,10 @@ const App = () => {
 ```ts
 // MyChildComponent.tsx
 // Should be imported into the parent state interface
-export interface ChildState {
-  checked: boolean;
-}
+export type ChildState = boolean;
 
-export const MyChildComponent: React.FC<FunState<ChildState>> = ({get, set}) => (
-  <input type="checkbox" checked={get()} onChange=(e => set(e.currentTarget.checked))>
+export const MyChildComponent: React.FC<{state: FunState<ChildState>}> = ({state}) => (
+  <input type="checkbox" checked={state.get()} onChange=(e => state.set(e.currentTarget.checked))>
 );
 ```
 
