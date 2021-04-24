@@ -1,7 +1,7 @@
 {
   "name": "accessor-ts",
   "license": "MIT",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "A TS/JS library for doing immutable updates and querying on nested data structures in a way that is composable and powerful.",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
@@ -31,9 +31,10 @@
   ],
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.publish.json",
-    "build-esm": "tsc -p ./tsconfig.publish.json --module 'ESNext' --outDir 'dist/esm'",
+    "build-esm": "tsc -p ./tsconfig.publish.json --module 'esnext' --outDir 'dist/esm'",
     "build": "yarn build-cjs && yarn build-esm",
     "lint": "eslint . --ext .ts",
+    "prepublishOnly": "yarn build",
     "test": "jest"
   },
   "husky": {
