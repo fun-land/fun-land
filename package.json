@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "fun-dev",
   "private": true,
   "devDependencies": {
     "lerna": "^4.0.0"

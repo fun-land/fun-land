@@ -12,23 +12,28 @@ import {
   flow,
 } from "./util";
 
-describe('B', () => {
-  it('composes functions', () => {
-    expect(B((a: number) => a / 2)((a: number) => a + 1)(3)).toBe(2)
+describe("B", () => {
+  it("composes functions", () => {
+    expect(B((a: number) => a / 2)((a: number) => a + 1)(3)).toBe(2);
   });
 });
 
-describe('B', () => {
-  it('composes functions left-to-right', () => {
-    expect(flow((a: number) => a + 1, (a: number) => a / 2)(3)).toBe(2)
+describe("flow", () => {
+  it("composes functions left-to-right", () => {
+    expect(
+      flow(
+        (a: number) => a + 1,
+        (a: number) => a / 2
+      )(3)
+    ).toBe(2);
   });
 });
 
-describe('empty', () => {
-  it('returns empty array', () => {
+describe("empty", () => {
+  it("returns empty array", () => {
     expect(empty<number>()).toEqual([]);
-  })
-})
+  });
+});
 
 describe("flatmap", () => {
   it("can map over empty", () => {
