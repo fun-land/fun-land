@@ -8,12 +8,12 @@ testable, and easy to refactor.
 
 useFunState works with any react 16.8+ application. Usage without TypeScript works but isn't recommended.
 
-1. `npm install -S @fun-land/use-fun-state`
+1. `npm install -S @fun-land/accessor @fun-land/use-fun-state @fun-land/use-fun-state`
 2. Pick or create a component to hold the FunState:
 
 ```ts
 import {index} from '@fun-dev/accessor';
-import {useFunState} from '@fun-dev/fun-state';
+import useFunState from '@fun-dev/use-fun-state';
 import {Todo, TodoItem} from './Todo/TodoItem';
 ...
 
@@ -89,58 +89,10 @@ See [fun-state-examples](https://github.com/jethrolarson/fun-state-examples) for
 
 Creates an react-hooks based FunState instance with a starting state.
 
-## mockState
+## FunState?
 
-```ts
-<State>(initialState: State) => FunState<State>
-```
+See [@fun-land/fun-state](../packages/fun-state)</a>.
 
-Creates a library-agnostic instance of the state machine with a starting state. This is useful when unit testing functions or components that take a FunState instance.
+## Accessor?
 
-## pureState
-
-```ts
-<State>({getState, modState}: StateEngine<State>): FunState<State>
-```
-
-Creates an instance of funState given a custom StateEngine. If you want to add support for preact or other libraries with things like hooks you want this.
-
-## Accessor
-
-Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See <a href="https://github.com/jethrolarson/accessor-ts">accessor-ts</a>
-
-## FunState
-
-```ts
-export interface FunState<State> {
-  get: () => State
-  /** Query the state using an accessor */
-  query: <A>(acc: Accessor<State, A>) => A[]
-  /** Transform the state with the passed function */
-  mod: Updater<State>
-  /** Replace the state */
-  set: (val: State) => void
-  /** Create a new FunState focused at the passed accessor */
-  focus: <SubState>(acc: Accessor<State, SubState>) => FunState<SubState>
-  /** focus state at passed key (sugar over `focus(prop(k))`) */
-  prop: <K extends keyof State>(key: K) => FunState<State[K]>
-}
-```
-
-Data structure that holds the state along with a stateful functions that interact with it.
-
-## merge
-
-```ts
-<State>(fs: FunState<State>) => (part: Partial<State>) => void
-```
-
-Mutably merge a partial state into a FunState
-
-# TODO / Contributing
-
-- Give feedback!
-- Add performance benchmarks
-- File bugs
-- Improve documentation
-- Add more examples
+Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See [@fun-land/accessor](../packages/accessor)</a>.

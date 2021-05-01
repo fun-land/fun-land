@@ -8,10 +8,7 @@
   "maintainers": [
     "jethrolarson <jethrolarson@gmail.com>"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fun-land/fun-land.git"
-  },
+  "repository": "git+https://github.com/fun-land/fun-land.git",
   "homepage": "https://github.com/fun-land/fun-land/tree/main/packages/use-fun-state",
   "keywords": [
     "optics",
@@ -23,13 +20,15 @@
     "react",
     "state-management"
   ],
-  "dependencies": {
-    "@fun-land/fun-state": "^6.0.1"
-  },
+  "sideEffects": false,
   "peerDependencies": {
+    "@fun-land/accessor": "^2.0.1",
+    "@fun-land/fun-state": "^6.0.1",
     "react": ">=16.8"
   },
   "devDependencies": {
+    "@fun-land/accessor": "^2.0.1",
+    "@fun-land/fun-state": "^6.0.1",
     "@types/react": "^17.0.3",
     "@types/react-dom": "^17.0.3",
     "react": "^17.0.2",
@@ -50,5 +49,6 @@
   "directories": {
     "doc": "docs"
   },
-  "license": "ISC"
+  "license": "ISC",
+  "private": false
 }
