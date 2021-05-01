@@ -11,6 +11,11 @@
       "email": "jethrolarson@gmail.com"
     }
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fun-land/fun-land.git"
+  },
+  "homepage": "https://github.com/fun-land/fun-land/tree/main/packages/fun-state",
   "readmeFilename": "README.md",
   "keywords": [
     "optics",

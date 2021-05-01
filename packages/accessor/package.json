@@ -6,6 +6,11 @@
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
   "author": "jethro larson",
+  "homepage": "https://github.com/fun-land/fun-land/tree/main/packages/accessor",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fun-land/fun-land.git"
+  },
   "maintainers": [
     {
       "name": "jethrolarson",
