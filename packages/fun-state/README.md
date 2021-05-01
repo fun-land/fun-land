@@ -1,19 +1,19 @@
 <p align="center"><img src="docs/logo.svg" alt="" width="100" /></p>
 <h1 align="center">Fun-State</h1>
 
-FunState is a React architecture and library for doing fractal, compositional state in a way that is type-safe,
+@fun-land/fun-state is a React.js library for doing fractal, compositional state in a way that is type-safe,
 testable, and easy to refactor.
 
 # Getting Started
 
-FunState works with any react 16.8+ application. Usage without TypeScript works but isn't recommended.
+Fun-State works with any react 16.8+ application. Usage without TypeScript works but isn't recommended.
 
 1. `npm install -S fun-state`
 2. Pick or create a component to hold the FunState:
 
 ```ts
-import {index} from 'accessors-ts';
-import {useFunState} from 'fun-state';
+import {index} from '@fun-dev/accessor';
+import {useFunState} from '@fun-dev/fun-state';
 import {Todo, TodoItem} from './Todo/TodoItem';
 ...
 

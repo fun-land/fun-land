@@ -9,15 +9,11 @@
   "homepage": "https://github.com/fun-land/fun-land/tree/main/packages/accessor",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fun-land/fun-land.git"
+    "url": "git+https://github.com/fun-land/fun-land.git"
   },
   "maintainers": [
-    {
-      "name": "jethrolarson",
-      "email": "jethrolarson@gmail.com"
-    }
+    "jethrolarson <jethrolarson@gmail.com>"
   ],
-  "readmeFilename": "README.md",
   "keywords": [
     "optics",
     "lens",
@@ -33,5 +29,10 @@
     "lint": "eslint . --ext .ts",
     "prepublishOnly": "yarn build",
     "test": "jest"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/fun-land/fun-land/issues"
+  },
+  "dependencies": {},
+  "devDependencies": {}
 }

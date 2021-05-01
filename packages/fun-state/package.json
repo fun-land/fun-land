@@ -6,17 +6,13 @@
   "module": "dist/esm/index.js",
   "author": "jethro larson",
   "maintainers": [
-    {
-      "name": "jethrolarson",
-      "email": "jethrolarson@gmail.com"
-    }
+    "jethrolarson <jethrolarson@gmail.com>"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/fun-land/fun-land.git"
+    "url": "git+https://github.com/fun-land/fun-land.git"
   },
   "homepage": "https://github.com/fun-land/fun-land/tree/main/packages/fun-state",
-  "readmeFilename": "README.md",
   "keywords": [
     "optics",
     "lens",
@@ -46,6 +42,13 @@
     "lint": "eslint . --ext .ts",
     "test": "jest --watch",
     "test-cover": "jest --coverage",
-    "publish": "yarn build && yarn test-cover && npm publish"
-  }
+    "prepublishOnly": "yarn build"
+  },
+  "bugs": {
+    "url": "https://github.com/fun-land/fun-land/issues"
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "license": "ISC"
 }
