@@ -1,4 +1,4 @@
-import {pureState, standaloneEngine, funState, merge} from './FunState'
+import {pureState, standaloneEngine, mockState, merge} from './FunState'
 import {comp, all, prop} from 'accessor-ts'
 import {prepend} from './fun'
 
@@ -12,12 +12,12 @@ describe('standaloneEngine', () => {
 })
 
 describe('merge', () => {
-  it('merges a partial state into a funstate', () => {
+  it('merges a partial state into a mockState', () => {
     interface Obj {
       a: number
       b: boolean
     }
-    const fs = funState<Obj>({a: 1, b: false})
+    const fs = mockState<Obj>({a: 1, b: false})
 
     merge(fs)({b: true})
     expect(fs.get()).toEqual({a: 1, b: true})
@@ -27,14 +27,14 @@ describe('merge', () => {
       a: number | undefined
       b: boolean | undefined
     }
-    const fs = funState<Obj>({a: 1, b: false})
+    const fs = mockState<Obj>({a: 1, b: false})
 
     merge(fs)({b: undefined})
     expect(fs.get()).toEqual({a: 1, b: undefined})
   })
 })
 
-describe('funState', () => {
+describe('mockState', () => {
   it('sets initial state', () => {
     const fs = pureState(standaloneEngine(1))
 
@@ -55,7 +55,7 @@ describe('funState', () => {
     expect(fs.get()).toBe(3)
   })
   it('creates sub state for prop', () => {
-    const fs = funState({a: {b: 1}})
+    const fs = mockState({a: {b: 1}})
     expect(fs.get()).toEqual({a: {b: 1}})
     const afs = fs.prop('a')
     // focusing down still gives state
@@ -77,7 +77,7 @@ describe('funState', () => {
       a: Jface[]
     }
     const initial = Object.freeze({a: [{b: 1}, {b: 2}]})
-    const fs = funState(initial)
+    const fs = mockState(initial)
     expect(fs.get()).toEqual(initial)
     const acc = comp(prop<Iface>()('a'), all<Jface>(), prop<Jface>()('b'))
     const afs = fs.focus(acc)
@@ -103,7 +103,7 @@ describe('funState', () => {
       a: Jface[]
     }
     const initial = Object.freeze({a: [{b: 1}, {b: 2}]})
-    const fs = funState(initial)
+    const fs = mockState(initial)
     const afs = fs.focus(prop<Iface>()('a')).focus(all<Jface>()).focus(prop<Jface>()('b'))
     // mutating subs works
     afs.mod((a) => a + 1)

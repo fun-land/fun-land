@@ -1,5 +1,5 @@
-import {pipe, mergeInto} from './fun'
-import {Accessor, comp, set, prop} from 'accessor-ts'
+import {mergeInto} from './fun'
+import {Accessor, comp, set, prop, flow} from '@fun-land/accessor'
 
 export type Updater<State> = (transform: (state: State) => State) => void
 
@@ -28,7 +28,7 @@ export interface FunState<State> {
 }
 
 /**
- * Create a FunState instance
+ * Create a FunState instance from a StateEngine
  */
 export const pureState = <State>({getState, modState}: StateEngine<State>): FunState<State> => {
   const setState = (v: State): void => modState(() => v)
@@ -39,7 +39,7 @@ export const pureState = <State>({getState, modState}: StateEngine<State>): FunS
     mod: modState,
     set: setState,
     focus,
-    prop: pipe(prop<State>(), focus)
+    prop: flow(prop<State>(), focus)
   }
   return fs
 }
@@ -53,20 +53,23 @@ const subState = <ParentState, ChildState>(
 ): FunState<ChildState> => {
   const props = prop<ChildState>()
   const _get = (): ChildState => accessor.query(getState())[0]
-  const _mod = pipe(accessor.mod, modState)
+  const _mod = flow(accessor.mod, modState)
   const focus = <SubState>(acc: Accessor<ChildState, SubState>): FunState<SubState> =>
     subState({getState: _get, modState: _mod}, acc)
-  const _prop = pipe(props, focus)
+  const _prop = flow(props, focus)
   return {
     get: _get,
     query: <A>(acc: Accessor<ChildState, A>): A[] => comp(accessor, acc).query(getState()),
     mod: _mod,
-    set: pipe(set(accessor), modState),
+    set: flow(set(accessor), modState),
     focus,
     prop: _prop
   }
 }
 
+/**
+ * Simple StateEngine that is just based on a single mutible variable. Primarilly used for unit testing.
+ */
 export const standaloneEngine = <State>(initialState: State): StateEngine<State> => {
   let state: State = initialState
   const getState = (): State => state
@@ -76,5 +79,13 @@ export const standaloneEngine = <State>(initialState: State): StateEngine<State>
   return {getState, modState}
 }
 
-export const funState = <State>(initialState: State): FunState<State> =>
+/**
+ * create a FunState instance without react hooks. Primarily useful for unit testing.
+ */
+export const mockState = <State>(initialState: State): FunState<State> =>
   pureState(standaloneEngine<State>(initialState))
+
+/**
+ * @deprecated renamed to `mockState`
+ */
+export const funState = mockState

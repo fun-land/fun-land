@@ -1,7 +1,15 @@
 {
-  "name": "fun-dev",
+  "name": "@fun-land/fun-land",
   "private": true,
   "devDependencies": {
     "lerna": "^4.0.0"
-  }
+  },
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/fun-land/fun-land.git",
+  "author": "Jethro Larson <jethrolarson@gmail.com>",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ]
 }

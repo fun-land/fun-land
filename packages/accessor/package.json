@@ -1,5 +1,5 @@
 {
-  "name": "accessor-ts",
+  "name": "@fun-land/accessor",
   "license": "MIT",
   "version": "1.5.0",
   "description": "A TS/JS library for doing immutable updates and querying on nested data structures in a way that is composable and powerful.",
@@ -12,14 +12,6 @@
       "email": "jethrolarson@gmail.com"
     }
   ],
-  "bugs": {
-    "url": "https://github.com/jethrolarson/accessor-ts/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jethrolarson/accessor-ts.git"
-  },
-  "homepage": "https://github.com/jethrolarson/accessor-ts#readme",
   "readmeFilename": "README.md",
   "keywords": [
     "optics",
@@ -36,11 +28,6 @@
     "lint": "eslint . --ext .ts",
     "prepublishOnly": "yarn build",
     "test": "jest"
-  },
-  "husky": {
-    "hooks": {
-      "pre-push": "yarn test --coverage && yarn lint"
-    }
   },
   "devDependencies": {
     "@types/jest": "^26.0.22",
