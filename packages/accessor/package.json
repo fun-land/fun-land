@@ -1,7 +1,7 @@
 {
   "name": "@fun-land/accessor",
   "license": "MIT",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "A TS/JS library for doing immutable updates and querying on nested data structures in a way that is composable and powerful.",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
