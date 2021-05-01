@@ -1,0 +1,21 @@
+0 silly argv {
+0 silly argv   _: [ 'import' ],
+0 silly argv   lernaVersion: '4.0.0',
+0 silly argv   '$0': 'node_modules\\lerna\\cli.js',
+0 silly argv   dir: 'C:/Users/jethr/develop/accessor-ts'
+0 silly argv }
+1 notice cli v4.0.0
+2 verbose rootPath C:\Users\jethr\develop\lerna-repo
+3 info versioning independent
+4 error Error: Command failed with exit code 128: git rev-parse HEAD
+4 error fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree.
+4 error Use '--' to separate paths from revisions, like this:
+4 error 'git <command> [<revision>...] -- [<file>...]'
+4 error HEAD
+4 error     at makeError (C:\Users\jethr\develop\lerna-repo\node_modules\execa\lib\error.js:59:11)
+4 error     at Function.module.exports.sync (C:\Users\jethr\develop\lerna-repo\node_modules\execa\index.js:186:17)
+4 error     at Object.execSync (C:\Users\jethr\develop\lerna-repo\node_modules\@lerna\child-process\index.js:39:16)
+4 error     at ImportCommand.execSync (C:\Users\jethr\develop\lerna-repo\node_modules\@lerna\import\index.js:141:25)
+4 error     at ImportCommand.getCurrentSHA (C:\Users\jethr\develop\lerna-repo\node_modules\@lerna\import\index.js:133:17)
+4 error     at ImportCommand.initialize (C:\Users\jethr\develop\lerna-repo\node_modules\@lerna\import\index.js:102:31)
+4 error     at C:\Users\jethr\develop\lerna-repo\node_modules\@lerna\command\index.js:274:24
