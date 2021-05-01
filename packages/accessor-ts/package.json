@@ -31,7 +31,7 @@
   ],
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.publish.json",
-    "build-esm": "tsc -p ./tsconfig.publish.json --module 'esnext' --outDir 'dist/esm'",
+    "build-esm": "tsc -p ./tsconfig.publish.json --module \"esnext\" --outDir \"dist/esm\"",
     "build": "yarn build-cjs && yarn build-esm",
     "lint": "eslint . --ext .ts",
     "prepublishOnly": "yarn build",
