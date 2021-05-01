@@ -1,0 +1,54 @@
+{
+  "name": "@fun-land/use-fun-state",
+  "version": "1.0.0",
+  "description": "A React architecture and library for doing fractal, compositional state in a way that is typesafe, testable, and easy to refactor.",
+  "main": "dist/index.js",
+  "module": "dist/esm/index.js",
+  "author": "jethro larson",
+  "maintainers": [
+    "jethrolarson <jethrolarson@gmail.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fun-land/fun-land.git"
+  },
+  "homepage": "https://github.com/fun-land/fun-land/tree/main/packages/use-fun-state",
+  "keywords": [
+    "optics",
+    "lens",
+    "traversal",
+    "state",
+    "functional",
+    "data-structure",
+    "react",
+    "state-management"
+  ],
+  "dependencies": {
+    "@fun-land/fun-state": "^6.0.1"
+  },
+  "peerDependencies": {
+    "react": ">=16.8"
+  },
+  "devDependencies": {
+    "@types/react": "^17.0.3",
+    "@types/react-dom": "^17.0.3",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "scripts": {
+    "build-cjs": "tsc -p ./tsconfig.publish.json",
+    "build-esm": "tsc -p ./tsconfig.publish.json --module esnext --outDir dist/esm",
+    "build": "yarn build-cjs && yarn build-esm",
+    "lint": "eslint . --ext .ts",
+    "test": "jest --watch",
+    "test-cover": "jest --coverage",
+    "prepublishOnly": "yarn build"
+  },
+  "bugs": {
+    "url": "https://github.com/fun-land/fun-land/issues"
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "license": "ISC"
+}
