@@ -1,18 +1,18 @@
 /** This component's state is managed externally so strictly-speaking it's a stateless functional component  */
-import React, { FC, ChangeEventHandler } from 'react'
-import { FunState } from 'fun-state'
+import React, { FC, ChangeEventHandler } from "react";
+import { FunState } from "@fun-land/fun-state";
 
-const inc = (a: number) => a + 1
-const dec = (a: number) => a - 1
+const inc = (a: number) => a + 1;
+const dec = (a: number) => a - 1;
 
-export type CounterState = number
-export const initialCounterState = 0
+export type CounterState = number;
+export const initialCounterState = 0;
 
 export const Counter: FC<FunState<CounterState>> = ({ get, mod, set }) => {
-  const onCountChange: ChangeEventHandler<HTMLInputElement> = e => {
-    const val = +e.currentTarget.value
-    if (isFinite(val)) set(val)
-  }
+  const onCountChange: ChangeEventHandler<HTMLInputElement> = (e) => {
+    const val = +e.currentTarget.value;
+    if (isFinite(val)) set(val);
+  };
   return (
     <div>
       <h1>Counter</h1>
@@ -22,5 +22,5 @@ export const Counter: FC<FunState<CounterState>> = ({ get, mod, set }) => {
       <button onClick={() => mod(inc)}>up</button>
       <button onClick={() => mod(dec)}>down</button>
     </div>
-  )
-}
+  );
+};
