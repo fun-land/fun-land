@@ -1,17 +1,16 @@
 {
-  "name": "fun-state-examples",
+  "name": "@fun-land/fun-state-examples",
   "version": "1.0.0",
-  "description": "",
+  "description": "Examples of how to use fun-state",
   "keywords": [],
   "main": "index.js",
   "dependencies": {
     "@types/react-dom": "^16.9.8",
-    "accessor-ts": "^1.0.3",
-    "fun-state": "^4.1.1",
+    "@fun-land/accessor": "^2.0.0",
+    "@fun-land/fun-state": "^6.0.0",
     "react": "16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.3",
-    "typescript": "^4.0.2"
+    "react-scripts": "3.4.3"
   },
   "devDependencies": {
     "@types/react": "^16.9.46"
@@ -33,5 +32,7 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "author": "",
+  "license": "MIT"
 }
