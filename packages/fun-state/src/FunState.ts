@@ -1,5 +1,4 @@
-import {mergeInto} from './fun'
-import {Accessor, comp, set, prop, flow} from '@fun-land/accessor'
+import {Accessor, comp, set, prop, flow, mergeInto} from '@fun-land/accessor'
 
 export type Updater<State> = (transform: (state: State) => State) => void
 
