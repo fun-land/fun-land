@@ -1,6 +1,6 @@
 {
   "name": "@fun-land/fun-state",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "description": "A React architecture and library for doing fractal, compositional state in a way that is typesafe, testable, and easy to refactor.",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
@@ -24,7 +24,7 @@
     "state-management"
   ],
   "dependencies": {
-    "@fun-land/accessor": "^2.0.0"
+    "@fun-land/accessor": "^2.0.1"
   },
   "peerDependencies": {
     "react": ">=16.8"
