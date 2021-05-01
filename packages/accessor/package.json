@@ -32,5 +32,6 @@
   },
   "bugs": {
     "url": "https://github.com/fun-land/fun-land/issues"
-  }
+  },
+  "sideEffects": false
 }

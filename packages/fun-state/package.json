@@ -23,6 +23,7 @@
     "react",
     "state-management"
   ],
+  "sideEffects": false,
   "peerDependencies": {
     "@fun-land/accessor": "^2.0.1"
   },
