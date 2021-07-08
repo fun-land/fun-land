@@ -5,7 +5,7 @@ Accessor-ts is a library for doing immutable updates and querying on nested data
 ## Installation
 
 ```bash
-  npm install -S accessor-ts
+  npm install -S @fun-land/accessor
 ```
 
 ## Prerequisites
@@ -15,7 +15,7 @@ Accessor-ts is a library for doing immutable updates and querying on nested data
 ## Examples
 
 ```
-import { prop, index, filter, set, all, comp } from "accessor-ts";
+import { prop, index, filter, set, all, comp } from "@fun-land/accessor";
 ```
 
 Simple property query
