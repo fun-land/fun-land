@@ -62,6 +62,7 @@ See [fun-state-examples](https://github.com/jethrolarson/fun-state-examples) for
 
 # When to useFunState
 
+- You have more than a couple useState calls in a component.
 - When you're in a situation where you would gain benefit from redux or other state-managment libraries.
 - You want composable/modular state
 - You want to gradually try out another state management system without fully converting your app.
@@ -71,6 +72,7 @@ See [fun-state-examples](https://github.com/jethrolarson/fun-state-examples) for
 - When your data or component heirachy is mostly flat.
 - When your app is not as complex as [TodoMVC](https://todomvc.com/).
 - You're avoiding `FunctionComponent`s
+- You're using a react version older than 16.8
 
 # Tips
 
