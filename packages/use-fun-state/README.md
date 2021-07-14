@@ -77,7 +77,7 @@ See [fun-state-examples](https://github.com/jethrolarson/fun-state-examples) for
 # Tips
 
 - Keep your FunState Apps simple and delegate the complex logic to pure child components, using `.prop()` where practical.
-- Use Accessor composition to drill down into deep parts of your tree or operate on multiple items. See `./TodoApp` or <a href="https://github.com/jethrolarson/accessor-ts">accessor-ts docs</a> for examples.
+- Use Accessor composition to drill down into deep parts of your tree or operate on multiple items. See `./TodoApp` or [@fun-land/accessor docs](../packages/accessor) for examples.
 - If child components need data from multiple places in the state tree, you can create and pass more than one FunState or just pass the root and then query what you need with Accessors.
 - Unit test your updaters and snapshot test your components.
 
@@ -97,4 +97,4 @@ See [@fun-land/fun-state](../packages/fun-state)</a>.
 
 ## Accessor?
 
-Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See [@fun-land/accessor](../packages/accessor)</a>.
+Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See [@fun-land/accessor](../packages/accessor).
