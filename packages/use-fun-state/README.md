@@ -8,8 +8,10 @@ testable, and easy to refactor.
 
 useFunState works with any react 16.8+ application. Usage without TypeScript works but isn't recommended.
 
-`npm install -S @fun-land/accessor @fun-land/fun-state @fun-land/use-fun-state`. 
-or. 
+### npm
+`npm install -S @fun-land/accessor @fun-land/fun-state @fun-land/use-fun-state`
+
+### yarn
 `yarn add @fun-land/accessor @fun-land/fun-state @fun-land/use-fun-state`
 
 # Why create another React state-management library?
