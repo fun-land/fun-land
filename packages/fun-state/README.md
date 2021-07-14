@@ -55,7 +55,7 @@ Creates an instance of funState given a custom StateEngine. If you want to add s
 
 ## Accessor
 
-Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See <a href="https://github.com/jethrolarson/accessor-ts">accessor-ts</a>
+Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See [@fun-land/accessor](packages/accessor) 
 
 ## merge
 
