@@ -1,6 +1,6 @@
 # accessor
 
-Accessor-ts is a library for doing immutable updates and querying on nested data structures in a way that is composable and powerful. This is similar to lens and traversal libraries like [partial.lenses](https://github.com/calmm-js/partial.lenses), [monacle-ts](https://github.com/gcanti/monocle-ts), and [shades](https://github.com/jamesmcnamara/shades). This library aims to allow easy typed composition of optics without the bewildering functional programming jargon that usually comes with them.
+Accessor is a library for doing immutable updates and querying on nested data structures in a way that is composable and powerful. This is similar to lens and traversal libraries like [partial.lenses](https://github.com/calmm-js/partial.lenses), [monacle-ts](https://github.com/gcanti/monocle-ts), and [shades](https://github.com/jamesmcnamara/shades). This library aims to allow easy typed composition of optics without the bewildering functional programming jargon that usually comes with them.
 
 ## Installation
 
