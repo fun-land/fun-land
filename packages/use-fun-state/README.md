@@ -63,7 +63,7 @@ export const Counter: React.FC = () => {
 
 # More examples
 
-See [fun-state-examples](../packages/fun-state-examples) for a sample standalone application.
+See [fun-state-examples](../fun-state-examples) for a sample standalone application.
 
 # When to useFunState
 
@@ -82,7 +82,7 @@ See [fun-state-examples](../packages/fun-state-examples) for a sample standalone
 # Tips
 
 - Keep your FunState Apps simple and delegate the complex logic to pure child components, using `.prop()` where practical.
-- Use Accessor composition to drill down into deep parts of your tree or operate on multiple items. See `./TodoApp` or [@fun-land/accessor docs](../packages/accessor) for examples.
+- Use Accessor composition to drill down into deep parts of your tree or operate on multiple items. See `./TodoApp` or [@fun-land/accessor docs](../accessor) for examples.
 - If child components need data from multiple places in the state tree, you can create and pass more than one FunState or just pass the root and then query what you need with Accessors.
 
 # API
@@ -93,12 +93,12 @@ See [fun-state-examples](../packages/fun-state-examples) for a sample standalone
 <State>(initialState: State) => FunState<State>
 ```
 
-Creates an react-hooks based [FunState](../packages/fun-state)</a> instance with a starting state.
+Creates an react-hooks based [FunState](../fun-state)</a> instance with a starting state.
 
 ## FunState?
 
-See [@fun-land/fun-state](../packages/fun-state)</a>.
+See [@fun-land/fun-state](../fun-state)</a>.
 
 ## Accessor?
 
-Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See [@fun-land/accessor](../packages/accessor).
+Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See [@fun-land/accessor](../accessor).
