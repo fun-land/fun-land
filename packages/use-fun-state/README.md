@@ -63,7 +63,7 @@ export const Counter: React.FC = () => {
 
 # More examples
 
-See [fun-state-examples](https://github.com/jethrolarson/fun-state-examples) for a sample standalone application.
+See [fun-state-examples](../packages/fun-state-examples) for a sample standalone application.
 
 # When to useFunState
 
