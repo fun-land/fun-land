@@ -14,21 +14,28 @@ See [@fun-land/use-fun-state](../use-fun-state) to get started using react hooks
 
 ```ts
 export interface FunState<State> {
+
+  /** Extract the enclosed immutable State */
   get: () => State
+
   /** Query the state using an accessor */
   query: <A>(acc: Accessor<State, A>) => A[]
+
   /** Transform the state with the passed function */
   mod: Updater<State>
+
   /** Replace the state */
   set: (val: State) => void
+
   /** Create a new FunState focused at the passed accessor */
   focus: <SubState>(acc: Accessor<State, SubState>) => FunState<SubState>
-  /** focus state at passed key (sugar over `focus(prop(k))`) */
+  
+  /** Focus state at passed property key (sugar for `focus(prop(k))`) */
   prop: <K extends keyof State>(key: K) => FunState<State[K]>
 }
 ```
 
-Data structure that holds the state along with a stateful functions that interact with it.
+Data structure that holds the state along with a stateful methods that interact with it.
 
 ## mockState
 
@@ -48,7 +55,7 @@ Creates an instance of funState given a custom StateEngine. If you want to add s
 
 ## Accessor
 
-Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See <a href="https://github.com/jethrolarson/accessor-ts">accessor-ts</a>
+Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See [@fun-land/accessor](..//accessor) 
 
 ## merge
 

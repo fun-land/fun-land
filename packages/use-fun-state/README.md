@@ -8,60 +8,66 @@ testable, and easy to refactor.
 
 useFunState works with any react 16.8+ application. Usage without TypeScript works but isn't recommended.
 
-1. `npm install -S @fun-land/accessor @fun-land/use-fun-state @fun-land/use-fun-state`
-2. Pick or create a component to hold the FunState:
+### npm
+`npm install -S @fun-land/accessor @fun-land/fun-state @fun-land/use-fun-state`
+
+### yarn
+`yarn add @fun-land/accessor @fun-land/fun-state @fun-land/use-fun-state`
+
+# Why create another React state-management library?
+
+React's useState hook eliminated a lot of the need to have a state-management solution but I still ran into a number of problems that I didn't like:
+
+1. Too many `useState` calls in my application each of which created two values to manage.
+2. I found it difficult to write unit tests for code using useState in a way that felt clean.
+3. Using useState was bloating the size of my functional components and it was hard to refactor the functionality out (esentially requiring custom hooks which are themselves hard to unit test.)
+4. Having a lot of useState instances meant I had to pass tons of values and callbacks down to child components. 
+
+What I wanted:
+
+1. Rather than adding indirection of actions and reducers I wanted to be able to just set the state in event handlers without shame
+2. To bundle the concept of setter and current value up so that it can be passed to helper functions as well as child components. 
+3. Make it easy to drill down into the state and pass subsets of it to functions and child component. It was also important to me that this feature be very sophisticated given the deeply nested data structures I'd worked with.
+4. Make it easy to write unit tests for components or functions that use the bundled state without mocking react dependencies.
+5. Maintain good type-safety with typescript so the compiler can ensure that everything is copacetic
+
+I looked at many state-management libraries out there and they seemed to have too-much-magic or too-much-boilerplate or both, and still didn't nail all of my goals. I was able to leverage my experience with functional programming and optics to create a pattern that I think is pretty simple while still supporting an enormous number of complex cases. FunState is impure and the types are not quite bullet-proof but it's easy to write most of your code in a testable way and have high confidence that you're not going to have runtime errors.
+
+# Brief Example
 
 ```ts
-import {index} from '@fun-dev/accessor';
-import useFunState from '@fun-dev/use-fun-state';
-import {Todo, TodoItem} from './Todo/TodoItem';
-...
+import useFunState from '@fun-land/use-fun-state';
 
-// Define an interface for your App's state
-interface TodoApp {
-  users: Todo[]
-  ...
+// Type definition for state.
+interface CounterState {
+  count: number;
 }
 
-// Define an initial state:
-const initialAppState: TodoApp = {
-  todos: [],
-  ...
+// initial value for the state
+const initialCounterState: CounterState = {
+  count: 0,
 };
 
-// Create a FunState instance within a React.FunctionalComponent (uses react hooks)
-const App = () => {
-  const state = useFunState(initialAppState);
-  const {todos} = funState.get();
-  return (
-    {/* Child components can get the root state directly */}
-    <SelectAll state={state} />
-    {todos.map((item, i) => (
-      {/* or focus down to the state the component needs to interact with */}
-      <TodoItem state={state.prop('todos').focus(index(i))} />
-    ))}
-  );
+export const Counter: React.FC = () => {
+  // Create the FunState instance wrapping your state
+  const state = useFunState(initialCounterState);
+  // you can use .prop to focus a child property of a state
+  const countState = state.prop('count');
+  // Similar to useState you can just set directly (via .set) or apply function to the current value
+  const onClick = (): void => countState.mod((count) => count + 1);
+
+  // Extract the current value from the state with .get()
+  return <button onClick={onClick}>{countState.get()}</button>;
 };
-```
-
-3. Create child components focused on a piece of your state:
-
-```ts
-// MyChildComponent.tsx
-// Should be imported into the parent state interface
-export type ChildState = boolean;
-
-export const MyChildComponent: React.FC<{state: FunState<ChildState>}> = ({state}) => (
-  <input type="checkbox" checked={state.get()} onChange=(e => state.set(e.currentTarget.checked))>
-);
 ```
 
 # More examples
 
-See [fun-state-examples](https://github.com/jethrolarson/fun-state-examples) for a sample standalone application.
+See [fun-state-examples](../fun-state-examples) for a sample standalone application.
 
 # When to useFunState
 
+- You have more than a couple useState calls in a component.
 - When you're in a situation where you would gain benefit from redux or other state-managment libraries.
 - You want composable/modular state
 - You want to gradually try out another state management system without fully converting your app.
@@ -71,13 +77,13 @@ See [fun-state-examples](https://github.com/jethrolarson/fun-state-examples) for
 - When your data or component heirachy is mostly flat.
 - When your app is not as complex as [TodoMVC](https://todomvc.com/).
 - You're avoiding `FunctionComponent`s
+- You're using a react version older than 16.8
 
 # Tips
 
 - Keep your FunState Apps simple and delegate the complex logic to pure child components, using `.prop()` where practical.
-- Use Accessor composition to drill down into deep parts of your tree or operate on multiple items. See `./TodoApp` or <a href="https://github.com/jethrolarson/accessor-ts">accessor-ts docs</a> for examples.
+- Use Accessor composition to drill down into deep parts of your tree or operate on multiple items. See `./TodoApp` or [@fun-land/accessor docs](../accessor) for examples.
 - If child components need data from multiple places in the state tree, you can create and pass more than one FunState or just pass the root and then query what you need with Accessors.
-- Unit test your updaters and snapshot test your components.
 
 # API
 
@@ -87,12 +93,12 @@ See [fun-state-examples](https://github.com/jethrolarson/fun-state-examples) for
 <State>(initialState: State) => FunState<State>
 ```
 
-Creates an react-hooks based FunState instance with a starting state.
+Creates an react-hooks based [FunState](../fun-state)</a> instance with a starting state.
 
 ## FunState?
 
-See [@fun-land/fun-state](../packages/fun-state)</a>.
+See [@fun-land/fun-state](../fun-state)</a>.
 
 ## Accessor?
 
-Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See [@fun-land/accessor](../packages/accessor)</a>.
+Used by `FunState:query` and `FunState:focus` for operating on more complex structures. See [@fun-land/accessor](../accessor).
