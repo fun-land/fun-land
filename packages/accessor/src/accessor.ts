@@ -125,12 +125,42 @@ export const set = <S, A>(acc: Accessor<S, A>): ((x: A) => (s: S) => S) =>
   flow(K, acc.mod);
 
 /**
- * No-op Accessor
- * Makes Accessors a monoid in conjunction with `comp`
+ * Extract the first value of an accessor. When query would return `[]` this returns undefined.
+ * @example
+ *   type Foo = {a: number; items: boolean[]};
+ *   get(prop<Foo>()('a'))({a: 1, items: []}) // -> 1
+ * @example
+ *   get(comp(prop<Foo>()('items'), index(0)))({a: 1, items: []}) // -> undefined
+ */
+export const get = <S, A>(acc: Accessor<S, A>) => (s: S): A | undefined =>
+  acc.query(s)?.[0];
+
+/**
+ * Accessor that doesn't drill down.
+ * @example
+ *   readOnly<number>().query(1) // -> [1]
+ * @example
+ *   readOnly<number>().mod(a => a + 1) // -> 2
+ * @example
+ *   type Foo = {a: number}
+ *   const f = (isHappy: boolean): number | Foo =>  (isHappy ? prop<Foo>()('a') : unit).query({a: 1})
+ *   f(true) // -> 1
+ *   f(false) // -> {a: 1}
  */
 export const unit = <A>(): Accessor<A, A> => ({
-  query: (xs): A[] => [xs],
-  mod: (transform) => (xs): A => xs,
+  query: (x): A[] => [x],
+  mod: (transform) => (x): A => transform(x),
+});
+
+/**
+ * Like `unit` but mod does nothing
+ * @example
+ *   readOnly<number>().query(1) // -> [1]
+ *   readOnly<number>().mod(a => a + 1)(1) // -> 1
+ */
+export const readOnly = <A>(): Accessor<A, A> => ({
+  query: (x): A[] => [x],
+  mod: (_transform) => (x): A => x,
 });
 
 const _pick = <Obj, Keys extends keyof Obj>(

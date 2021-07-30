@@ -9,6 +9,8 @@ import {
   before,
   after,
   sub,
+  readOnly,
+  get,
 } from "./accessor";
 
 interface User {
@@ -29,13 +31,24 @@ describe("prop", () => {
   it("handles optional fields", () => {
     expect(userProps("cool").query(bob)).toEqual([undefined]);
   });
-  describe("set", () => {
-    it("sets immutably", () => {
-      expect(set(userProps("id"))(3)(bob).id).toBe(3);
-      expect(bob.id).toBe(1);
-    });
+});
+
+describe("set", () => {
+  it("sets immutably", () => {
+    expect(set(userProps("id"))(3)(bob).id).toBe(3);
+    expect(bob.id).toBe(1);
   });
 });
+
+describe("get", () => {
+  it("extracts existing values", () => {
+    expect(get(prop<User>()("name"))(bob)).toBe("bob");
+  });
+  it("returns undefined when matching no items", () => {
+    expect(get(index(0))([])).toBe(undefined);
+  });
+});
+
 // Nested interfaces. Now we're getting to the good part
 interface Friend {
   user: User;
@@ -121,11 +134,36 @@ describe("unit", () => {
     expect(comp(userProps("id"), unit()).query(bob)).toEqual([1]);
     expect(comp(unit<User>(), userProps("id")).query(bob)).toEqual([1]);
   });
+  it("mod still works as it should", () => {
+    expect(unit<number>().mod((a) => a + 1)(2)).toBe(3);
+  });
   it("mod composes with other accessors", () => {
-    expect(comp(userProps("id"), unit()).mod((a) => a + 1)(bob)).toEqual(bob);
-    expect(comp(unit<User>(), userProps("id")).mod((a) => a + 1)(bob)).toEqual(
+    expect(comp(userProps("id"), unit()).mod((a) => a + 1)(bob)).toEqual({
+      ...bob,
+      id: 2,
+    });
+    expect(
+      comp(unit<User>(), userProps("id"), unit<number>()).mod((a) => a + 1)(bob)
+    ).toEqual({ ...bob, id: 2 });
+  });
+});
+describe("readOnly", () => {
+  it("query composes with other accessors", () => {
+    expect(comp(userProps("id"), readOnly()).query(bob)).toEqual([1]);
+    expect(comp(readOnly<User>(), userProps("id")).query(bob)).toEqual([1]);
+  });
+  it("mod is a noop", () => {
+    expect(readOnly<number>().mod((a) => a + 1)(2)).toBe(2);
+  });
+  it("mod is still noop when composed with other accessors", () => {
+    expect(comp(userProps("id"), readOnly()).mod((a) => a + 1)(bob)).toEqual(
       bob
     );
+    expect(
+      comp(readOnly<User>(), userProps("id"), unit<number>()).mod((a) => a + 1)(
+        bob
+      )
+    ).toEqual(bob);
   });
 });
 

@@ -9,8 +9,9 @@ Accessor-ts is a library for doing immutable updates and querying on nested data
 ```
 
 ## Prerequisites
-* This library and its examples uses [currying](https://blog.bitsrc.io/understanding-currying-in-javascript-ceb2188c339), arrow functions, and generics extensively so it'll help if you're familiar with those concepts.
-* TypeScript - While usage without TypeScript will work, you lose a lot of the benefit of this library without types. If you're looking for an optics library for use without TS check out [partial.lenses](https://github.com/calmm-js/partial.lenses).
+
+- This library and its examples uses [currying](https://blog.bitsrc.io/understanding-currying-in-javascript-ceb2188c339), arrow functions, and generics extensively so it'll help if you're familiar with those concepts.
+- TypeScript - While usage without TypeScript will work, you lose a lot of the benefit of this library without types. If you're looking for an optics library for use without TS check out [partial.lenses](https://github.com/calmm-js/partial.lenses).
 
 ## Examples
 
@@ -88,7 +89,7 @@ set(friendName)("Robert")(myFriendBob); // => {user: {name: "Robert", id: 1, con
 We can use Accessor.mod to run a function on the targeted value
 
 ```ts
-comp(userProp("id")).mod(a => a + 1)(bob); // => { name: "bob", id: 2, connections: [1, 2] }
+comp(userProp("id")).mod((a) => a + 1)(bob); // => { name: "bob", id: 2, connections: [1, 2] }
 ```
 
 `index` can be used to focus a specific element of an array
@@ -167,60 +168,94 @@ export interface Accessor<S, A> {
   mod(fn: (x: A) => A): (struct: S) => S;
 }
 ```
+
 Since accessor-ts only provides Accessors for arrays and objects you may want to create your own if you use other data structures like `Set`, `Map` or immutable.js
 
-### prop 
+### prop
+
 ```ts
-: <Obj>() => <K extends keyof Obj>(k: K) => Accessor<Obj, Obj[K]>;
+: <Obj>() => <Key extends keyof Obj>(k: Key) => Accessor<Obj, Obj[Key]>;
 ```
 
 Create Accessor that points to a property of an object
 
 Example:
+
 ```ts
-prop<Person>()('name').query(bob) // => ['bob']
+prop<Person>()("name").query(bob); // => ['bob']
 ```
 
-
 ### index
+
 ```ts
 : <A>(i: number) => Accessor<A[], A>;
 ```
+
 Create Accessor that points to an index of an array
 
 Example:
+
 ```ts
-index(1).query([1, 2, 3]) // => [2]
+index(1).query([1, 2, 3]); // => [2]
 ```
+
 ### set
+
 ```ts
 : <S, A>(acc: Accessor<S, A>) => (x: A) => (s: S) => S
 ```
+
 Immutably assign using an Accessor
 
 Example:
+
 ```ts
-set(prop<Person>()('name'))('Robert')(bob) // => {name: 'Robert', ...}
+set(prop<Person>()("name"))("Robert")(bob); // => {name: 'Robert', ...}
+```
+
+### get
+
+```ts
+: <S, A>(acc: Accessor<S, A>) => (s: S): A | undefined =>
+```
+
+Extract the first value of an accessor. When query would return `[]` this returns undefined.
+
+Example:
+
+```ts
+type Foo = { a: number; items: boolean[] };
+const foo = { a: 1, items: [] };
+
+get(prop<Foo>()("a"))(foo); // -> 1
+
+get(index(0))([]); // -> undefined
 ```
 
 ### comp
+
 ```ts
 : <A, B, C>(acc1: Accessor<A, B>, acc2: Accessor<B, C>) => Accessor<A, C>
 ```
+
 Compose 2 or more Accessors (overloaded up to 8)
 
 Examples:
+
 ```ts
-comp(prop<Person>()('address'), prop<Address>()('city')).query(bob) // => ['Seattle']
+comp(prop<Person>()("address"), prop<Address>()("city")).query(bob); // => ['Seattle']
 ```
 
 ### all
+
 ```ts
 : <A>() => Accessor<A[], A>
 ```
+
 Create Accessor focused on all items in an array. `query` unwraps them, `mod` changes each item.
 
 Examples:
+
 ```ts
 const makeAllFriendsCool = (user: Person) => set(comp(prop<Person>()('friends'), all<Person>(), prop<Person>()('isCool'))(true).query(user)
 // BTW you can make functions point-free if you like:
@@ -230,140 +265,201 @@ const getFriends = (user: Person) => comp(prop<Person>()('friends'), all<Person>
 ```
 
 ### filter
+
 ```ts
 : <A>(pred: (x: A) => boolean) => Accessor<A[], A>
 ```
+
 Create Accessor that targets items in an array that match the passed predicate. `query` returns the matched items, `mod` modifies matched items.
 
 Example:
+
 ```ts
-const getCoolFriends = (user: Person) => comp(prop<Person>()('friends'), filter<Person>(friend => friend.isCool)).query(user);
+const getCoolFriends = (user: Person) =>
+  comp(
+    prop<Person>()("friends"),
+    filter<Person>((friend) => friend.isCool)
+  ).query(user);
 ```
 
 ### before
+
 ```ts
 : <A>(i: number) => Accessor<A[], A>
 ```
+
 Create Accessor that targets items in an array before the passed index
 
 Example:
+
 ```ts
-const getFirstTenFriends = comp(prop<Person>()('friends'), before(10)).query
+const getFirstTenFriends = comp(prop<Person>()("friends"), before(10)).query;
 ```
 
 ### after
+
 ```ts
 : <A>(i: number) => Accessor<A[], A>
 ```
+
 Create Accessor that targets items in an array after the passed index
 
 Example:
+
 ```ts
-const getMoreFriends = comp(prop<Person>()('friends'), after(9)).query
+const getMoreFriends = comp(prop<Person>()("friends"), after(9)).query;
 ```
 
 ### sub
 
 ```ts
-<SSub, S extends SSub = never>(keys: Array<keyof SSub>) => Accessor<S, SSub>
+: <SSub, S extends SSub = never>(keys: Array<keyof SSub>) => Accessor<S, SSub>
 ```
 
 Create an accessor that targets a subset of properties of an object.
 
-Example: 
+Example:
+
 ```ts
 interface Entity {
   name: string;
   id: number;
 }
-const entityAcc = sub<Entity, User>(['name', 'id'])
+const entityAcc = sub<Entity, User>(["name", "id"]);
 
-entityAcc.query(bob) // => [{name: 'bob', id: 1}]
+entityAcc.query(bob); // => [{name: 'bob', id: 1}]
 ```
 
 ### unit
+
 ```ts
 : <A>(): Accessor<A, A>
 ```
-No-op Accessor  
-Makes Accessors a monoid in conjunction with `comp`. You'll probably only need this if you're writing really abstract code.
 
+Accessor that doesn't drill down.
 
 Example:
+
 ```ts
-comp(prop<Person>()('name'), unit<String>()).query(bob) // => ['bob']
+comp(prop<Person>()("name"), unit<string>()).query(bob); // => ['bob']
+```
+
+### readOnly
+
+```ts
+: <A>(): Accessor<A, A>
+```
+
+Like `unit` but mod does nothing
+
+Example:
+
+```ts
+readOnly<number>().query(1); // -> 1
+
+readOnly<number>().mod((a) => a + 1); // -> 2
+
+type Foo = { a: number };
+const f = (isHappy: boolean): number | Foo =>
+  (isHappy ? prop<Foo>()("a") : unit).query({ a: 1 });
+f(true); // -> 1
+f(false); // -> {a: 1}
 ```
 
 ## Utilities
 
+Bonus functions which are not directly related to accessors but are useful when using them or doing functional programming in-general.
+
 ### flow
+
 ```ts
-<A, B, C>(f: (x: A) => B, g: (y: B) => C) => (x: A) => C
+: <A, B, C>(f: (x: A) => B, g: (y: B) => C) => (x: A) => C;
 ```
+
 Compose two functions left to right.
 
 ### K
+
 ```ts
-<A>(a: A) => (_b: unknown) => A
+<A>(a: A) => (_b: unknown) => A;
 ```
+
 Constant combinator. Returns a function that ignores its argument and returns the original one.
 
 ### empty
+
 ```ts
-<A>() => A[]
+: <A>() => A[]
 ```
+
 Returns an empty array.
 
 ### flatmap
+
 ```ts
-<T, U>(f: (x: T) => U[]) => (xs: T[]) => U[]
+: <T, U>(f: (x: T) => U[]) => (xs: T[]) => U[]
 ```
+
 Apply an array returning function to each item in an array and return an unnested array.
 
 ### removeAt
+
 ```ts
-(index: number) => <T>(xs: T[]) => T[]
+: (index: number) => <T>(xs: T[]) => T[]
 ```
+
 Removes item at passed index from array.
 
 ### prepend
+
 ```ts
-<A>(x: A) => (xs: A[]): A[]
+: <A>(x: A) => (xs: A[]): A[]
 ```
+
 Prepend an item to an array.
 
 ### append
+
 ```ts
-<A>(x: A) => (xs: A[]): A[]
+: <A>(x: A) => (xs: A[]): A[]
 ```
+
 Append an item to the end of an array
 
 ### head
+
 ```ts
-<A>(xs: A[]) => A | undefined
+: <A>(xs: A[]) => A | undefined;
 ```
+
 Return the first item in an array
 
 ### tail
+
 ```ts
-<A>(xs: A[]) => A[]
+: <A>(xs: A[]) => A[]
 ```
+
 Return a copy of the array excluding the first item.
 
 ### not
+
 ```ts
-(a: boolean) => boolean
+: (a: boolean) => boolean;
 ```
+
 Logically negate the argument.
 
 ### mergeInto
+
 ```ts
-<State>(part: Partial<State>) => (s: State) => State
+: <State>(part: Partial<State>) => (s: State) => State;
 ```
+
 Merge a partial object into the full one. Useful for updating a subset of properties of an object.
 
-
 ## Weaknesses
+
 - Since `query` returns an array of results, users must be careful about the array being empty.
 - Performance of this library hasn't been evaluated or optimized yet.
 
