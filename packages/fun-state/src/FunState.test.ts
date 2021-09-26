@@ -1,6 +1,5 @@
 import {pureState, standaloneEngine, mockState, merge} from './FunState'
-import {comp, all, prop} from '@fun-land/accessor'
-import {prepend} from './fun'
+import {comp, all, prop, prepend} from '@fun-land/accessor'
 
 describe('standaloneEngine', () => {
   it('sets', () => {

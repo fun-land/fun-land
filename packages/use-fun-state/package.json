@@ -22,15 +22,15 @@
   ],
   "sideEffects": false,
   "peerDependencies": {
-    "@fun-land/accessor": "^2.0.1",
-    "@fun-land/fun-state": "^6.0.1",
+    "@fun-land/accessor": "^3.0.0",
+    "@fun-land/fun-state": "^6.0.3",
     "react": ">=16.8"
   },
   "devDependencies": {
-    "@fun-land/accessor": "^2.0.3",
+    "@fun-land/accessor": "^3.0.0",
     "@fun-land/fun-state": "^6.0.3",
-    "@types/react": "^17.0.3",
-    "@types/react-dom": "^17.0.3",
+    "@types/react": "^17.0.9",
+    "@types/react-dom": "^17.0.9",
     "react": "^17.0.2",
     "react-dom": "^17.0.2"
   },

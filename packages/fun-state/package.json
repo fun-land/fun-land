@@ -25,10 +25,10 @@
   ],
   "sideEffects": false,
   "peerDependencies": {
-    "@fun-land/accessor": "^2.0.1"
+    "@fun-land/accessor": "^3.0.0"
   },
   "devDependencies": {
-    "@fun-land/accessor": "^2.0.3"
+    "@fun-land/accessor": "^3.0.0"
   },
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.publish.json",
