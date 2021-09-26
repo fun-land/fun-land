@@ -1,0 +1,40 @@
+{
+  "name": "@fun-land/observable-fun-state",
+  "version": "1.0.0",
+  "description": "Use FunState with zen-observable!",
+  "author": "Jethro Larson <jethrolarson@gmail.com>",
+  "homepage": "https://github.com/fun-land/fun-land",
+  "license": "MIT",
+  "main": "lib/observable-fun-state.js",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "@fun-land/accessor": "^3.0.0",
+    "@fun-land/fun-state": "^6.0.3",
+    "zen-observable": "^0.8.15"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fun-land/fun-land.git"
+  },
+  "scripts": {
+    "build-cjs": "tsc -p ./tsconfig.publish.json",
+    "build-esm": "tsc -p ./tsconfig.publish.json --module esnext --outDir dist/esm",
+    "build": "yarn build-cjs && yarn build-esm",
+    "lint": "eslint . --ext .ts",
+    "test": "jest --watch",
+    "test-cover": "jest --coverage",
+    "prepublishOnly": "yarn build"
+  },
+  "bugs": {
+    "url": "https://github.com/fun-land/fun-land/issues"
+  },
+  "devDependencies": {
+    "@types/zen-observable": "^0.8.3"
+  }
+}
