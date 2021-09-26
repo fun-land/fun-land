@@ -6,10 +6,6 @@
   "homepage": "https://github.com/fun-land/fun-land",
   "license": "MIT",
   "main": "lib/observable-fun-state.js",
-  "directories": {
-    "lib": "lib",
-    "test": "__tests__"
-  },
   "files": [
     "lib"
   ],

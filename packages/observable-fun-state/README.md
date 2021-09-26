@@ -4,7 +4,11 @@ Use FunState with zen-observable!
 
 # API
 
-## observableFunState : <State>(initialState: State) => Observable<FunState<State>>
+## observableFunState
+
+```ts
+<State>(initialState: State) => Observable<FunState<State>>
+```
 
 Create an [Observable](https://github.com/zenparsing/zen-observable) of a FunState
 which calls Observable.next() when subscribers modify the state using the
@@ -16,13 +20,14 @@ import observableFunState from "@fun-land/observable";
 const observableState = observableFunState({ counter: 0 });
 
 observableState.subscribe((funState) => {
-  const interval = setInterval(() => {
     // can read from funState like usual
-    if (funState.prop("counter").get() >= 10) {
-      clearInterval(interval);
+    const currentCount = funState.prop("counter").get();
+    console.log(currentCount);
+
+    if (currentCount < 10) {
+      // writing to the state causes another event
+      funState.prop("counter").mod((v) => v + 1);
     }
-    // writing to the state causes another event
-    funState.prop("counter").mod((v) => v + 1);
   }, 100);
 });
 ```
