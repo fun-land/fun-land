@@ -5,7 +5,8 @@
   "author": "Jethro Larson <jethrolarson@gmail.com>",
   "homepage": "https://github.com/fun-land/fun-land",
   "license": "MIT",
-  "main": "lib/observable-fun-state.js",
+  "main": "dist/observable-fun-state.js",
+  "module": "dist/esm/observable-fun-state.js",
   "files": [
     "lib"
   ],
