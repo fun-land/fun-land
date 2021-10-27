@@ -9,9 +9,11 @@ testable, and easy to refactor.
 useFunState works with any react 16.8+ application. Usage without TypeScript works but isn't recommended.
 
 ### npm
+
 `npm install -S @fun-land/accessor @fun-land/fun-state @fun-land/use-fun-state`
 
 ### yarn
+
 `yarn add @fun-land/accessor @fun-land/fun-state @fun-land/use-fun-state`
 
 # Why create another React state-management library?
@@ -21,12 +23,12 @@ React's useState hook eliminated a lot of the need to have a state-management so
 1. Too many `useState` calls in my application each of which created two values to manage.
 2. I found it difficult to write unit tests for code using useState in a way that felt clean.
 3. Using useState was bloating the size of my functional components and it was hard to refactor the functionality out (esentially requiring custom hooks which are themselves hard to unit test.)
-4. Having a lot of useState instances meant I had to pass tons of values and callbacks down to child components. 
+4. Having a lot of useState instances meant I had to pass tons of values and callbacks down to child components.
 
 What I wanted:
 
 1. Rather than adding indirection of actions and reducers I wanted to be able to just set the state in event handlers without shame
-2. To bundle the concept of setter and current value up so that it can be passed to helper functions as well as child components. 
+2. To bundle the concept of setter and current value up so that it can be passed to helper functions as well as child components.
 3. Make it easy to drill down into the state and pass subsets of it to functions and child component. It was also important to me that this feature be very sophisticated given the deeply nested data structures I'd worked with.
 4. Make it easy to write unit tests for components or functions that use the bundled state without mocking react dependencies.
 5. Maintain good type-safety with typescript so the compiler can ensure that everything is copacetic
@@ -36,29 +38,29 @@ I looked at many state-management libraries out there and they seemed to have to
 # Brief Example
 
 ```ts
-import useFunState from '@fun-land/use-fun-state';
+import useFunState from '@fun-land/use-fun-state'
 
 // Type definition for state.
 interface CounterState {
-  count: number;
+  count: number
 }
 
 // initial value for the state
 const initialCounterState: CounterState = {
-  count: 0,
-};
+  count: 0
+}
 
 export const Counter: React.FC = () => {
   // Create the FunState instance wrapping your state
-  const state = useFunState(initialCounterState);
+  const state = useFunState(initialCounterState)
   // you can use .prop to focus a child property of a state
-  const countState = state.prop('count');
+  const countState = state.prop('count')
   // Similar to useState you can just set directly (via .set) or apply function to the current value
-  const onClick = (): void => countState.mod((count) => count + 1);
+  const onClick = (): void => countState.mod((count) => count + 1)
 
   // Extract the current value from the state with .get()
-  return <button onClick={onClick}>{countState.get()}</button>;
-};
+  return <button onClick={onClick}>{countState.get()}</button>
+}
 ```
 
 # More examples
@@ -90,10 +92,12 @@ See [fun-state-examples](../fun-state-examples) for a sample standalone applicat
 ## useFunState
 
 ```ts
-<State>(initialState: State) => FunState<State>
+<State>(initialState: State, globalMod?: (state: State) => State) => FunState<State>
 ```
 
 Creates an react-hooks based [FunState](../fun-state)</a> instance with a starting state.
+
+Advanced: `globalMod` is an optional callback that will run on any update to the state. In most cases you shouldn't use it but it can be useful to create implementations of FunState with special caching behavior or effects.
 
 ## FunState?
 

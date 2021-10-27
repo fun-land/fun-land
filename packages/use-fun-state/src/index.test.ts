@@ -55,4 +55,34 @@ describe('useFunState', () => {
     })
     expect(container?.querySelector('button')?.textContent).toBe('a 2, b 1')
   })
+  it('modifies the state with the globalMod callback', () => {
+    interface St {
+      a: number
+      b: number
+    }
+    const inc = (a: number): number => a + 1
+    let fs: FunState<St> | undefined
+    const TestComp: FunctionComponent = () => {
+      fs = useFunState<St>({a: 0, b: 10}, (s) => ({...s, b: s.b - 1}))
+      const s = fs.get()
+      return e(
+        'button',
+        {
+          onClick: (): void => {
+            fs?.prop('a').mod(inc)
+          }
+        },
+        `a ${s.a}, b ${s.b}`
+      )
+    }
+    act(() => {
+      // Something wrong with the react types so I'm forcing `any` to get it to work as documented
+      container !== undefined && render(e(TestComp) as any, container)
+    })
+    act(() => {
+      container?.querySelector('button')?.dispatchEvent(new MouseEvent('click', {bubbles: true}))
+    })
+
+    expect(fs?.get()).toEqual<St>({a: 1, b: 9})
+  })
 })
