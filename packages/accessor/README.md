@@ -182,7 +182,7 @@ Create Accessor that points to a property of an object
 Example:
 
 ```ts
-prop<Person>()("name").query(bob); // => ['bob']
+prop<User>()("name").query(bob); // => ['bob']
 ```
 
 ### index
@@ -210,7 +210,7 @@ Immutably assign using an Accessor
 Example:
 
 ```ts
-set(prop<Person>()("name"))("Robert")(bob); // => {name: 'Robert', ...}
+set(prop<User>()("name"))("Robert")(bob); // => {name: 'Robert', ...}
 ```
 
 ### get
@@ -243,7 +243,7 @@ Compose 2 or more Accessors (overloaded up to 8)
 Examples:
 
 ```ts
-comp(prop<Person>()("address"), prop<Address>()("city")).query(bob); // => ['Seattle']
+comp(prop<User>()("address"), prop<Address>()("city")).query(bob); // => ['Seattle']
 ```
 
 ### all
@@ -257,11 +257,11 @@ Create Accessor focused on all items in an array. `query` unwraps them, `mod` ch
 Examples:
 
 ```ts
-const makeAllFriendsCool = (user: Person) => set(comp(prop<Person>()('friends'), all<Person>(), prop<Person>()('isCool'))(true).query(user)
+const makeAllFriendsCool = (user: User) => set(comp(prop<User>()('friends'), all<User>(), prop<User>()('isCool'))(true).query(user)
 // BTW you can make functions point-free if you like:
-const getFriends = comp(prop<Person>()('friends'), all<Person>()).query
+const getFriends = comp(prop<User>()('friends'), all<User>()).query
 // is the same as
-const getFriends = (user: Person) => comp(prop<Person>()('friends'), all<Person>()).query(user)
+const getFriends = (user: User) => comp(prop<User>()('friends'), all<User>()).query(user)
 ```
 
 ### filter
@@ -275,10 +275,10 @@ Create Accessor that targets items in an array that match the passed predicate. 
 Example:
 
 ```ts
-const getCoolFriends = (user: Person) =>
+const getCoolFriends = (user: User) =>
   comp(
-    prop<Person>()("friends"),
-    filter<Person>((friend) => friend.isCool)
+    prop<User>()("friends"),
+    filter<User>((friend) => friend.isCool)
   ).query(user);
 ```
 
@@ -293,7 +293,7 @@ Create Accessor that targets items in an array before the passed index
 Example:
 
 ```ts
-const getFirstTenFriends = comp(prop<Person>()("friends"), before(10)).query;
+const getFirstTenFriends = comp(prop<User>()("friends"), before(10)).query;
 ```
 
 ### after
@@ -307,7 +307,7 @@ Create Accessor that targets items in an array after the passed index
 Example:
 
 ```ts
-const getMoreFriends = comp(prop<Person>()("friends"), after(9)).query;
+const getMoreFriends = comp(prop<User>()("friends"), after(9)).query;
 ```
 
 ### sub
@@ -341,7 +341,7 @@ Accessor that doesn't drill down.
 Example:
 
 ```ts
-comp(prop<Person>()("name"), unit<string>()).query(bob); // => ['bob']
+comp(prop<User>()("name"), unit<string>()).query(bob); // => ['bob']
 ```
 
 ### readOnly
