@@ -462,24 +462,12 @@ Merge a partial object into the full one. Useful for updating a subset of proper
 
 ## Experimental Fluent API
 
-````ts
-interface Foci<S, A> {
-  mod: (f: (x: A) => A) => (struct: S) => S;
-  set: (a: A) => (struct: S) => S;
-  get: (struct: S) => A | undefined;
-  query: (struct: S) => A[];
-  prop: <K extends keyof A>(k: K) => Foci<S, A[K]>;
-  focus: <B>(acc: Accessor<A, B>) => Foci<S, B>;
-  at: <B extends ArrayItemType<A>>(idx: number) => Foci<S, B>;
-  all: <B extends ArrayItemType<A>>() => Foci<S, B>;
-}
-
 ### Acc
 
 ```ts
 <S>() => Foci<S, S>;
 <S, A>(acc: Accessor<S, A>) => Foci<S, A>;
-````
+```
 
 Create a Foci either from nothing or an accessor. This allows you to build up a Foci by chaining.
 
