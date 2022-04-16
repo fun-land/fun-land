@@ -381,7 +381,9 @@ Compose two functions left to right.
 ### K
 
 ```ts
-<A>(a: A) => (_b: unknown) => A;
+<A>(a: A) =>
+  (_b: unknown) =>
+    A;
 ```
 
 Constant combinator. Returns a function that ignores its argument and returns the original one.
@@ -458,9 +460,106 @@ Logically negate the argument.
 
 Merge a partial object into the full one. Useful for updating a subset of properties of an object.
 
+## Experimental Fluent API
+
+````ts
+interface Foci<S, A> {
+  mod: (f: (x: A) => A) => (struct: S) => S;
+  set: (a: A) => (struct: S) => S;
+  get: (struct: S) => A | undefined;
+  query: (struct: S) => A[];
+  prop: <K extends keyof A>(k: K) => Foci<S, A[K]>;
+  focus: <B>(acc: Accessor<A, B>) => Foci<S, B>;
+  at: <B extends ArrayItemType<A>>(idx: number) => Foci<S, B>;
+  all: <B extends ArrayItemType<A>>() => Foci<S, B>;
+}
+
+### Acc
+
+```ts
+<S>() => Foci<S, S>;
+<S, A>(acc: Accessor<S, A>) => Foci<S, A>;
+````
+
+Create a Foci either from nothing or an accessor. This allows you to build up a Foci by chaining.
+
+```ts
+const bobsName = Acc<User>().prop("name").get();
+const bobsFirstConnection = Acc(prop<User>()("connections")).at(0).get();
+const makeMyFriendsCool = Acc<Friends>()
+  .prop("friends")
+  .all()
+  .prop("user")
+  .prop("cool")
+  .set(true)(allMyFriends);
+```
+
+### Foci&lt;S,A&gt;.mod
+
+```ts
+(f: (x: A) => A) => (struct: S) => S;
+```
+
+Transform value(s) focused with passed function.
+
+### Foci&lt;S,A&gt;.set
+
+```ts
+(a: A) => (struct: S) => S;
+```
+
+Replace value(s) focused.
+
+### Foci&lt;S,A&gt;.get
+
+```ts
+(struct: S) => A | undefined;
+```
+
+Extract first value focused.
+
+### Foci&lt;S,A&gt;.query
+
+```ts
+(struct: S) => A[]
+```
+
+Extract all values focused.
+
+### Foci&lt;S,A&gt;.prop
+
+```ts
+<K extends keyof A>(k: K) => Foci<S, A[K]>
+```
+
+Focus child property.
+
+### Foci&lt;S,A&gt;.focus
+
+```ts
+<B>(acc: Accessor<A, B>) => Foci<S, B>
+```
+
+Focus using passed accessor.
+
+### Foci&lt;S,A&gt;.at
+
+```ts
+<B extends ArrayItemType<A>>(idx: number) => Foci<S, B>
+```
+
+If `A` is an array this focuses item in the array at passed index.
+
+### Foci&lt;S,A&gt;.all
+
+```ts
+<B extends ArrayItemType<A>>() => Foci<S, B>
+```
+
+If `A` is an array this focuses all items in the array.
+
 ## Weaknesses
 
-- Since `query` returns an array of results, users must be careful about the array being empty.
 - Performance of this library hasn't been evaluated or optimized yet.
 
 ## Comparisons to other libries

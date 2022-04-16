@@ -1,4 +1,5 @@
 import {
+  Acc,
   prop,
   index,
   filter,
@@ -60,9 +61,11 @@ const friendProps = prop<Friend>();
 // We can compose accessors to point to things within other things
 
 const shari: User = { name: "Shari", id: 0, connections: [3, 4] };
+const mark: User = { name: "Mark", id: 2, connections: [3, 4], cool: true };
 
 const myFriendBob: Friend = { user: bob };
 const myFriendShari: Friend = { user: shari };
+const myFriendMark: Friend = { user: mark };
 
 describe("comp", () => {
   const friendName = comp(friendProps("user"), userProps("name"));
@@ -175,20 +178,10 @@ describe("before", () => {
   it("modify items prior to index", () => {
     const binc = (a: number): number => a + 2;
     expect(before<number>(3).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([
-      2,
-      3,
-      4,
-      3,
-      4,
-      5,
+      2, 3, 4, 3, 4, 5,
     ]);
     expect(before<number>(0).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
+      0, 1, 2, 3, 4, 5,
     ]);
   });
 });
@@ -201,20 +194,10 @@ describe("after", () => {
   it("modify items prior to index", () => {
     const binc = (a: number): number => a + 2;
     expect(after<number>(3).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([
-      0,
-      1,
-      2,
-      3,
-      6,
-      7,
+      0, 1, 2, 3, 6, 7,
     ]);
     expect(after<number>(5).mod(binc)([0, 1, 2, 3, 4, 5])).toEqual([
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
+      0, 1, 2, 3, 4, 5,
     ]);
   });
 });
@@ -225,9 +208,9 @@ describe("sub", () => {
     connections: number[];
   }
   it("query a subset of the keys of an object", () => {
-    expect(
-      sub<SubUser, User>(["name", "connections"]).query(bob)
-    ).toEqual([{ name: "bob", connections: [1, 2] }]);
+    expect(sub<SubUser, User>(["name", "connections"]).query(bob)).toEqual([
+      { name: "bob", connections: [1, 2] },
+    ]);
   });
   it("modifies only a subset of an object", () => {
     expect(
@@ -236,5 +219,76 @@ describe("sub", () => {
         name: "Robert",
       }))(bob)
     ).toEqual({ name: "Robert", connections: [1, 2], id: 1 });
+  });
+});
+
+describe("ACC", () => {
+  describe("can create from accessor", () => {
+    it("queries prop", () => {
+      const a = Acc(prop<User>()("connections")).at(0);
+      expect(a.get(bob)).toEqual(1);
+    });
+  });
+  describe("prop", () => {
+    it("queries prop", () => {
+      const a = Acc<User>().prop("name");
+      expect(a.query(bob)).toEqual([bob.name]);
+    });
+  });
+  describe("focus", () => {
+    it("queries accessor", () => {
+      const a = Acc<Friend>();
+      expect(
+        a.focus(comp(friendProps("user"), userProps("id"))).query(myFriendBob)
+      ).toEqual([1]);
+    });
+  });
+  const CoolFriends = Acc<Friends>()
+    .prop("friends")
+    .focus(filter((x: Friend) => x.user?.cool ?? false));
+
+  const myFriends: Friends = {
+    friends: [myFriendBob, myFriendShari, myFriendMark],
+  };
+  describe("get", () => {
+    it("extracts value", () => {
+      const a = Acc<Friend>().prop("user").prop("id");
+      expect(a.get(myFriendBob)).toEqual(1);
+    });
+    it("returns first of a set for traversals", () => {
+      expect(CoolFriends.prop("user").prop("name").get(myFriends)).toBe("Mark");
+    });
+    it("returns undefined when accessor fails", () => {
+      expect(CoolFriends.get(baz)).toBe(undefined);
+    });
+  });
+  describe("at", () => {
+    it("queries at index", () => {
+      const a = Acc<User>().prop("connections").at(1);
+      expect(a.query(bob)).toEqual([bob.connections[1]]);
+    });
+    it("mod works at index", () => {
+      const a = Acc<User>().prop("connections").at(1);
+      const inc = (a: number): number => a + 1;
+      expect(a.mod(inc)(bob).connections[1]).toEqual(bob.connections[1] + 1);
+    });
+  });
+  describe("get all my cool friends", () => {
+    it("works", () => {
+      expect(CoolFriends.prop("user").prop("id").query(myFriends)).toEqual([2]);
+    });
+  });
+  describe("make all my friends cool", () => {
+    it("works", () => {
+      const cooledFriends = Acc<Friends>()
+        .prop("friends")
+        .all()
+        .prop("user")
+        .prop("cool")
+        .set(true)(myFriends);
+      expect(CoolFriends.prop("user").prop("id").query(cooledFriends)).toEqual([
+        1, 0, 2,
+      ]);
+    });
   });
 });

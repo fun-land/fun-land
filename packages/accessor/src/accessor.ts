@@ -10,17 +10,22 @@ export interface Accessor<S, A> {
  * Create Accessor that points to a property of an object
  * Extra lambda is to avoid specifying the key in both type and term space.
  */
-export const prop = <Obj>() => <K extends keyof Obj>(
-  k: K
-): Accessor<Obj, Obj[K]> => ({
-  query: (obj): [Obj[K]] => [obj[k]],
-  mod: (transform) => (obj): Obj => ({ ...obj, [k]: transform(obj[k]) }),
-});
+export const prop =
+  <Obj>() =>
+  <K extends keyof Obj>(k: K): Accessor<Obj, Obj[K]> => ({
+    query: (obj): [Obj[K]] => [obj[k]],
+    mod:
+      (transform) =>
+      (obj): Obj => ({ ...obj, [k]: transform(obj[k]) }),
+  });
 
 /** Create Accessor that points to an index of an array */
 export const index = <A>(i: number): Accessor<A[], A> => ({
   query: (s): A[] => [s[i]],
-  mod: (f) => (xs): A[] => xs.map((x, j) => (i === j ? f(x) : x)),
+  mod:
+    (f) =>
+    (xs): A[] =>
+      xs.map((x, j) => (i === j ? f(x) : x)),
 });
 
 /** Compose two Accessors */
@@ -91,7 +96,10 @@ export function comp(...accs: Array<Accessor<any, any>>): Accessor<any, any> {
  */
 export const all = <A>(): Accessor<A[], A> => ({
   query: (xs): A[] => xs,
-  mod: (transform) => (xs): A[] => xs.map(transform),
+  mod:
+    (transform) =>
+    (xs): A[] =>
+      xs.map(transform),
 });
 
 /**
@@ -99,7 +107,10 @@ export const all = <A>(): Accessor<A[], A> => ({
  */
 export const filter = <A>(pred: (x: A) => boolean): Accessor<A[], A> => ({
   query: (xs): A[] => xs.filter(pred),
-  mod: (transform) => (s): A[] => s.map((x) => (pred(x) ? transform(x) : x)),
+  mod:
+    (transform) =>
+    (s): A[] =>
+      s.map((x) => (pred(x) ? transform(x) : x)),
 });
 
 /**
@@ -107,7 +118,10 @@ export const filter = <A>(pred: (x: A) => boolean): Accessor<A[], A> => ({
  */
 export const before = <A>(i: number): Accessor<A[], A> => ({
   query: (xs): A[] => xs.filter((_, j) => j < i),
-  mod: (transform) => (s): A[] => s.map((x, j) => (j < i ? transform(x) : x)),
+  mod:
+    (transform) =>
+    (s): A[] =>
+      s.map((x, j) => (j < i ? transform(x) : x)),
 });
 
 /**
@@ -115,7 +129,10 @@ export const before = <A>(i: number): Accessor<A[], A> => ({
  */
 export const after = <A>(i: number): Accessor<A[], A> => ({
   query: (xs): A[] => xs.filter((_, j) => j > i),
-  mod: (transform) => (s): A[] => s.map((x, j) => (j > i ? transform(x) : x)),
+  mod:
+    (transform) =>
+    (s): A[] =>
+      s.map((x, j) => (j > i ? transform(x) : x)),
 });
 
 /**
@@ -132,8 +149,10 @@ export const set = <S, A>(acc: Accessor<S, A>): ((x: A) => (s: S) => S) =>
  * @example
  *   get(comp(prop<Foo>()('items'), index(0)))({a: 1, items: []}) // -> undefined
  */
-export const get = <S, A>(acc: Accessor<S, A>) => (s: S): A | undefined =>
-  acc.query(s)?.[0];
+export const get =
+  <S, A>(acc: Accessor<S, A>) =>
+  (s: S): A | undefined =>
+    acc.query(s)?.[0];
 
 /**
  * Accessor that doesn't drill down.
@@ -149,7 +168,10 @@ export const get = <S, A>(acc: Accessor<S, A>) => (s: S): A | undefined =>
  */
 export const unit = <A>(): Accessor<A, A> => ({
   query: (x): A[] => [x],
-  mod: (transform) => (x): A => transform(x),
+  mod:
+    (transform) =>
+    (x): A =>
+      transform(x),
 });
 
 /**
@@ -160,7 +182,10 @@ export const unit = <A>(): Accessor<A, A> => ({
  */
 export const readOnly = <A>(): Accessor<A, A> => ({
   query: (x): A[] => [x],
-  mod: (_transform) => (x): A => x,
+  mod:
+    (_transform) =>
+    (x): A =>
+      x,
 });
 
 const _pick = <Obj, Keys extends keyof Obj>(
@@ -179,5 +204,49 @@ export const sub = <SSub, S extends SSub = never>(
   keys: Array<keyof SSub>
 ): Accessor<S, SSub> => ({
   query: (obj): SSub[] => [_pick(keys, obj)],
-  mod: (f) => (obj: S): S => ({ ...obj, ...f(_pick(keys, obj)) }),
+  mod:
+    (f) =>
+    (obj: S): S => ({ ...obj, ...f(_pick(keys, obj)) }),
+});
+
+type ArrayItemType<T> = T extends Array<infer U> ? U : never;
+
+interface Foci<S, A> {
+  /** transform value(s) focused with passed function */
+  mod: (f: (x: A) => A) => (struct: S) => S;
+  /** replace value(s) focused */
+  set: (a: A) => (struct: S) => S;
+  /** extract first value focused */
+  get: (struct: S) => A | undefined;
+  /** extract all focused values */
+  query: (struct: S) => A[];
+  /** focus child property */
+  prop: <K extends keyof A>(k: K) => Foci<S, A[K]>;
+  /** focus using passed accessor */
+  focus: <B>(acc: Accessor<A, B>) => Foci<S, B>;
+  /** focus on passed array index */
+  at: <B extends ArrayItemType<A>>(idx: number) => Foci<S, B>;
+  /** focus all child array items */
+  all: <B extends ArrayItemType<A>>() => Foci<S, B>;
+}
+
+export function Acc<S>(): Foci<S, S>;
+export function Acc<S, A>(acc: Accessor<S, A>): Foci<S, A>;
+export function Acc<S>(acc = unit<S>()): Foci<S, any> {
+  return focusedAcc(acc);
+}
+
+const focusedAcc = <S, A>(acc: Accessor<S, A>): Foci<S, A> => ({
+  query: (struct: S): A[] => acc.query(struct),
+  get: (struct: S): A | undefined => acc.query(struct)[0] ?? undefined,
+  mod: acc.mod,
+  set: flow(K, acc.mod),
+  focus: <B>(bcc: Accessor<A, B>): Foci<S, B> => focusedAcc(comp(acc, bcc)),
+  prop<K extends keyof A>(k: K): Foci<S, A[K]> {
+    return this.focus(prop<A>()(k));
+  },
+  at: <B extends ArrayItemType<A>>(idx: number): Foci<S, B> =>
+    focusedAcc(comp(acc as unknown as Accessor<S, B[]>, index<B>(idx))),
+  all: <B extends ArrayItemType<A>>(): Foci<S, B> =>
+    focusedAcc(comp(acc as unknown as Accessor<S, B[]>, all<B>())),
 });
