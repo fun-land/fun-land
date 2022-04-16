@@ -1,13 +1,13 @@
 {
   "name": "@fun-land/fun-state-examples",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Examples of how to use fun-state",
   "keywords": [],
   "main": "index.js",
   "dependencies": {
-    "@fun-land/accessor": "^3.1.0",
-    "@fun-land/fun-state": "^6.1.0",
-    "@fun-land/use-fun-state": "^1.2.0",
+    "@fun-land/accessor": "^3.2.0",
+    "@fun-land/fun-state": "^6.1.1",
+    "@fun-land/use-fun-state": "^1.2.1",
     "@types/react-dom": "^16.9.8",
     "react": "16.13.1",
     "react-dom": "^16.13.1",

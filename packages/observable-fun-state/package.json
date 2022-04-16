@@ -1,6 +1,6 @@
 {
   "name": "@fun-land/observable-fun-state",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Use FunState with zen-observable!",
   "author": "Jethro Larson <jethrolarson@gmail.com>",
   "homepage": "https://github.com/fun-land/fun-land",
@@ -11,8 +11,8 @@
     "lib"
   ],
   "dependencies": {
-    "@fun-land/accessor": "^3.1.0",
-    "@fun-land/fun-state": "^6.1.0",
+    "@fun-land/accessor": "^3.2.0",
+    "@fun-land/fun-state": "^6.1.1",
     "zen-observable": "^0.8.15"
   },
   "repository": {
