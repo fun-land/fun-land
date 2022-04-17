@@ -8,19 +8,19 @@ const dec = (a: number) => a - 1;
 export type CounterState = number;
 export const initialCounterState = 0;
 
-export const Counter: FC<FunState<CounterState>> = ({ get, mod, set }) => {
+export const Counter: FC<{ state: FunState<CounterState> }> = ({ state }) => {
   const onCountChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const val = +e.currentTarget.value;
-    if (isFinite(val)) set(val);
+    if (isFinite(val)) state.set(val);
   };
   return (
     <div>
       <h1>Counter</h1>
       <span>
-        <input value={get()} onChange={onCountChange} />
+        <input value={state.get()} onChange={onCountChange} />
       </span>
-      <button onClick={() => mod(inc)}>up</button>
-      <button onClick={() => mod(dec)}>down</button>
+      <button onClick={() => state.mod(inc)}>up</button>
+      <button onClick={() => state.mod(dec)}>down</button>
     </div>
   );
 };

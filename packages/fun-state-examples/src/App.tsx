@@ -11,15 +11,14 @@ const initialState: AppState = {
   count: initialCounterState,
 };
 
-/** App components should be the only things that instantiate state */
 const App: FC = () => {
-  const funState = useFunState(initialState);
+  const state = useFunState(initialState);
 
   // We're bootstrapping the Counter's state to the root as an example but it's not strictly necessary.
   return (
     <div>
       <TodoApp />
-      <Counter {...funState.prop("count")} />
+      <Counter state={state.prop("count")} />
     </div>
   );
 };

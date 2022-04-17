@@ -1,14 +1,6 @@
 {
   "compilerOptions": {
-    "strict": true,
-    "noEmit": true,
-    "sourceMap": true,
-    "declaration": false,
-    "target": "ES2015",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "module": "esnext",
-    "jsx": "react",
+    "target": "es5",
     "lib": [
       "dom",
       "dom.iterable",
@@ -16,12 +8,19 @@
     ],
     "allowJs": true,
     "skipLibCheck": true,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx"
   },
   "include": [
-    "src/**/*.tsx"
+    "src"
   ]
 }
