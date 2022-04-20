@@ -1,11 +1,18 @@
-import {Accessor, comp, set, prop, flow, mergeInto} from '@fun-land/accessor'
+import {Accessor, comp, set, prop, flow, mergeInto, all, index} from '@fun-land/accessor'
 
 export type Updater<State> = (transform: (state: State) => State) => void
 
 type UnpackState<FS> = FS extends FunState<infer State> ? State : never
 
-export const merge = <FState extends FunState<any>>(fs: FState) => (part: Partial<UnpackState<FState>>): void =>
-  fs.mod(mergeInto(part))
+/** Merge a partial state into a FunState instance */
+export const merge =
+  <FState extends FunState<any>>(fs: FState) =>
+  (part: Partial<UnpackState<FState>>): void =>
+    fs.mod(mergeInto(part))
+
+/** Convert a FunState holding an array of items into an array of FunState of the item. */
+export const extractArray = <A>(state: FunState<A[]>): Array<FunState<A>> =>
+  state.query(all<A>()).map((__, i) => state.focus(index(i)))
 
 export interface StateEngine<State> {
   getState: () => State
