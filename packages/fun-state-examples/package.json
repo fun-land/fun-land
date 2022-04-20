@@ -1,6 +1,6 @@
 {
   "name": "@fun-land/fun-state-examples",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Examples of how to use fun-state",
   "keywords": [],
   "main": "index.js",
