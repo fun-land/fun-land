@@ -20,6 +20,7 @@ export interface StateEngine<State> {
 }
 
 export interface FunState<State> {
+  /** Extract the value stored as the state */
   get: () => State
   /** Query the state using an accessor */
   query: <A>(acc: Accessor<State, A>) => A[]

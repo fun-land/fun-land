@@ -50,5 +50,6 @@
     "doc": "docs"
   },
   "license": "ISC",
-  "private": false
+  "private": false,
+  "gitHead": "9e6e656a51201486a6e45a2d181a0dc63ba36f25"
 }
