@@ -1,75 +1,72 @@
-import React, { FC, ChangeEventHandler } from "react";
-import { TodoState, Todo, todoProps } from "./Todo";
-import { FunState } from "@fun-land/fun-state";
+import { FC, ChangeEventHandler } from "react";
+import { TodoState, Todo } from "./Todo";
+import { FunState, extractArray } from "@fun-land/fun-state";
 import useFunState from "@fun-land/use-fun-state";
-import {
-  comp,
-  prop,
-  set,
-  all,
-  index,
-  removeAt,
-  flow,
-  prepend,
-} from "@fun-land/accessor";
+import { removeAt, flow, prepend, Acc } from "@fun-land/accessor";
 
-/**
- * TodoApp Model
- */
-interface State {
+interface TodoAppState {
   value: string;
   items: TodoState[];
 }
-const initialState: State = { value: "", items: [] };
-const stateProps = prop<State>();
+const initialState: TodoAppState = { value: "", items: [] };
 
-// some business logic pulled out of the component. These are all State -> State
-const addItem = (state: State): State =>
-  stateProps("items").mod(
-    prepend<TodoState>({ checked: false, label: state.value, priority: 1 })
-  )(state);
-const clearValue = set(stateProps("value"))("");
+// some business logic pulled out of the component. These are all TodoAppState -> TodoAppState
+const addItem = (state: TodoAppState): TodoAppState =>
+  Acc<TodoAppState>()
+    .prop("items")
+    .mod(
+      prepend<TodoState>({ checked: false, label: state.value, priority: 1 })
+    )(state);
 
-//modifying a bunch of child items
-const markAllDone = set(
-  comp(stateProps("items"), all<TodoState>(), todoProps("checked"))
-)(true);
+const clearValue = Acc<TodoAppState>().prop("value").set("");
 
-// modifying the collection
-const removeItem = flow(removeAt, stateProps("items").mod);
+// Focusing on the state
+const markAllDone = Acc<TodoAppState>()
+  // focus .items
+  .prop("items")
+  // for each item
+  .all()
+  // focus .checked
+  .prop("checked")
+  // and set all to true
+  .set(true);
+
+// remove todo item at passed index
+const removeItem = (index: number) =>
+  Acc<TodoAppState>().prop("items").mod(removeAt(index));
 
 // depends on state as props but
-const Todos: FC<{ funState: FunState<State> }> = ({ funState }) => {
+const Todos: FC<{ state: FunState<TodoAppState> }> = ({ state }) => {
   // A little bit of business logic in-line for convenience
   const onValueChange: ChangeEventHandler<HTMLInputElement> = ({
     currentTarget: { value },
-  }) => funState.prop("value").set(value);
-  const onClickAllDone = () => funState.mod(markAllDone);
+  }) => state.prop("value").set(value);
+  const onClickAllDone = () => state.mod(markAllDone);
   // querying child items
-  const allDone = funState
-    .query(comp(stateProps("items"), all<TodoState>()))
+  const allDone = state
+    .query(Acc<TodoAppState>().prop("items").all())
     .every((a) => a.checked);
-  const current = funState.get();
+  const { value } = state.get();
   return (
     <div>
       <h1>Todo App</h1>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          funState.mod(flow(addItem, clearValue));
+          state.mod(flow(addItem, clearValue));
         }}
       >
-        <input value={current.value} onChange={onValueChange} type="input" />
+        <input value={value} onChange={onValueChange} type="input" />
         <button type="submit">Add</button>
       </form>
       <button onClick={onClickAllDone}>Mark All done</button>{" "}
       {allDone && "all done!"}
       <ul>
-        {current.items.map((item, i) => (
+        {extractArray(state.prop("items")).map((itemState, i) => (
           <Todo
-            {...funState.focus(comp(stateProps("items"), index(i)))}
+            state={itemState}
             key={i}
-            removeItem={() => funState.mod(removeItem(i))}
+            removeItem={() => state.mod(removeItem(i))}
           />
         ))}
       </ul>
@@ -78,5 +75,5 @@ const Todos: FC<{ funState: FunState<State> }> = ({ funState }) => {
 };
 
 // The Apps themselves can be impure but other components should not be
-const TodoApp: FC = () => <Todos funState={useFunState(initialState)} />;
+const TodoApp: FC = () => <Todos state={useFunState(initialState)} />;
 export default TodoApp;
