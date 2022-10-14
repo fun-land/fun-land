@@ -87,7 +87,19 @@ export function comp(...accs: Array<Accessor<any, any>>): Accessor<any, any> {
   return accs.reduce(_comp);
 }
 
-// TODO make a variate function so we don't need 4 different functions to compose Accessors
+/**
+ * Create an accessor that let's you operate on data as if it's a different encoding. I.e an isomorphism.
+ * @param toView transform from the stored data to the desired view
+ * @param fromView transform from the view representation to the stored data representation
+ * @returns Accessor
+ */
+export const viewed = <X, Y>(
+  toView: (x: X) => Y,
+  fromView: (y: Y) => X
+): Accessor<X, Y> => ({
+  query: (s): Y[] => [toView(s)],
+  mod: (f) => (s): X => fromView(f(toView)),
+});
 
 /**
  * Focus all items in a child array

@@ -12,6 +12,7 @@ import {
   sub,
   readOnly,
   get,
+  viewed,
 } from "./accessor";
 
 interface User {
@@ -219,6 +220,47 @@ describe("sub", () => {
         name: "Robert",
       }))(bob)
     ).toEqual({ name: "Robert", connections: [1, 2], id: 1 });
+  });
+});
+
+describe("viewed", () => {
+  type Coord = [number, number];
+  interface Point {
+    x: number;
+    y: number;
+  }
+
+  const asPoint = viewed(
+    ([x, y]: Coord): Point => ({ x, y }),
+    ({ x, y }: Point): Coord => [x, y]
+  );
+
+  const coords: Coord[] = [
+    [1, 2],
+    [3, 4],
+  ];
+  it("allows querying into viewed structure", () => {
+    expect(Acc<Coord[]>().all().focus(asPoint).query(coords)).toEqual([
+      { x: 1, y: 2 },
+      { x: 3, y: 4 },
+    ]);
+  });
+  it("allows drilled querying into viewed structure", () => {
+    expect(Acc<Coord[]>().all().focus(asPoint).prop("x").query(coords)).toEqual(
+      [1, 3]
+    );
+  });
+  it("allows modding into viewed structure", () => {
+    expect(
+      Acc<Coord[]>()
+        .all()
+        .focus(asPoint)
+        .prop("x")
+        .mod((a) => a + 1)
+    ).toEqual([
+      { x: 2, y: 2 },
+      { x: 4, y: 4 },
+    ]);
   });
 });
 

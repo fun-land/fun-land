@@ -282,6 +282,30 @@ const getCoolFriends = (user: User) =>
   ).query(user);
 ```
 
+### viewed
+
+```ts
+: <X, Y>(toView: (x: X) => Y, fromView: (y: Y) => X) => Accessor<X, Y>
+```
+Create an accessor that let's you operate on the data as if it's a different encoding. I.e an isomorphism.
+
+Example: 
+
+```ts
+type Coord = [number, number]
+type Point = {x: number; y: number}
+
+const coordToPoint: Accessor<Coord, Point> = viewed(
+  ([x, y]: Coord): Point => ({x,y}),
+  ({x, y}: Point): Coord => [x, y]
+);
+
+const coords: Coord[] = [[1,2], [3,4]];
+const getPoints = Acc<Coord[]>().all().focus(asPoint).prop("x").query
+getPoints(coords) // => [{ x: 1, y: 2 }, { x: 3, y: 4 },]
+```
+
+
 ### before
 
 ```ts
