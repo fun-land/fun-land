@@ -45,5 +45,6 @@
   "directories": {
     "doc": "docs"
   },
-  "license": "ISC"
+  "license": "ISC",
+  "gitHead": "3de230a8f86d54eb36df655da45380dafc261696"
 }

@@ -98,7 +98,10 @@ export const viewed = <X, Y>(
   fromView: (y: Y) => X
 ): Accessor<X, Y> => ({
   query: (s): Y[] => [toView(s)],
-  mod: (f) => (s): X => fromView(f(toView)),
+  mod:
+    (f) =>
+    (s): X =>
+      fromView(f(toView(s))),
 });
 
 /**

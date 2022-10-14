@@ -256,10 +256,10 @@ describe("viewed", () => {
         .all()
         .focus(asPoint)
         .prop("x")
-        .mod((a) => a + 1)
+        .mod((a) => a + 1)(coords)
     ).toEqual([
-      { x: 2, y: 2 },
-      { x: 4, y: 4 },
+      [2, 2],
+      [4, 4],
     ]);
   });
 });

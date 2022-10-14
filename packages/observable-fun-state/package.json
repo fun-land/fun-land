@@ -33,5 +33,6 @@
   },
   "devDependencies": {
     "@types/zen-observable": "^0.8.3"
-  }
+  },
+  "gitHead": "3de230a8f86d54eb36df655da45380dafc261696"
 }
