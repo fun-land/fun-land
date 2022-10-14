@@ -1,13 +1,13 @@
 {
   "name": "@fun-land/fun-state-examples",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Examples of how to use fun-state",
   "keywords": [],
   "main": "index.js",
   "dependencies": {
-    "@fun-land/accessor": "^3.3.0",
-    "@fun-land/fun-state": "^6.2.4",
-    "@fun-land/use-fun-state": "^1.2.7",
+    "@fun-land/accessor": "^3.3.1",
+    "@fun-land/fun-state": "^6.2.5",
+    "@fun-land/use-fun-state": "^1.2.8",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.1.1",
     "@testing-library/user-event": "^13.5.0",
