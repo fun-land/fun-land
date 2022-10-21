@@ -1,4 +1,4 @@
-import {Accessor} from '@fun-land/accessor'
+import type {Accessor} from '@fun-land/accessor'
 
 export interface Validator<S> {
   validate: (state: S) => S

@@ -1,11 +1,12 @@
 {
   "name": "@fun-land/validation",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "mini-library for validating nested data structures",
   "author": "Jethro Larson <jethrolarson@gmail.com>",
   "homepage": "https://github.com/fun-land/fun-land#readme",
   "license": "MIT",
   "main": "dist/validation.js",
+  "module": "dist/esm/validation.js",
   "directories": {
     "lib": "lib",
     "test": "__tests__"
@@ -28,5 +29,11 @@
   "bugs": {
     "url": "https://github.com/fun-land/fun-land/issues"
   },
-  "gitHead": "416da7a1f0964e342cb7e3f2267585f64baa2340"
+  "gitHead": "416da7a1f0964e342cb7e3f2267585f64baa2340",
+  "peerDependencies": {
+    "@fun-land/accessor": "^3.3.3"
+  },
+  "devDependencies": {
+    "@fun-land/accessor": "^3.3.3"
+  }
 }
