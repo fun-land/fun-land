@@ -65,7 +65,7 @@ export const Counter: React.FC = () => {
 
 # More examples
 
-See [fun-state-examples](../fun-state-examples) for a sample standalone application.
+See [fun-state-examples](https://github.com/fun-land/fun-land/tree/main/packages/fun-state-examples) for a sample standalone application using vite.
 
 # When to useFunState
 
@@ -76,23 +76,21 @@ See [fun-state-examples](../fun-state-examples) for a sample standalone applicat
 
 # When not to useFunState
 
-- When your data or component heirachy is mostly flat.
-- When your app is not as complex as [TodoMVC](https://todomvc.com/).
-- You're avoiding `FunctionComponent`s
-- You're using a react version older than 16.8
+- When you just have a single state value.
+- You're avoiding or can't use React Hooks.
 
 # Tips
 
 - Keep your FunState Apps simple and delegate the complex logic to pure child components, using `.prop()` where practical.
-- Use Accessor composition to drill down into deep parts of your tree or operate on multiple items. See `./TodoApp` or [@fun-land/accessor docs](../accessor) for examples.
-- If child components need data from multiple places in the state tree, you can create and pass more than one FunState or just pass the root and then query what you need with Accessors.
+- Drill down into deep parts of your tree using .focus in conjunction with `Accessors`. See `./TodoApp` or [@fun-land/accessor docs](https://github.com/fun-land/fun-land/blob/main/packages/accessor) for examples.
+- If child components need data from multiple places in the state tree, you can create and pass more than one FunState or just pass the root and then focus to what you need.
 
 # API
 
 ## useFunState
 
 ```ts
-<State>(initialState: State, globalMod?: (state: State) => State) => FunState<State>
+;<State>(initialState: State, globalMod?: (state: State) => State) => FunState<State>
 ```
 
 Creates an react-hooks based [FunState](../fun-state)</a> instance with a starting state.
@@ -102,10 +100,13 @@ Advanced: `globalMod` is an optional callback that will run on any update to the
 ## bindValue
 
 ```ts
-<T extends HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+;<T extends HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
   state: FunState<string>,
   onChange?: ChangeEventHandler<T>
-) => {value: string; onChange: ChangeEventHandler<T>}
+) => {
+  value: string
+  onChange: ChangeEventHandler<T>
+}
 ```
 
 Bind `FunState<string>` to the value property of `input[type=text]`, `textarea`, or `select` elements.
@@ -120,10 +121,10 @@ const Name = () => {
 ## bindChecked
 
 ```ts
-<T extends HTMLInputElement>(
-  state: FunState<boolean>,
-  onChange?: ChangeEventHandler<T>
-) => {checked: boolean; onChange: ChangeEventHandler<T>}
+;<T extends HTMLInputElement>(state: FunState<boolean>, onChange?: ChangeEventHandler<T>) => {
+  checked: boolean
+  onChange: ChangeEventHandler<T>
+}
 ```
 
 Bind `FunState<boolean>` to the checked property of `input[type=radio]` or `input[type=checkbox]` elements.
