@@ -1,9 +1,11 @@
 /** @module accessor This is the actual "optics" library */
-import { flow, K, flatmap } from "./util";
+import {flow, K, flatmap} from './util'
 
 export interface Accessor<S, A> {
-  query: (struct: S) => A[];
-  mod: (f: (x: A) => A) => (struct: S) => S;
+  /** extract all focused values */
+  query: (struct: S) => A[]
+  /** transform value(s) focused with passed function */
+  mod: (f: (x: A) => A) => (struct: S) => S
 }
 
 /**
@@ -16,8 +18,8 @@ export const prop =
     query: (obj): [Obj[K]] => [obj[k]],
     mod:
       (transform) =>
-      (obj): Obj => ({ ...obj, [k]: transform(obj[k]) }),
-  });
+      (obj): Obj => ({...obj, [k]: transform(obj[k])})
+  })
 
 /** Create Accessor that points to an index of an array */
 export const index = <A>(i: number): Accessor<A[], A> => ({
@@ -25,46 +27,36 @@ export const index = <A>(i: number): Accessor<A[], A> => ({
   mod:
     (f) =>
     (xs): A[] =>
-      xs.map((x, j) => (i === j ? f(x) : x)),
-});
+      xs.map((x, j) => (i === j ? f(x) : x))
+})
 
 /** Compose two Accessors */
 // I'm so ammused that composed Accessors is so close to function composition.
 // Doubly ammused that the fly in the ointment is the Monad operator for our query response data type.
-const _comp = <A, B, C>(
-  acc1: Accessor<A, B>,
-  acc2: Accessor<B, C>
-): Accessor<A, C> => ({
+const _comp = <A, B, C>(acc1: Accessor<A, B>, acc2: Accessor<B, C>): Accessor<A, C> => ({
   query: flow(acc1.query, flatmap<B, C>(acc2.query)),
-  mod: flow(acc2.mod, acc1.mod),
-});
+  mod: flow(acc2.mod, acc1.mod)
+})
 
 /**
  * Composes all passed Accessors.
  * Max of 8 cuz reasons. If you need more than then just compose twice.
  */
-export function comp<A, B, C>(
-  acc1: Accessor<A, B>,
-  acc2: Accessor<B, C>
-): Accessor<A, C>;
-export function comp<A, B, C, D>(
-  acc1: Accessor<A, B>,
-  acc2: Accessor<B, C>,
-  acc3: Accessor<C, D>
-): Accessor<A, D>;
+export function comp<A, B, C>(acc1: Accessor<A, B>, acc2: Accessor<B, C>): Accessor<A, C>
+export function comp<A, B, C, D>(acc1: Accessor<A, B>, acc2: Accessor<B, C>, acc3: Accessor<C, D>): Accessor<A, D>
 export function comp<A, B, C, D, E>(
   acc1: Accessor<A, B>,
   acc2: Accessor<B, C>,
   acc3: Accessor<C, D>,
   acc4: Accessor<D, E>
-): Accessor<A, E>;
+): Accessor<A, E>
 export function comp<A, B, C, D, E, F>(
   acc1: Accessor<A, B>,
   acc2: Accessor<B, C>,
   acc3: Accessor<C, D>,
   acc4: Accessor<D, E>,
   acc5: Accessor<E, F>
-): Accessor<A, F>;
+): Accessor<A, F>
 export function comp<A, B, C, D, E, F, G>(
   acc1: Accessor<A, B>,
   acc2: Accessor<B, C>,
@@ -72,7 +64,7 @@ export function comp<A, B, C, D, E, F, G>(
   acc4: Accessor<D, E>,
   acc5: Accessor<E, F>,
   acc6: Accessor<F, G>
-): Accessor<A, G>;
+): Accessor<A, G>
 export function comp<A, B, C, D, E, F, G, H>(
   acc1: Accessor<A, B>,
   acc2: Accessor<B, C>,
@@ -81,10 +73,10 @@ export function comp<A, B, C, D, E, F, G, H>(
   acc5: Accessor<E, F>,
   acc6: Accessor<F, G>,
   acc7: Accessor<G, H>
-): Accessor<A, H>;
+): Accessor<A, H>
 export function comp(...accs: Array<Accessor<any, any>>): Accessor<any, any> {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  return accs.reduce(_comp);
+  return accs.reduce(_comp)
 }
 
 /**
@@ -93,16 +85,13 @@ export function comp(...accs: Array<Accessor<any, any>>): Accessor<any, any> {
  * @param fromView transform from the view representation to the stored data representation
  * @returns Accessor
  */
-export const viewed = <X, Y>(
-  toView: (x: X) => Y,
-  fromView: (y: Y) => X
-): Accessor<X, Y> => ({
+export const viewed = <X, Y>(toView: (x: X) => Y, fromView: (y: Y) => X): Accessor<X, Y> => ({
   query: (s): Y[] => [toView(s)],
   mod:
     (f) =>
     (s): X =>
-      fromView(f(toView(s))),
-});
+      fromView(f(toView(s)))
+})
 
 /**
  * Focus all items in a child array
@@ -114,8 +103,8 @@ export const all = <A>(): Accessor<A[], A> => ({
   mod:
     (transform) =>
     (xs): A[] =>
-      xs.map(transform),
-});
+      xs.map(transform)
+})
 
 /**
  * Accessor that targets items in an array that match the passed predicate
@@ -125,8 +114,8 @@ export const filter = <A>(pred: (x: A) => boolean): Accessor<A[], A> => ({
   mod:
     (transform) =>
     (s): A[] =>
-      s.map((x) => (pred(x) ? transform(x) : x)),
-});
+      s.map((x) => (pred(x) ? transform(x) : x))
+})
 
 /**
  * Accessor that targets items before the passed index
@@ -136,8 +125,8 @@ export const before = <A>(i: number): Accessor<A[], A> => ({
   mod:
     (transform) =>
     (s): A[] =>
-      s.map((x, j) => (j < i ? transform(x) : x)),
-});
+      s.map((x, j) => (j < i ? transform(x) : x))
+})
 
 /**
  * Accessor that targets items before the passed index
@@ -147,14 +136,13 @@ export const after = <A>(i: number): Accessor<A[], A> => ({
   mod:
     (transform) =>
     (s): A[] =>
-      s.map((x, j) => (j > i ? transform(x) : x)),
-});
+      s.map((x, j) => (j > i ? transform(x) : x))
+})
 
 /**
  * Immutably assign to an Accessor
  */
-export const set = <S, A>(acc: Accessor<S, A>): ((x: A) => (s: S) => S) =>
-  flow(K, acc.mod);
+export const set = <S, A>(acc: Accessor<S, A>): ((x: A) => (s: S) => S) => flow(K, acc.mod)
 
 /**
  * Extract the first value of an accessor. When query would return `[]` this returns undefined.
@@ -167,7 +155,7 @@ export const set = <S, A>(acc: Accessor<S, A>): ((x: A) => (s: S) => S) =>
 export const get =
   <S, A>(acc: Accessor<S, A>) =>
   (s: S): A | undefined =>
-    acc.query(s)?.[0];
+    acc.query(s)?.[0]
 
 /**
  * Accessor that doesn't drill down.
@@ -186,8 +174,8 @@ export const unit = <A>(): Accessor<A, A> => ({
   mod:
     (transform) =>
     (x): A =>
-      transform(x),
-});
+      transform(x)
+})
 
 /**
  * Like `unit` but mod does nothing
@@ -200,55 +188,47 @@ export const readOnly = <A>(): Accessor<A, A> => ({
   mod:
     (_transform) =>
     (x): A =>
-      x,
-});
+      x
+})
 
-const _pick = <Obj, Keys extends keyof Obj>(
-  keys: Keys[],
-  obj: Obj
-): Pick<Obj, Keys> => {
-  const out: Partial<Obj> = {};
+const _pick = <Obj, Keys extends keyof Obj>(keys: Keys[], obj: Obj): Pick<Obj, Keys> => {
+  const out: Partial<Obj> = {}
   keys.forEach((k) => {
-    out[k] = obj[k];
-  });
-  return out as Pick<Obj, Keys>;
-};
+    out[k] = obj[k]
+  })
+  return out as Pick<Obj, Keys>
+}
 
 /** Create an accessor that targets a subset of properties of an object. */
-export const sub = <SSub, S extends SSub = never>(
-  keys: Array<keyof SSub>
-): Accessor<S, SSub> => ({
+export const sub = <SSub, S extends SSub = never>(keys: Array<keyof SSub>): Accessor<S, SSub> => ({
   query: (obj): SSub[] => [_pick(keys, obj)],
   mod:
     (f) =>
-    (obj: S): S => ({ ...obj, ...f(_pick(keys, obj)) }),
-});
+    (obj: S): S => ({...obj, ...f(_pick(keys, obj))})
+})
 
-type ArrayItemType<T> = T extends Array<infer U> ? U : never;
+type ArrayItemType<T> = T extends Array<infer U> ? U : never
 
-interface Foci<S, A> {
-  /** transform value(s) focused with passed function */
-  mod: (f: (x: A) => A) => (struct: S) => S;
+/** A more user-friendly api to create and compose accessors */
+export interface Foci<S, A> extends Accessor<S, A> {
   /** replace value(s) focused */
-  set: (a: A) => (struct: S) => S;
+  set: (a: A) => (struct: S) => S
   /** extract first value focused */
-  get: (struct: S) => A | undefined;
-  /** extract all focused values */
-  query: (struct: S) => A[];
+  get: (struct: S) => A | undefined
   /** focus child property */
-  prop: <K extends keyof A>(k: K) => Foci<S, A[K]>;
+  prop: <K extends keyof A>(k: K) => Foci<S, A[K]>
   /** focus using passed accessor */
-  focus: <B>(acc: Accessor<A, B>) => Foci<S, B>;
+  focus: <B>(acc: Accessor<A, B>) => Foci<S, B>
   /** focus on passed array index */
-  at: <B extends ArrayItemType<A>>(idx: number) => Foci<S, B>;
+  at: <B extends ArrayItemType<A>>(idx: number) => Foci<S, B>
   /** focus all child array items */
-  all: <B extends ArrayItemType<A>>() => Foci<S, B>;
+  all: <B extends ArrayItemType<A>>() => Foci<S, B>
 }
 
-export function Acc<S>(): Foci<S, S>;
-export function Acc<S, A>(acc: Accessor<S, A>): Foci<S, A>;
+export function Acc<S>(): Foci<S, S>
+export function Acc<S, A>(acc: Accessor<S, A>): Foci<S, A>
 export function Acc<S>(acc = unit<S>()): Foci<S, any> {
-  return focusedAcc(acc);
+  return focusedAcc(acc)
 }
 
 const focusedAcc = <S, A>(acc: Accessor<S, A>): Foci<S, A> => ({
@@ -258,10 +238,9 @@ const focusedAcc = <S, A>(acc: Accessor<S, A>): Foci<S, A> => ({
   set: flow(K, acc.mod),
   focus: <B>(bcc: Accessor<A, B>): Foci<S, B> => focusedAcc(comp(acc, bcc)),
   prop<K extends keyof A>(k: K): Foci<S, A[K]> {
-    return this.focus(prop<A>()(k));
+    return this.focus(prop<A>()(k))
   },
   at: <B extends ArrayItemType<A>>(idx: number): Foci<S, B> =>
     focusedAcc(comp(acc as unknown as Accessor<S, B[]>, index<B>(idx))),
-  all: <B extends ArrayItemType<A>>(): Foci<S, B> =>
-    focusedAcc(comp(acc as unknown as Accessor<S, B[]>, all<B>())),
-});
+  all: <B extends ArrayItemType<A>>(): Foci<S, B> => focusedAcc(comp(acc as unknown as Accessor<S, B[]>, all<B>()))
+})
