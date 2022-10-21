@@ -16,7 +16,7 @@ Usage:
 
 ```tsx
 import * as V from '@fun-land/validation'
-import {TextInputState, bindTextInputState, textInputValidator, validateAndAct} from '@fun-land/react-validation'
+import {TextInputState, textInputValidator, validateAndAct} from '@fun-land/react-validation'
 import type { FunState } from '@fun-land/fun-state'
 import useFunState, {bindValue, bindChecked} from '@fun-land/use-fun-state'
 import * as A from '@fun-land/accessor'
@@ -59,7 +59,7 @@ export const TOSValidator: V.Validator<CheckboxState> = {
 }
 
 export const TOSCheckbox = ({state: FunState<CheckboxState>}) => {
-  const {checked, errorMessage} = state.get();
+  const {errorMessage} = state.get();
   return (
     <label>
       <input type="checkbox" {...bindChecked(state.prop('checked'))} />
@@ -119,7 +119,7 @@ Shape of a validator object.
 ## focus
 
 ```ts
-<S, T>(foci: Accessor<S, T>, validator: Validator<T>) => Validator<S>
+;<S, T>(foci: Accessor<S, T>, validator: Validator<T>) => Validator<S>
 ```
 
 Focus a validator using an accessor.
@@ -133,7 +133,7 @@ V.focus(stateFoci.prop('name'), nameValidator)
 ## every
 
 ```ts
-<S>(...validators: Array<Validator<S>>) => Validator<S>
+;<S>(...validators: Array<Validator<S>>) => Validator<S>
 ```
 
 Compose multiple validators together. Returned validator is valid if all of the passed validators are.
