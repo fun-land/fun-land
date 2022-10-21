@@ -1,8 +1,8 @@
-import {createElement as e, FunctionComponent, useState} from 'react'
+import {ChangeEvent, createElement as e, FunctionComponent, useState} from 'react'
 import {render} from 'react-dom'
 import {act} from 'react-dom/test-utils'
-import {FunState} from '@fun-land/fun-state'
-import useFunState from './index'
+import {FunState, mockState} from '@fun-land/fun-state'
+import useFunState, {bindChecked, bindValue} from './index'
 
 let container: HTMLDivElement | undefined
 
@@ -84,5 +84,34 @@ describe('useFunState', () => {
     })
 
     expect(fs?.get()).toEqual<St>({a: 1, b: 9})
+  })
+})
+
+describe('bindValue', () => {
+  it('sets value', () => {
+    const bob = 'bob'
+    const state = mockState(bob)
+    expect(bindValue(state).value).toBe(bob)
+  })
+  it('onChange updates value', () => {
+    const bob = 'bob'
+    const state = mockState(bob)
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const mockChangeEvent = {currentTarget: {value: 'Bob'}} as ChangeEvent<HTMLInputElement>
+    bindValue(state).onChange(mockChangeEvent)
+    expect(state.get()).toBe('Bob')
+  })
+})
+describe('bindChecked', () => {
+  it('sets checked', () => {
+    const state = mockState(false)
+    expect(bindChecked(state).checked).toBe(false)
+  })
+  it('onChange updates checked', () => {
+    const state = mockState(false)
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const mockChangeEvent = {currentTarget: {checked: true}} as ChangeEvent<HTMLInputElement>
+    bindChecked(state).onChange(mockChangeEvent)
+    expect(state.get()).toBe(true)
   })
 })

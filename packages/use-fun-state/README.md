@@ -99,6 +99,42 @@ Creates an react-hooks based [FunState](../fun-state)</a> instance with a starti
 
 Advanced: `globalMod` is an optional callback that will run on any update to the state. In most cases you shouldn't use it but it can be useful to create implementations of FunState with special caching behavior or effects.
 
+## bindValue
+
+```ts
+<T extends HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+  state: FunState<string>,
+  onChange?: ChangeEventHandler<T>
+) => {value: string; onChange: ChangeEventHandler<T>}
+```
+
+Bind `FunState<string>` to the value property of `input[type=text]`, `textarea`, or `select` elements.
+
+```tsx
+const Name = () => {
+  const state = useFunState('')
+  return <input type="text" {...bindValue(state)} />
+}
+```
+
+## bindChecked
+
+```ts
+<T extends HTMLInputElement>(
+  state: FunState<boolean>,
+  onChange?: ChangeEventHandler<T>
+) => {checked: boolean; onChange: ChangeEventHandler<T>}
+```
+
+Bind `FunState<boolean>` to the checked property of `input[type=radio]` or `input[type=checkbox]` elements.
+
+```tsx
+const Cool = () => {
+  const state = useFunState(false)
+  return <input type="radio" {...bindChecked(state)} />
+}
+```
+
 ## FunState?
 
 See [@fun-land/fun-state](../fun-state)</a>.
