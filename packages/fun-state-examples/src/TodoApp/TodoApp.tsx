@@ -1,4 +1,4 @@
-import { FC, ChangeEventHandler } from "react";
+import React, { FC } from "react";
 import { TodoState, Todo } from "./Todo";
 import { FunState, extractArray } from "@fun-land/fun-state";
 import useFunState, { bindValue } from "@fun-land/use-fun-state";
@@ -39,10 +39,6 @@ const removeItem = (index: number) =>
 
 // depends on state as props but
 const Todos: FC<{ state: FunState<TodoAppState> }> = ({ state }) => {
-  // A little bit of business logic in-line for convenience
-  const onValueChange: ChangeEventHandler<HTMLInputElement> = ({
-    currentTarget: { value },
-  }) => state.prop("value").set(value);
   const onClickAllDone = () => state.mod(markAllDone);
   // querying child items
   const allDone = state
