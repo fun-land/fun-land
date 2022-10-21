@@ -1,2 +1,2 @@
-export * from "./util";
-export * from "./accessor";
+export * from './util'
+export * from './accessor'

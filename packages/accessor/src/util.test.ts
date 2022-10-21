@@ -1,117 +1,103 @@
-import {
-  head,
-  empty,
-  not,
-  tail,
-  prepend,
-  append,
-  removeAt,
-  mergeInto,
-  flatmap,
-  B,
-  flow,
-} from "./util";
+import {head, empty, not, tail, prepend, append, removeAt, mergeInto, flatmap, B, flow} from './util'
 
-describe("B", () => {
-  it("composes functions", () => {
-    expect(B((a: number) => a / 2)((a: number) => a + 1)(3)).toBe(2);
-  });
-});
+describe('B', () => {
+  it('composes functions', () => {
+    expect(B((a: number) => a / 2)((a: number) => a + 1)(3)).toBe(2)
+  })
+})
 
-describe("flow", () => {
-  it("composes functions left-to-right", () => {
+describe('flow', () => {
+  it('composes functions left-to-right', () => {
     expect(
       flow(
         (a: number) => a + 1,
         (a: number) => a / 2
       )(3)
-    ).toBe(2);
-  });
-});
+    ).toBe(2)
+  })
+})
 
-describe("empty", () => {
-  it("returns empty array", () => {
-    expect(empty<number>()).toEqual([]);
-  });
-});
+describe('empty', () => {
+  it('returns empty array', () => {
+    expect(empty<number>()).toEqual([])
+  })
+})
 
-describe("flatmap", () => {
-  it("can map over empty", () => {
-    expect(flatmap(empty)([])).toEqual([]);
-  });
-  it("flattens", () => {
-    expect(flatmap((a: number) => [a, a])([1, 2])).toEqual([1, 1, 2, 2]);
-  });
-});
+describe('flatmap', () => {
+  it('can map over empty', () => {
+    expect(flatmap(empty)([])).toEqual([])
+  })
+  it('flattens', () => {
+    expect(flatmap((a: number) => [a, a])([1, 2])).toEqual([1, 1, 2, 2])
+  })
+})
 
-describe("removeAt", () => {
-  it("removes item at index", () => {
-    expect(removeAt(1)([0, 1, 2])).toEqual([0, 2]);
-  });
-  it("noop if index out of bounds", () => {
-    expect(removeAt(4)([0, 1, 2])).toEqual([0, 1, 2]);
-  });
-  it("noop on empty", () => {
-    expect(removeAt(0)([])).toEqual([]);
-  });
-});
+describe('removeAt', () => {
+  it('removes item at index', () => {
+    expect(removeAt(1)([0, 1, 2])).toEqual([0, 2])
+  })
+  it('noop if index out of bounds', () => {
+    expect(removeAt(4)([0, 1, 2])).toEqual([0, 1, 2])
+  })
+  it('noop on empty', () => {
+    expect(removeAt(0)([])).toEqual([])
+  })
+})
 
-describe("prepend", () => {
-  it("adds element to end of array", () => {
-    expect(prepend(1)([2])).toEqual([1, 2]);
-    expect(prepend(1)([])).toEqual([1]);
-  });
-});
+describe('prepend', () => {
+  it('adds element to end of array', () => {
+    expect(prepend(1)([2])).toEqual([1, 2])
+    expect(prepend(1)([])).toEqual([1])
+  })
+})
 
-describe("append", () => {
-  it("adds element to front of array", () => {
-    expect(append(1)([2])).toEqual([2, 1]);
-    expect(append(1)([])).toEqual([1]);
-  });
-});
+describe('append', () => {
+  it('adds element to front of array', () => {
+    expect(append(1)([2])).toEqual([2, 1])
+    expect(append(1)([])).toEqual([1])
+  })
+})
 
-describe("head", () => {
-  it("gets the first element in an array", () => {
-    expect(head([2])).toBe(2);
-  });
+describe('head', () => {
+  it('gets the first element in an array', () => {
+    expect(head([2])).toBe(2)
+  })
 
-  it("returns undefined for empty (an typechecks as such)", () => {
+  it('returns undefined for empty (an typechecks as such)', () => {
     // @ts-expect-error
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const a: string = head<string>([]);
-    expect(a).toBeUndefined();
-  });
-});
+    const a: string = head<string>([])
+    expect(a).toBeUndefined()
+  })
+})
 
-describe("tail", () => {
-  it("returns empty for unary array", () => {
-    expect(tail([2])).toEqual([]);
-  });
-  it("returns empty for empty array", () => {
-    expect(tail([])).toEqual([]);
-  });
+describe('tail', () => {
+  it('returns empty for unary array', () => {
+    expect(tail([2])).toEqual([])
+  })
+  it('returns empty for empty array', () => {
+    expect(tail([])).toEqual([])
+  })
 
-  it("returns rest for binary+ array", () => {
-    expect(tail([2, 3])).toEqual([3]);
-    expect(tail([2, 3, 4])).toEqual([3, 4]);
-  });
-});
+  it('returns rest for binary+ array', () => {
+    expect(tail([2, 3])).toEqual([3])
+    expect(tail([2, 3, 4])).toEqual([3, 4])
+  })
+})
 
-describe("not", () => {
-  it("defies expectation", () => {
-    expect(not(true)).toBe(false);
-    expect(not(false)).toBe(true);
-  });
-});
+describe('not', () => {
+  it('defies expectation', () => {
+    expect(not(true)).toBe(false)
+    expect(not(false)).toBe(true)
+  })
+})
 
-describe("mergeInto", () => {
-  it("merges first into second arg", () => {
+describe('mergeInto', () => {
+  it('merges first into second arg', () => {
     interface Obj {
-      a: number;
-      b: number;
+      a: number
+      b: number
     }
-    expect(
-      mergeInto<Obj>({ a: 1 })({ a: 2, b: 3 })
-    ).toEqual({ a: 1, b: 3 });
-  });
-});
+    expect(mergeInto<Obj>({a: 1})({a: 2, b: 3})).toEqual({a: 1, b: 3})
+  })
+})
