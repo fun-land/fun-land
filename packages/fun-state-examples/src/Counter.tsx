@@ -17,7 +17,7 @@ export const Counter: FC<{ state: FunState<CounterState> }> = ({ state }) => {
     <div>
       <h1>Counter</h1>
       <span>
-        <input value={state.get()} onChange={onCountChange} />
+        <input value={state.get().toString()} onChange={onCountChange} />
       </span>
       <button onClick={() => state.mod(inc)}>up</button>
       <button onClick={() => state.mod(dec)}>down</button>
