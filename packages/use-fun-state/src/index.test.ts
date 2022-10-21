@@ -38,8 +38,7 @@ describe('useFunState', () => {
       )
     }
     act(() => {
-      // Something wrong with the react types so I'm forcing `any` to get it to work as documented
-      container !== undefined && render(e(TestComp) as any, container)
+      container !== undefined && render(e(TestComp), container)
     })
     const firstState = st
     const button = container?.querySelector('button')
