@@ -3,4 +3,7 @@ jest.config.js
 .eslintrc.js
 .eslintignore
 tsconfig.json
+tsconfig.publish.json
+.prettierrc
 coverage
+*.test.ts

@@ -1,0 +1,55 @@
+{
+  "name": "@fun-land/react-validation",
+  "version": "1.0.0",
+  "description": "Helpers for using @fun-land/validation with ReactJS",
+  "main": "dist/index.js",
+  "module": "dist/esm/index.js",
+  "author": "jethro larson",
+  "maintainers": [
+    "jethrolarson <jethrolarson@gmail.com>"
+  ],
+  "repository": "git+https://github.com/fun-land/fun-land.git",
+  "homepage": "https://github.com/fun-land/fun-land/tree/main/packages/use-fun-state",
+  "keywords": [
+    "optics",
+    "lens",
+    "traversal",
+    "state",
+    "functional",
+    "data-structure",
+    "react",
+    "state-management"
+  ],
+  "sideEffects": false,
+  "peerDependencies": {
+    "@fun-land/fun-state": "^6.2.7",
+    "@fun-land/validation": "1.0.5",
+    "react": ">=16.8"
+  },
+  "devDependencies": {
+    "@fun-land/fun-state": "^6.2.7",
+    "@fun-land/validation": "1.0.5",
+    "@types/react": "^18.0.5",
+    "@types/react-dom": "^17.0.9",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "scripts": {
+    "build-cjs": "tsc -p ./tsconfig.publish.json",
+    "build-esm": "tsc -p ./tsconfig.publish.json --module esnext --outDir dist/esm",
+    "build": "yarn build-cjs && yarn build-esm",
+    "lint": "eslint . --ext .ts",
+    "test": "jest --watch",
+    "test-cover": "jest --coverage",
+    "prepublishOnly": "yarn build"
+  },
+  "bugs": {
+    "url": "https://github.com/fun-land/fun-land/issues"
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "license": "ISC",
+  "private": false,
+  "gitHead": "416da7a1f0964e342cb7e3f2267585f64baa2340"
+}
