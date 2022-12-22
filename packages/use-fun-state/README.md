@@ -29,9 +29,9 @@ What I wanted:
 
 1. Rather than adding indirection of actions and reducers I wanted to be able to just set the state in event handlers without shame
 2. To bundle the concept of setter and current value up so that it can be passed to helper functions as well as child components.
-3. Make it easy to drill down into the state and pass subsets of it to functions and child component. It was also important to me that this feature be very sophisticated given the deeply nested data structures I'd worked with.
+3. Make it easy to drill down into the state and pass subsets of it to functions and child components.
 4. Make it easy to write unit tests for components or functions that use the bundled state without mocking react dependencies.
-5. Maintain good type-safety with typescript so the compiler can ensure that everything is copacetic
+5. Maintain good type-safety with typescript so that refactoring is a breeze.
 
 I looked at many state-management libraries out there and they seemed to have too-much-magic or too-much-boilerplate or both, and still didn't nail all of my goals. I was able to leverage my experience with functional programming and optics to create a pattern that I think is pretty simple while still supporting an enormous number of complex cases. FunState is impure and the types are not quite bullet-proof but it's easy to write most of your code in a testable way and have high confidence that you're not going to have runtime errors.
 
@@ -90,12 +90,10 @@ See [fun-state-examples](https://github.com/fun-land/fun-land/tree/main/packages
 ## useFunState
 
 ```ts
-;<State>(initialState: State, globalMod?: (state: State) => State) => FunState<State>
+;<State>(initialState: State) => FunState<State>
 ```
 
 Creates an react-hooks based [FunState](../fun-state)</a> instance with a starting state.
-
-Advanced: `globalMod` is an optional callback that will run on any update to the state. In most cases you shouldn't use it but it can be useful to create implementations of FunState with special caching behavior or effects.
 
 ## bindValue
 
