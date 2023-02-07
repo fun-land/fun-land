@@ -484,7 +484,7 @@ Logically negate the argument.
 
 Merge a partial object into the full one. Useful for updating a subset of properties of an object.
 
-## Experimental Fluent API
+## Fluent API (new)
 
 ### Acc
 
