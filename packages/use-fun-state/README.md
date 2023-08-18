@@ -65,19 +65,21 @@ export const Counter: React.FC = () => {
 
 See [fun-state-examples](https://github.com/fun-land/fun-land/tree/main/packages/fun-state-examples) for a sample standalone application using vite.
 
-# When to useFunState
+# ❗ Considerations 
+
+**When to useFunState:**
 
 - You have more than a couple useState calls in a component.
 - When you're in a situation where you would gain benefit from redux or other state-managment libraries.
 - You want composable/modular state
 - You want to gradually try out another state management system without fully converting your app.
 
-# When not to useFunState
+**When not to useFunState:**
 
 - When you just have a single useState value.
 - You're avoiding or can't use React Hooks.
 
-# Tips
+# 💡 Tips
 
 - Keep your FunState Apps simple and delegate the complex logic to pure child components, using `.prop()` where practical.
 - Drill down into deep parts of your tree using .focus in conjunction with `Accessors`. See `./TodoApp` or [@fun-land/accessor docs](https://github.com/fun-land/fun-land/blob/main/packages/accessor) for examples.
