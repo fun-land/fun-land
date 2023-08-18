@@ -112,9 +112,11 @@ Acc<Friends>().prop("friends").all().prop("user").prop("cool").set(true)(friends
 // This sets the "cool" field to true for all users within the friends list.
 ```
 
-Use `focus` to pass any of the functional accessors, such as `filter` to to modify or query specific items:
+Use `focus` to pass any of the functional accessors. Here `filter` allows us to focus items in an array that satisfy the passed callback:
 
 ```ts
+import {Acc, filter} from '@fun-land/accessor';
+
 const isOdd = (a: number): boolean => a % 2 === 1;
 // saving the complex Foci as a variable
 const oddConnections = Acc<Friends>()
@@ -126,7 +128,7 @@ const oddConnections = Acc<Friends>()
 
 oddConnections.query(friendsList) // => [1, 3]
 
-oddConnections.set(oddConnectionsOfFriends)(NaN)(baz)); /* =>
+oddConnections.set(NaN)(friendsList); /* =>
   {friends: [
     {user: {name: "bob", id: 1, connections: [NaN, 2]}},
     {user: {name: "Shari", id: 0, connections: [NaN, 4]}}
