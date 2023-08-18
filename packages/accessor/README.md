@@ -2,30 +2,30 @@
 
 Accessor is a library for doing immutable updates and querying on nested data structures in a way that is composable and powerful. This is similar to lens and traversal libraries like [partial.lenses](https://github.com/calmm-js/partial.lenses), [monacle-ts](https://github.com/gcanti/monocle-ts), and [shades](https://github.com/jamesmcnamara/shades). This library aims to allow easy typed composition of optics without the bewildering functional programming jargon that usually comes with them.
 
-## Installation
+## 🔧 Installation
 
 ```bash
   npm install -S @fun-land/accessor
 ```
 
-## Prerequisites
+## 🧠 Prerequisites
 
 - This library and its examples uses [currying](https://blog.bitsrc.io/understanding-currying-in-javascript-ceb2188c339), arrow functions, and generics extensively so it'll help if you're familiar with those concepts.
 - TypeScript - While usage without TypeScript will work, you lose a lot of the benefit of this library without types. If you're looking for an optics library for use without TS check out [partial.lenses](https://github.com/calmm-js/partial.lenses).
 
-## Examples
+## 📚 Examples
 
 ```
-import { prop, index, filter, set, all, comp } from "@fun-land/accessor";
+import { Acc } from "@fun-land/accessor";
 ```
 
 Simple property query
 
 ```ts
-prop<{ a: number }>()("a").query({ a: 1 });
+Acc<{ a: number }>().prop("a").get({ a: 1 }); // => 1
 ```
 
-While you can inline an interface for your Accessors you probably want to define your interfaces separately and then create your accessors to match.
+While you can inline an interface for your Accessors you probably want to define your interfaces separately:
 
 ```ts
 // Sample interface
@@ -37,76 +37,67 @@ interface User {
 }
 
 // Sample User
-const bob: User = { name: "bob", id: 1, connections: [1, 2] };
+const bob: User = {
+  name: "bob",
+  id: 1,
+  connections: [1, 2]
+};
 ```
 
-Partially applied accessors can be stored, bound to the interface's type
+Immutably modify data with `.set()`:
 
 ```ts
-const userProps = prop<User>();
+Acc<User>().prop("id").set(3)(bob);
+// => { name: "bob", id: 3, connections: [1, 2] }
 ```
 
-`set` an accessor to immutably modify its target
-
-```ts
-set(userProps("id"))(3)(bob); // => { name: "bob", id: 3, connections: [1, 2] }
-```
-
-Trying to pass an invalid key to our accessor will be caught by TypeScript
-
-```ts
-userProps("invalid"); // `Argument of type '"invalid"' is not assignable to parameter of type '"id" | "name" | "cool" | "connections"'.ts(2345)`
-```
-
-You can query for optional fields
-
-```ts
-userProps("cool").query(bob); // => [undefined]
-```
-
-Accessors are composable so that you can extract or modify nested data structures.
+Drill down to child properties:
 
 ```ts
 interface Friend {
   user: User;
 }
 
-const friendProps = prop<Friend>();
 const myFriendBob: Friend = { user: bob };
 
-comp(friendProps("user"), userProps("id")).query(myFriendBob); // => [1]
+Acc<Friend>().prop("user").prop("id").get(myFriendBob);
+// => 1
+
 ```
 
-This is the same as `myFriendBob.user.id`.
+This is equivalent to accessing myFriendBob.user.id.
 
-The composed accessors are accessors themselves and can be stored and reused
+Storing and reusing the Foci:
 
 ```ts
-const friendName = comp(friendProps("user"), userProps("name"));
-set(friendName)("Robert")(myFriendBob); // => {user: {name: "Robert", id: 1, connections: [1, 2]}}
+const friendNameFoci = Acc<Friend>().prop("user").prop("name");
+friendNameFoci.set("Robert")(myFriendBob); 
+// => { user: { name: "Robert", id: 1, connections: [1, 2] } }
 ```
 
-We can use Accessor.mod to run a function on the targeted value
+Modifying the targeted value:
 
 ```ts
-comp(userProp("id")).mod((a) => a + 1)(bob); // => { name: "bob", id: 2, connections: [1, 2] }
+const incrementedIdBob = Acc<User>().prop("id").mod(id => id + 1)(bob);
+// => { name: "bob", id: 2, connections: [1, 2] }
 ```
 
-`index` can be used to focus a specific element of an array
+Focusing a specific element of an array:
 
 ```ts
-comp(friendProps("user"), userProps("connections"), index(1)).query(
-  myFriendBob
-); // => [1]
+Acc<Friend>().prop("user").prop("connections").at(1).get(myFriendBob); 
+// => 2
+
 ```
 
-`all()` can be used to target all items within a nested array
+Targeting all items within a nested array:
 
 ```ts
-comp(friendProps("user"), userProps("connections"), all()).query(myFriendBob); // => [1, 2]
+Acc<Friend>().prop("user").prop("connections").all().query(myFriendBob);
+// => [1, 2]
 ```
 
-`all` gets much more interesting when we have Arrays within Arrays
+Setting a value deep within nested structures:
 
 ```ts
 interface Friends {
@@ -114,39 +105,28 @@ interface Friends {
 }
 
 const shari: User = { name: "Shari", id: 0, connections: [3, 4] };
-
 const myFriendShari: Friend = { user: shari };
+const friendsList: Friends = { friends: [myFriendBob, myFriendShari] };
 
-const baz: Friends = { friends: [myFriendBob, myFriendShari] };
-const makeAllFriendsCool = set(
-  comp(
-    prop<Friends>()("friends"),
-    all(),
-    friendProps("user"),
-    userProps("cool")
-  )
-)(true);
-
-makeAllFriendsCool(baz); // => Sets "cool" to true for all the users within
+Acc<Friends>().prop("friends").all().prop("user").prop("cool").set(true)(friendsList);
+// This sets the "cool" field to true for all users within the friends list.
 ```
 
-`filter` can be used to reduce the scope of an accessor to items which pass a test function. This doesn't remove items from the data structure but just changes what you get from queries or modify.
+Use `focus` to pass any of the functional accessors, such as `filter` to to modify or query specific items:
 
 ```ts
 const isOdd = (a: number): boolean => a % 2 === 1;
+// saving the complex Foci as a variable
+const oddConnections = Acc<Friends>()
+  .prop("friends")
+  .all()
+  .prop("user")
+  .prop("connections")
+  .focus(filter(isOdd));
 
-// accessor chain as reusable value
-const oddConnectionsOfFriends = comp(
-  prop<Friends>()("friends"),
-  all(),
-  friendProps("user"),
-  userProps("connections"),
-  filter(isOdd)
-);
+oddConnections.query(friendsList) // => [1, 3]
 
-oddConnectionsOfFriends.query(baz) // => [1, 3]
-
-set(oddConnectionsOfFriends)(NaN)(baz)); /* =>
+oddConnections.set(oddConnectionsOfFriends)(NaN)(baz)); /* =>
   {friends: [
     {user: {name: "bob", id: 1, connections: [NaN, 2]}},
     {user: {name: "Shari", id: 0, connections: [NaN, 4]}}
