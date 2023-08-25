@@ -573,7 +573,7 @@ If `A` is an array this focuses all items in the array.
 ### Foci&lt;S,NotUndefined<A>&gt;.optional
 
 ```ts
-<B extends ArrayItemType<A>>() => Foci<S, B>
+<A>() => Foci<S, NotUndefined<A>>
 ```
 
 Focuses on the property as long as it's not undefined.
