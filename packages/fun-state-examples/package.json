@@ -1,11 +1,11 @@
 {
   "name": "@fun-land/fun-state-examples",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "Examples of how to use fun-state",
   "dependencies": {
-    "@fun-land/accessor": "^3.3.5",
-    "@fun-land/fun-state": "^6.2.9",
-    "@fun-land/use-fun-state": "^2.0.0",
+    "@fun-land/accessor": "^3.4.0",
+    "@fun-land/fun-state": "^6.2.10",
+    "@fun-land/use-fun-state": "^2.0.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.4.3",

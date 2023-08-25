@@ -1,6 +1,6 @@
 {
   "name": "@fun-land/use-fun-state",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A React architecture and library for doing fractal, compositional state in a way that is typesafe, testable, and easy to refactor.",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
@@ -27,8 +27,8 @@
     "react": ">=16.8"
   },
   "devDependencies": {
-    "@fun-land/accessor": "^3.3.5",
-    "@fun-land/fun-state": "^6.2.9",
+    "@fun-land/accessor": "^3.4.0",
+    "@fun-land/fun-state": "^6.2.10",
     "@testing-library/react": "^13.4.0",
     "@types/react": "^18.0.5",
     "@types/react-dom": "^17.0.9",
