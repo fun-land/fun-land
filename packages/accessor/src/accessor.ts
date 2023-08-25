@@ -191,6 +191,12 @@ export const readOnly = <A>(): Accessor<A, A> => ({
       x
 })
 
+/** Create an accessor that points to a value that can be undefined but whose query and modify functions exclude undefined. */
+export const optional = <A>(): Accessor<A, NotUndefined<A>> => ({
+  mod: (f) => (s) => s !== undefined ? f(s as NotUndefined<A>) : s,
+  query: (s) => (s !== undefined ? [s as NotUndefined<A>] : [])
+})
+
 const _pick = <Obj, Keys extends keyof Obj>(keys: Keys[], obj: Obj): Pick<Obj, Keys> => {
   const out: Partial<Obj> = {}
   keys.forEach((k) => {
@@ -209,6 +215,8 @@ export const sub = <SSub, S extends SSub = never>(keys: Array<keyof SSub>): Acce
 
 type ArrayItemType<T> = T extends Array<infer U> ? U : never
 
+type NotUndefined<T> = T extends undefined ? never : T
+
 /** A more user-friendly api to create and compose accessors */
 export interface Foci<S, A> extends Accessor<S, A> {
   /** replace value(s) focused */
@@ -223,6 +231,7 @@ export interface Foci<S, A> extends Accessor<S, A> {
   at: <B extends ArrayItemType<A>>(idx: number) => Foci<S, B>
   /** focus all child array items */
   all: <B extends ArrayItemType<A>>() => Foci<S, B>
+  optional: () => Foci<S, NotUndefined<A>>
 }
 
 export function Acc<S>(): Foci<S, S>
@@ -242,5 +251,6 @@ const focusedAcc = <S, A>(acc: Accessor<S, A>): Foci<S, A> => ({
   },
   at: <B extends ArrayItemType<A>>(idx: number): Foci<S, B> =>
     focusedAcc(comp(acc as unknown as Accessor<S, B[]>, index<B>(idx))),
-  all: <B extends ArrayItemType<A>>(): Foci<S, B> => focusedAcc(comp(acc as unknown as Accessor<S, B[]>, all<B>()))
+  all: <B extends ArrayItemType<A>>(): Foci<S, B> => focusedAcc(comp(acc as unknown as Accessor<S, B[]>, all<B>())),
+  optional: (): Foci<S, NotUndefined<A>> => focusedAcc(comp(acc, optional<A>()))
 })

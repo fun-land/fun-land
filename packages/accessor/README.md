@@ -350,6 +350,24 @@ Example:
 comp(prop<User>()("name"), unit<string>()).query(bob); // => ['bob']
 ```
 
+### optional
+
+```ts
+: <A>(): Accessor<A, NotUndefined<A>>
+```
+
+Accessor that drills through optional properties. 
+
+Example:
+
+```ts
+const maybeUserName = comp(optional<User | undefined>(), prop<User>()('name'))
+maybeUserName.query(bob); // => ['bob']
+maybeUserName.query(undefined); // => []
+maybeUserName.mod(() => 'Robert')(bob); // => (bob but with name set to "Robert")
+maybeUserName.set(() => 'Robert')(undefined); // => undefined
+```
+
 ### readOnly
 
 ```ts
@@ -551,6 +569,14 @@ If `A` is an array this focuses item in the array at passed index.
 ```
 
 If `A` is an array this focuses all items in the array.
+
+### Foci&lt;S,NotUndefined<A>&gt;.optional
+
+```ts
+<B extends ArrayItemType<A>>() => Foci<S, B>
+```
+
+Focuses on the property as long as it's not undefined.
 
 ## Weaknesses
 

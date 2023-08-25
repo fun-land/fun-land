@@ -1,10 +1,31 @@
-import {Acc, prop, index, filter, set, all, comp, unit, before, after, sub, readOnly, get, viewed} from './accessor'
+import {
+  Acc,
+  prop,
+  index,
+  filter,
+  set,
+  all,
+  comp,
+  unit,
+  before,
+  after,
+  sub,
+  readOnly,
+  get,
+  viewed,
+  optional
+} from './accessor'
+
+interface Complex {
+  value: boolean
+}
 
 interface User {
   name: string
   id: number
   cool?: boolean
   connections: number[]
+  complex?: Complex
 }
 const bob: User = Object.freeze({name: 'bob', id: 1, connections: [1, 2]})
 
@@ -119,6 +140,31 @@ describe('unit', () => {
     expect(comp(unit<User>(), userProps('id'), unit<number>()).mod((a) => a + 1)(bob)).toEqual({...bob, id: 2})
   })
 })
+describe('optional', () => {
+  const complexChain = comp(userProps('complex'), optional<Complex | undefined>(), prop<Complex>()('value'))
+  it('query empty on optional chain', () => {
+    expect(complexChain.query(bob)).toEqual([])
+  })
+  it('query the value if present', () => {
+    expect(complexChain.query({...bob, complex: {value: true}})).toEqual([true])
+  })
+  it('mod is noop over missing', () => {
+    expect(complexChain.mod((value) => !value)(bob)).toEqual(bob)
+  })
+  it('mod is works if present', () => {
+    expect(complexChain.mod((value) => !value)({...bob, complex: {value: true}})).toEqual({
+      ...bob,
+      complex: {value: false}
+    })
+  })
+  it('examples from docs work', () => {
+    const maybeUserName = comp(optional<User | undefined>(), prop<User>()('name'))
+    expect(maybeUserName.query(bob)).toEqual(['bob'])
+    expect(maybeUserName.query(undefined)).toEqual([]) // => []
+    expect(maybeUserName.mod(() => 'Robert')(bob)) // => (bob but with name set to "Robert")
+    expect(maybeUserName.mod(() => 'Robert')(undefined)) // => undefined
+  })
+})
 describe('readOnly', () => {
   it('query composes with other accessors', () => {
     expect(comp(userProps('id'), readOnly()).query(bob)).toEqual([1])
@@ -214,7 +260,7 @@ describe('viewed', () => {
   })
 })
 
-describe('ACC', () => {
+describe('Acc', () => {
   describe('can create from accessor', () => {
     it('queries prop', () => {
       const a = Acc(prop<User>()('connections')).at(0)
@@ -272,6 +318,31 @@ describe('ACC', () => {
     it('works', () => {
       const cooledFriends = Acc<Friends>().prop('friends').all().prop('user').prop('cool').set(true)(myFriends)
       expect(CoolFriends.prop('user').prop('id').query(cooledFriends)).toEqual([1, 0, 2])
+    })
+  })
+
+  describe('Acc.optional', () => {
+    const complexChain = Acc<User>().prop('complex').optional().prop('value')
+    it('query empty on optional chain', () => {
+      expect(complexChain.query(bob)).toEqual([])
+      expect(complexChain.get(bob)).toEqual(undefined)
+    })
+    it('query the value if present', () => {
+      expect(complexChain.query({...bob, complex: {value: true}})).toEqual([true])
+    })
+    it('mod is noop over missing', () => {
+      expect(complexChain.mod((value) => !value)(bob)).toEqual(bob)
+      expect(complexChain.set(false)(bob)).toEqual(bob)
+    })
+    it('mod is works if present', () => {
+      expect(complexChain.mod((value) => !value)({...bob, complex: {value: true}})).toEqual({
+        ...bob,
+        complex: {value: false}
+      })
+      expect(complexChain.set(false)({...bob, complex: {value: true}})).toEqual({
+        ...bob,
+        complex: {value: false}
+      })
     })
   })
 })
