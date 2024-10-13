@@ -1,6 +1,6 @@
 {
   "name": "@fun-land/validation",
-  "version": "1.0.9",
+  "version": "2.0.0",
   "description": "mini-library for validating nested data structures",
   "author": "Jethro Larson <jethrolarson@gmail.com>",
   "homepage": "https://github.com/fun-land/fun-land#readme",
