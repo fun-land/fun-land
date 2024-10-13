@@ -11,9 +11,12 @@
     "lib"
   ],
   "dependencies": {
-    "@fun-land/accessor": "^3.4.0",
-    "@fun-land/fun-state": "^6.2.10",
+    "@fun-land/accessor": "^4.0.1",
+    "@fun-land/fun-state": "^7.0.1",
     "zen-observable": "^0.8.15"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "repository": {
     "type": "git",
@@ -34,5 +37,5 @@
   "devDependencies": {
     "@types/zen-observable": "^0.8.3"
   },
-  "gitHead": "ed0474108d79434db7ad3a115bdc526aee3e03a8"
+  "gitHead": "ae4c60cfc303afb03acc78964b633e5f7f3836d9"
 }

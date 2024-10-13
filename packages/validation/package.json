@@ -11,6 +11,9 @@
     "lib": "lib",
     "test": "__tests__"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fun-land/fun-land.git"
@@ -26,11 +29,11 @@
   "bugs": {
     "url": "https://github.com/fun-land/fun-land/issues"
   },
-  "gitHead": "ed0474108d79434db7ad3a115bdc526aee3e03a8",
+  "gitHead": "ae4c60cfc303afb03acc78964b633e5f7f3836d9",
   "peerDependencies": {
     "@fun-land/accessor": "^3.3.3"
   },
   "devDependencies": {
-    "@fun-land/accessor": "^3.4.0"
+    "@fun-land/accessor": "^4.0.1"
   }
 }

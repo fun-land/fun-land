@@ -7,6 +7,9 @@
   "module": "dist/esm/index.js",
   "author": "jethro larson",
   "homepage": "https://github.com/fun-land/fun-land/tree/main/packages/accessor",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fun-land/fun-land.git"
@@ -34,5 +37,5 @@
     "url": "https://github.com/fun-land/fun-land/issues"
   },
   "sideEffects": false,
-  "gitHead": "ed0474108d79434db7ad3a115bdc526aee3e03a8"
+  "gitHead": "ae4c60cfc303afb03acc78964b633e5f7f3836d9"
 }

@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "strict": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "target": "ES2015",
+    "moduleResolution": "node",
+    "module": "ESNext",
+    "paths": {
+      "*": ["node_modules/*", "packages/*/src"]
+    }
+  }
+}

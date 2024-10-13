@@ -20,6 +20,9 @@
     "react",
     "state-management"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "sideEffects": false,
   "peerDependencies": {
     "@fun-land/fun-state": "^6.2.7",
@@ -27,8 +30,8 @@
     "react": ">=16.8"
   },
   "devDependencies": {
-    "@fun-land/fun-state": "^6.2.10",
-    "@fun-land/validation": "^1.0.9",
+    "@fun-land/fun-state": "^7.0.1",
+    "@fun-land/validation": "^2.0.1",
     "@types/react": "^18.0.5",
     "@types/react-dom": "^17.0.9",
     "react": "^18.0.0",
@@ -51,5 +54,5 @@
   },
   "license": "ISC",
   "private": false,
-  "gitHead": "ed0474108d79434db7ad3a115bdc526aee3e03a8"
+  "gitHead": "ae4c60cfc303afb03acc78964b633e5f7f3836d9"
 }
