@@ -1,7 +1,7 @@
-import {ChangeEvent, act} from 'react'
-import {mockState} from '@fun-land/fun-state'
+import {ChangeEvent, act, createElement as e, useState} from 'react'
+import {FunState, mockState} from '@fun-land/fun-state'
 import useFunState, {bindChecked, bindValue} from './index'
-import {renderHook} from '@testing-library/react'
+import {fireEvent, render, renderHook} from '@testing-library/react'
 
 const inc = (a: number): number => a + 1
 
@@ -12,6 +12,39 @@ interface St {
 const initialState = Object.freeze({a: 0})
 
 describe('useFunState', () => {
+  it('doesnt recreate funstate instances every render', () => {
+    interface St {
+      a: number
+    }
+    const inc = (a: number): number => a + 1
+    let st: FunState<St> | undefined
+    const TestComp = () => {
+      st = useFunState<St>({a: 0})
+      const [b, setB] = useState(0)
+      return e(
+        'button',
+        {
+          onClick: (): void => {
+            st?.prop('a').mod(inc)
+            setB(inc)
+          }
+        },
+        `a ${st.get().a}, b ${b}`
+      )
+    }
+    const res = render(e(TestComp))
+    const firstState = st
+    const button = res.getByRole('button')
+    fireEvent.click(button)
+
+    expect(st).toBe(firstState)
+    expect(st?.get()).toEqual({a: 1})
+    expect(res.getByRole('button').textContent).toBe('a 1, b 1')
+    act(() => {
+      st?.prop('a').set(2)
+    })
+    expect(res.getByRole('button').textContent).toBe('a 2, b 1')
+  })
   it('renders with default state', () => {
     const {result} = renderHook(() => useFunState<St>(initialState))
     expect(result.current.get()).toEqual(initialState)
