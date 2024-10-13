@@ -3,15 +3,7 @@
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": [
-          "build-cjs",
-          "build-esm",
-          "build",
-          "lint",
-          "prepublishOnly",
-          "test",
-          "test-cover"
-        ]
+        "cacheableOperations": ["build-cjs", "build-esm", "build", "lint", "test", "test-cover"]
       }
     }
   },

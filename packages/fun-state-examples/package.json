@@ -4,15 +4,15 @@
   "description": "Examples of how to use fun-state",
   "dependencies": {
     "@fun-land/accessor": "^3.4.0",
-    "@fun-land/fun-state": "^6.2.10",
-    "@fun-land/use-fun-state": "^2.0.1",
-    "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^14.4.3",
+    "@fun-land/fun-state": "^6.2.9",
+    "@fun-land/use-fun-state": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.4.3",
     "@types/jest": "^29.2.4",
     "@types/node": "^18.11.17",
     "@types/react": "^18.0.26",

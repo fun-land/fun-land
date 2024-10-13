@@ -1,4 +1,4 @@
-import {Accessor, comp, set, prop, flow, mergeInto, all, index} from '@fun-land/accessor'
+import {type Accessor, comp, set, prop, flow, mergeInto, all, index} from '@fun-land/accessor'
 
 export type Updater<State> = (transform: (state: State) => State) => void
 
@@ -7,8 +7,9 @@ type UnpackState<FS> = FS extends FunState<infer State> ? State : never
 /** Merge a partial state into a FunState instance */
 export const merge =
   <FState extends FunState<any>>(fs: FState) =>
-  (part: Partial<UnpackState<FState>>): void =>
+  (part: Partial<UnpackState<FState>>): void => {
     fs.mod(mergeInto(part))
+  }
 
 /** Convert a FunState holding an array of items into an array of FunState of the item. */
 export const extractArray = <A>(state: FunState<A[]>): Array<FunState<A>> =>
@@ -38,7 +39,9 @@ export interface FunState<State> {
  * Create a FunState instance from a StateEngine
  */
 export const pureState = <State>({getState, modState}: StateEngine<State>): FunState<State> => {
-  const setState = (v: State): void => modState(() => v)
+  const setState = (v: State): void => {
+    modState(() => v)
+  }
   const focus = <SubState>(acc: Accessor<State, SubState>): FunState<SubState> => subState({getState, modState}, acc)
   const fs: FunState<State> = {
     get: getState,

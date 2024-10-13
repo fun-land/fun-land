@@ -1,5 +1,5 @@
-import {ChangeEventHandler, useReducer} from 'react'
-import {pureState, FunState} from '@fun-land/fun-state'
+import {type ChangeEventHandler, useReducer} from 'react'
+import {pureState, type FunState} from '@fun-land/fun-state'
 
 /** Create react-hooks-based FunState */
 export default function useFunState<State>(initialState: State): FunState<State> {

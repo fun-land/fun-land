@@ -39,7 +39,7 @@
     "build-esm": "tsc -p ./tsconfig.publish.json --module esnext --outDir dist/esm",
     "build": "yarn build-cjs && yarn build-esm",
     "lint": "eslint . --ext .ts",
-    "test": "jest --watch",
+    "test": "jest",
     "test-cover": "jest --coverage",
     "prepublishOnly": "yarn build"
   },

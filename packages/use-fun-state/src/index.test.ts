@@ -1,7 +1,7 @@
-import {ChangeEvent} from 'react'
+import {ChangeEvent, act} from 'react'
 import {mockState} from '@fun-land/fun-state'
 import useFunState, {bindChecked, bindValue} from './index'
-import {act, renderHook} from '@testing-library/react'
+import {renderHook} from '@testing-library/react'
 
 const inc = (a: number): number => a + 1
 
@@ -38,6 +38,13 @@ describe('useFunState', () => {
     expect(result.current.get()).toEqual({a: 4})
   })
   it('prop mod works', () => {
+    const {result} = renderHook(() => useFunState<St>(initialState))
+    act(() => {
+      result.current.prop('a').mod(inc)
+    })
+    expect(result.current.get()).toEqual({a: 1})
+  })
+  it('is reference stable', () => {
     const {result} = renderHook(() => useFunState<St>(initialState))
     act(() => {
       result.current.prop('a').mod(inc)

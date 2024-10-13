@@ -1,6 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'jsdom',
+  testEnvironment: 'node',
+  collectCoverage: true,
   coverageThreshold: {
     global: {
       branches: 100,

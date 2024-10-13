@@ -28,19 +28,19 @@
   },
   "devDependencies": {
     "@fun-land/accessor": "^3.4.0",
-    "@fun-land/fun-state": "^6.2.10",
-    "@testing-library/react": "^13.4.0",
-    "@types/react": "^18.0.5",
-    "@types/react-dom": "^17.0.9",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "@fun-land/fun-state": "^6.2.9",
+    "@testing-library/react": "^16.0.1",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.publish.json",
     "build-esm": "tsc -p ./tsconfig.publish.json --module esnext --outDir dist/esm",
     "build": "yarn build-cjs && yarn build-esm",
     "lint": "eslint . --ext .ts",
-    "test": "jest --watch",
+    "test": "jest",
     "test-cover": "jest --coverage",
     "prepublishOnly": "yarn build"
   },
