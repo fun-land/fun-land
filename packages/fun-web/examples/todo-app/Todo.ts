@@ -13,7 +13,7 @@ export interface TodoState {
   label: string;
 }
 
-interface TodoProps {
+export interface TodoProps {
   removeItem: () => void;
   state: FunState<TodoState>;
 }

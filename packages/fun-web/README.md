@@ -40,15 +40,12 @@ import {
   type FunState,
 } from "@fun-land/fun-web";
 
-interface CounterProps {
-  state: FunState<number>;
-}
 
-const Counter: Component<CounterProps> = (signal, props) => {
+const Counter: Component<{state: FunState<number>}> = (signal, {state}) => {
   // Component runs once - no re-rendering on state changes
   const button = h("button", {}, `Count: ${state.get()}`);
 
-  // Subscriptions handle updates automatically
+  // bindProperty subscribes to the past state and updates named property
   bindProperty(button, "textContent", state, signal);
 
   // Event handlers never go stale (component doesn't re-run)
@@ -57,9 +54,8 @@ const Counter: Component<CounterProps> = (signal, props) => {
   return button;
 };
 
-// Create reactive state and mount
-const state = funState<CounterState>({ count: 0 });
-const mounted = mount(Counter, { state }, document.body);
+// Create reactive state and mount 
+const mounted = mount(Counter, { state: funState(0) }, document.body);
 ```
 
 ## Core Concepts
@@ -95,7 +91,6 @@ When `count` changes, the component **doesn't re-run**. Instead, the `bindProper
 | Virtual DOM diffing overhead | Direct DOM updates via subscriptions |
 | Rules about when you can update state | Update state whenever you want |
 | "Render cycles" and batching complexity | No render cycles, updates are just function calls |
-| Stale closure bugs | Closures never go stale (component doesn't re-run) |
 
 **What this means:**
 - Component functions are just **constructors** - they build UI once and set up reactive bindings
@@ -136,26 +131,7 @@ In React, clicking the button causes the entire component to re-execute. In fun-
 
 ### FunState - Reactive State with Subscriptions
 
-`FunState<T>` follows the compositional state pattern from @fun-land/fun-state with subscription support for DOM updates:
-
-```typescript
-interface FunState<State> {
-  // Core operations (from FunState pattern)
-  get(): State
-  set(value: State): void
-  mod(fn: (s: State) => State): void
-
-  // Focusing (from FunState pattern)
-  prop<K extends keyof State>(key: K): FunState<State[K]>
-  focus<Sub>(accessor: Accessor<State, Sub>): FunState<Sub>
-  query<A>(accessor: Accessor<State, A>): A[]
-
-  // Subscriptions
-  subscribe(signal: AbortSignal, callback: (state: State) => void): void
-}
-```
-
-The `.subscribe()` method allows DOM elements to subscribe to state changes with AbortSignal handling cleanup automatically.
+`FunState<T>` provides reactive compositional state [@fun-land/fun-state](../fun-state):
 
 ```typescript
 const userState = funState({ name: "Alice", age: 30 });
@@ -275,6 +251,8 @@ const mounted = mount(MyComponent, { state }, container);
 mounted.unmount(); // Aborts signal → everything cleans up
 ```
 
+For the most part you won't have to worry about the abort signal if you use the helpers provided.
+
 ## Best Practices
 
 **Prefer helpers over manual subscriptions:**
@@ -306,7 +284,7 @@ button.addEventListener("click", (e) => {
 **Manual subscriptions for complex updates:**
 
 ```typescript
-// ✅ Good - complex logic needs manual control
+// ✅ complex updates may need subscribe
 state.subscribe(signal, (s) => {
   // Multiple DOM updates based on complex conditions
   if (s.status === "loading") {
@@ -321,45 +299,14 @@ state.subscribe(signal, (s) => {
 
 ## API Reference
 
-### State
-
-#### `funState<T>(initialState: T): FunState<T>`
-
-Create a reactive state instance for standalone usage.
-
-```typescript
-const state = funState({ count: 0, name: "Alice" });
-```
-
-#### `FunState<State>`
-
-```typescript
-interface FunState<State> {
-  // Read
-  get(): State
-  query<A>(accessor: Accessor<State, A>): A[]
-
-  // Write
-  set(value: State): void
-  mod(fn: (s: State) => State): void
-
-  // Focus
-  prop<K extends keyof State>(key: K): FunState<State[K]>
-  focus<Sub>(accessor: Accessor<State, Sub>): FunState<Sub>
-
-  // Subscribe
-  subscribe(signal: AbortSignal, callback: (state: State) => void): void
-}
-```
-
 ### DOM Utilities
 
-#### `h<Tag extends keyof HTMLElementTagNameMap>(tag: Tag, attrs?: Record<string, any> | null, children?: ElementChild | ElementChild[]): HTMLElementTagNameMap[Tag]`
+#### `h`
 
-Create an element with automatic type inference.
+Declaratively create an HTML Element with properties and children.
 
 ```typescript
-const div: HTMLDivElement = h("div", { id: "app" }, [
+const div = h("div", { id: "app" }, [
   h("h1", null, "Hello"),
   h("input", { type: "text", value: "foo" })
 ]);
@@ -367,10 +314,18 @@ const div: HTMLDivElement = h("div", { id: "app" }, [
 
 **Attribute conventions:**
 - Dashed properties (`data-*`, `aria-*`) → `setAttribute()`
-- Properties starting with `on` → `addEventListener()`
+- Don't event bind with properties, use `on()`
 - Everything else → property assignment
 
-#### `bindProperty<E extends Element, K extends keyof E>(el: E, key: K, state: FunState<E[K]>, signal: AbortSignal): E`
+#### bindProperty
+```ts
+<E extends Element, K extends keyof E>(
+  el: E,
+  key: K,
+  fs: FunState<E[K]>,
+  signal: AbortSignal
+): E
+```
 
 Bind element property to state. Returns element for chaining.
 
@@ -380,7 +335,15 @@ bindProperty(input, "value", state.prop("name"), signal);
 // input.value syncs with state.name
 ```
 
-#### `on<E extends Element, K extends keyof HTMLElementEventMap>(el: E, type: K, handler: (ev: HTMLElementEventMap[K] & { currentTarget: E }) => void, signal: AbortSignal): E`
+#### on
+```ts
+<E extends Element, K extends keyof HTMLElementEventMap>(
+  el: E,
+  type: K,
+  handler: (ev: HTMLElementEventMap[K] & { currentTarget: E }) => void,
+  signal: AbortSignal
+): E
+```
 
 Add type-safe event listener. Returns element for chaining.
 
@@ -391,9 +354,21 @@ on(h("button"), "click", (e) => {
 }, signal);
 ```
 
-#### `keyedChildren<T extends { key: string }>(parent: Element, signal: AbortSignal, list: FunState<T[]>, renderRow: (rowSignal: AbortSignal, item: FunState<T>) => Element): KeyedChildren<T>`
+#### keyedChildren
+```ts
+<T extends { key: string }>(
+  parent: Element,
+  signal: AbortSignal,
+  list: FunState<T[]>,
+  renderRow: (row: {
+    signal: AbortSignal;
+    state: FunState<T>;
+    remove: () => void;
+  }) => Element
+): KeyedChildren<T>
+```
 
-Render and reconcile keyed lists efficiently.
+Render and reconcile keyed lists efficiently. Each row gets its own AbortSignal for cleanup and a focused state.
 
 ```typescript
 interface Todo {
@@ -406,16 +381,48 @@ const todos: FunState<Todo[]> = funState([
   { key: "a", label: "First", done: false }
 ]);
 
-keyedChildren(
-  h("ul"),
-  signal,
-  todos,
-  (rowSignal, todo: FunState<Todo>) => {
-    const li = h("li");
-    bindProperty(li, "textContent", todo.prop("label"), rowSignal);
-    return li;
-  }
-);
+keyedChildren(h("ul"), signal, todos, (row) => {
+  const li = h("li");
+
+  // row.state is a focused FunState<Todo> for this item
+  bindProperty(li, "textContent", row.state.prop("label"), row.signal);
+
+  // row.remove() removes this item from the list
+  const deleteBtn = h("button", { textContent: "Delete" });
+  on(deleteBtn, "click", row.remove, row.signal);
+
+  li.appendChild(deleteBtn);
+  return li;
+});
+```
+
+#### $ and $$ - DOM Query Utilities
+
+Convenient shortcuts for `querySelector` and `querySelectorAll` with better TypeScript support.
+
+**`$<T extends Element>(selector: string): T | undefined`**
+
+Query a single element. Returns `undefined` instead of `null` if not found.
+
+```typescript
+const button = $<HTMLButtonElement>("#submit-btn");
+if (button) {
+  button.disabled = true;
+}
+
+const input = $<HTMLInputElement>(".name-input");
+```
+
+**`$$<T extends Element>(selector: string): T[]`**
+
+Query multiple elements. Returns a real Array (not NodeList) for better ergonomics.
+
+```typescript
+const items = $$<HTMLDivElement>(".item");
+items.forEach(item => item.classList.add("active"));
+
+// Array methods work directly
+const texts = $$(".label").map(el => el.textContent);
 ```
 
 #### Other utilities
@@ -430,14 +437,17 @@ addClass: (...classes: string[]) => (el: Element) => Element
 removeClass: (...classes: string[]) => (el: Element) => Element
 toggleClass: (className: string, force?: boolean) => (el: Element) => Element
 append: (...children: Element[]) => (el: Element) => Element
-pipe: <T>(...fns: Array<(x: T) => T>) => (x: T) => T
+pipeEndo: <T>(...fns: Array<(x: T) => T>) => (x: T) => T
 ```
 
 ### Mounting
 
-#### `mount<Props>(component: Component<Props>, props: Props, container: Element): MountedComponent`
+#### mount
+```ts
+<Props>(component: Component<Props>, props: Props, container: Element): MountedComponent
+```
 
-Mount component to DOM and manage lifecycle.
+Mount component to DOM and manage lifecycle. You probably only need to call this once in your app.
 
 ```typescript
 const state = funState({ count: 0 });
@@ -470,18 +480,16 @@ interface AppState {
   settings: Settings;
 }
 
-const App: Component<{ state: FunState<AppState> }> = (signal, props) => {
-  const userSection = UserProfile(signal, {
-    editable: true,
-    state: props.state.focus(prop<AppState>()("user")),
-  });
-
-  const settingsSection = SettingsPanel(signal, {
-    state: props.state.focus(prop<AppState>()("settings")),
-  });
-
-  return h("div", {}, [userSection, settingsSection]);
-};
+const App: Component<{ state: FunState<AppState> }> = (signal, props) => 
+  h("div", {}, [
+    UserProfile(signal, {
+      editable: true,
+      state: props.state.focus(prop<AppState>()("user")),
+    }),
+    SettingsPanel(signal, {
+      state: props.state.focus(prop<AppState>()("settings")),
+    })
+  ]);
 ```
 
 Focused states only trigger updates when their slice changes. Components can also create **local state** using `funState()` instead of receiving it via props - there's no distinction, state is just data.

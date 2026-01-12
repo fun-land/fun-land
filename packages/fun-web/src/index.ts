@@ -19,5 +19,7 @@ export {
   bindProperty,
   keyedChildren,
   pipeEndo,
+  $,
+  $$,
 } from "./dom";
 export { mount } from "./mount";

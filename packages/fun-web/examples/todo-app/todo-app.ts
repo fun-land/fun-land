@@ -96,10 +96,10 @@ const TodoApp: Component = (signal) => {
   const allDoneText = h("span", { textContent: "" });
 
   const todoList = h("ul", {});
-  keyedChildren(todoList, signal, state.prop("items"), (rowSignal, todoState) =>
-    Todo(rowSignal, {
-      removeItem: () => state.mod(removeByKey(todoState.prop("key").get())),
-      state: todoState,
+  keyedChildren(todoList, signal, state.prop("items"), (row) =>
+    Todo(row.signal, {
+      removeItem: row.remove,
+      state: row.state,
     })
   );
 

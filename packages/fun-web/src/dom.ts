@@ -209,7 +209,11 @@ export function keyedChildren<T extends Keyed>(
   parent: Element,
   signal: AbortSignal,
   list: FunState<T[]>,
-  renderRow: (rowSignal: AbortSignal, item: FunState<T>) => Element
+  renderRow: (row: {
+    signal: AbortSignal;
+    state: FunState<T>;
+    remove: () => void;
+  }) => Element
 ): KeyedChildren<T> {
   const rows = new Map<string, MountedRow>();
 
@@ -249,7 +253,11 @@ export function keyedChildren<T extends Keyed>(
       if (!rows.has(k)) {
         const ctrl = new AbortController();
         const itemState = list.focus(filter<T>((t) => t.key === k));
-        const el = renderRow(ctrl.signal, itemState);
+        const el = renderRow({
+          signal: ctrl.signal,
+          state: itemState,
+          remove: () => list.mod((list) => list.filter((t) => t.key !== k)),
+        });
         rows.set(k, { key: k, el, ctrl });
       }
     }
@@ -277,3 +285,9 @@ export function keyedChildren<T extends Keyed>(
 
   return { reconcile, dispose };
 }
+
+export const $ = <T extends Element>(selector: string): T | undefined =>
+  document.querySelector<T>(selector) ?? undefined;
+
+export const $$ = <T extends Element>(selector: string): T[] =>
+  Array.from(document.querySelectorAll(selector));

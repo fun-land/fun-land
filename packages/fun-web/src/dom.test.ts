@@ -7,6 +7,8 @@ import {
   on,
   pipeEndo,
   keyedChildren,
+  $,
+  $$,
 } from "./dom";
 import { FunState, funState } from "./state";
 
@@ -415,36 +417,29 @@ function setupKeyedChildren(
   const mountCountByKey = new Map<string, number>();
   const abortCountByKey = new Map<string, number>();
 
-  const api = keyedChildren<Item>(
-    parent,
-    signal,
-    listState,
-    (rowSignal, itemState: any) => {
-      // In your real keyedChildren, itemState is a focused FunState<Item>.
-      // In tests we don't need it; we just need an element and lifecycle tracking.
+  const api = keyedChildren<Item>(parent, signal, listState, (row) => {
+    // In your real keyedChildren, itemState is a focused FunState<Item>.
+    // In tests we don't need it; we just need an element and lifecycle tracking.
 
-      // We'll attach a listener to verify rowSignal abort happens:
-      const key = (itemState?.get?.()?.key ??
-        (itemState?.key as string) ??
-        "unknown") as string;
+    // We'll attach a listener to verify rowSignal abort happens:
+    const key = row.state.get().key;
 
-      // However, because we can't rely on itemState.get() in this harness,
-      // we'll patch this by using a data attribute later in the test.
-      const el = document.createElement("li");
+    // However, because we can't rely on itemState.get() in this harness,
+    // we'll patch this by using a data attribute later in the test.
+    const el = document.createElement("li");
 
-      // Count mounts by key (key set later by caller using dataset)
-      el.dataset.key = key;
+    // Count mounts by key (key set later by caller using dataset)
+    el.dataset.key = key;
 
-      const prevMounts = mountCountByKey.get(key) ?? 0;
-      mountCountByKey.set(key, prevMounts + 1);
+    const prevMounts = mountCountByKey.get(key) ?? 0;
+    mountCountByKey.set(key, prevMounts + 1);
 
-      rowSignal.addEventListener("abort", () => {
-        abortCountByKey.set(key, (abortCountByKey.get(key) ?? 0) + 1);
-      });
+    row.signal.addEventListener("abort", () => {
+      abortCountByKey.set(key, (abortCountByKey.get(key) ?? 0) + 1);
+    });
 
-      return el;
-    }
-  );
+    return el;
+  });
 
   return { api, mountCountByKey, abortCountByKey };
 }
@@ -464,29 +459,24 @@ function setupKeyedChildrenWithKeyAwareRenderer(
   const abortCountByKey = new Map<string, number>();
   const elByKey = new Map<string, Element>();
 
-  const api = keyedChildren<Item>(
-    parent,
-    signal,
-    listState as any,
-    (rowSignal: AbortSignal, itemState: FunState<Item>) => {
-      // In your real impl, itemState.get().key should exist.
-      const item = itemState.get();
-      const k = item.key;
+  const api = keyedChildren<Item>(parent, signal, listState as any, (row) => {
+    // In your real impl, itemState.get().key should exist.
+    const item = row.state.get();
+    const k = item.key;
 
-      const el = document.createElement("li");
-      el.dataset.key = k;
-      el.textContent = item.label;
+    const el = document.createElement("li");
+    el.dataset.key = k;
+    el.textContent = item.label;
 
-      elByKey.set(k, el);
-      mountCountByKey.set(k, (mountCountByKey.get(k) ?? 0) + 1);
+    elByKey.set(k, el);
+    mountCountByKey.set(k, (mountCountByKey.get(k) ?? 0) + 1);
 
-      rowSignal.addEventListener("abort", () => {
-        abortCountByKey.set(k, (abortCountByKey.get(k) ?? 0) + 1);
-      });
+    row.signal.addEventListener("abort", () => {
+      abortCountByKey.set(k, (abortCountByKey.get(k) ?? 0) + 1);
+    });
 
-      return el;
-    }
-  );
+    return el;
+  });
 
   return { api, mountCountByKey, abortCountByKey, elByKey };
 }
@@ -725,16 +715,113 @@ describe("keyedChildren", () => {
     ]);
 
     expect(() => {
-      keyedChildren(
-        container,
-        signal,
-        listState,
-        (rowSignal: AbortSignal, itemState: FunState<Item>) => {
-          return document.createElement("li");
-        }
-      );
+      keyedChildren(container, signal, listState, () => {
+        return document.createElement("li");
+      });
     }).toThrow('keyedChildren: duplicate key "a"');
 
     controller.abort();
+  });
+});
+
+describe("$ (querySelector)", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  test("should return element if found", () => {
+    const div = h("div", { id: "test", className: "my-class" });
+    document.body.appendChild(div);
+
+    const result = $<HTMLDivElement>("#test");
+    expect(result).toBe(div);
+    expect(result?.id).toBe("test");
+  });
+
+  test("should return undefined if not found", () => {
+    const result = $("#nonexistent");
+    expect(result).toBeUndefined();
+  });
+
+  test("should work with class selectors", () => {
+    const div = h("div", { className: "test-class" });
+    document.body.appendChild(div);
+
+    const result = $(".test-class");
+    expect(result).toBe(div);
+  });
+
+  test("should return first matching element", () => {
+    const div1 = h("div", { className: "item" });
+    const div2 = h("div", { className: "item" });
+    document.body.appendChild(div1);
+    document.body.appendChild(div2);
+
+    const result = $(".item");
+    expect(result).toBe(div1);
+  });
+
+  test("should infer element type", () => {
+    const input = h("input", { type: "text", id: "myinput" });
+    document.body.appendChild(input);
+
+    const result = $<HTMLInputElement>("#myinput");
+    expect(result).toBe(input);
+    // TypeScript should know this is HTMLInputElement
+    if (result) {
+      expect(result.value).toBeDefined();
+    }
+  });
+});
+
+describe("$$ (querySelectorAll)", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  test("should return array of matching elements", () => {
+    const div1 = h("div", { className: "item" });
+    const div2 = h("div", { className: "item" });
+    const div3 = h("div", { className: "item" });
+    document.body.appendChild(div1);
+    document.body.appendChild(div2);
+    document.body.appendChild(div3);
+
+    const results = $$(".item");
+    expect(results).toHaveLength(3);
+    expect(results[0]).toBe(div1);
+    expect(results[1]).toBe(div2);
+    expect(results[2]).toBe(div3);
+  });
+
+  test("should return empty array if no matches", () => {
+    const results = $$(".nonexistent");
+    expect(results).toEqual([]);
+    expect(Array.isArray(results)).toBe(true);
+  });
+
+  test("should work with complex selectors", () => {
+    const container = h("div", { id: "container" });
+    const item1 = h("span", { className: "item" });
+    const item2 = h("span", { className: "item" });
+    container.appendChild(item1);
+    container.appendChild(item2);
+    document.body.appendChild(container);
+
+    const results = $$<HTMLSpanElement>("#container .item");
+    expect(results).toHaveLength(2);
+    expect(results[0]).toBe(item1);
+    expect(results[1]).toBe(item2);
+  });
+
+  test("should return true array, not NodeList", () => {
+    const div1 = h("div", { className: "item" });
+    document.body.appendChild(div1);
+
+    const results = $$(".item");
+    expect(Array.isArray(results)).toBe(true);
+    // Should have array methods
+    expect(typeof results.map).toBe("function");
+    expect(typeof results.filter).toBe("function");
   });
 });

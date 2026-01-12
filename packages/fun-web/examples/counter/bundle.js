@@ -1,6 +1,6 @@
 "use strict";
 (() => {
-  // ../accessor/dist/esm/util.js
+  // ../fun-state/node_modules/@fun-land/accessor/dist/esm/util.js
   var flow = (f, g) => (x) => g(f(x));
   var K = (a) => (_b) => a;
   var flatmap = (f) => (xs) => {
@@ -11,7 +11,7 @@
     return out;
   };
 
-  // ../accessor/dist/esm/accessor.js
+  // ../fun-state/node_modules/@fun-land/accessor/dist/esm/accessor.js
   var prop = () => (k) => ({
     query: (obj) => [obj[k]],
     mod: (transform) => (obj) => Object.assign(Object.assign({}, obj), { [k]: transform(obj[k]) })
@@ -25,13 +25,12 @@
   }
   var set = (acc) => flow(K, acc.mod);
 
-  // src/state.ts
-  var pureState = (engine) => {
-    const { getState, modState, subscribe } = engine;
+  // ../fun-state/dist/esm/src/FunState.js
+  var pureState = ({ getState, modState, subscribe }) => {
     const setState = (v) => {
       modState(() => v);
     };
-    const focus = (acc) => subState(engine, acc);
+    const focus = (acc) => subState({ getState, modState, subscribe }, acc);
     const subscribeToState = (signal, callback) => {
       const unsubscribe = subscribe(callback);
       signal.addEventListener("abort", unsubscribe, { once: true });
@@ -47,27 +46,10 @@
     };
     return fs;
   };
-  var subState = (engine, accessor) => {
-    const { getState, modState, subscribe } = engine;
+  var subState = ({ getState, modState, subscribe }, accessor) => {
     const props = prop();
     const _get = () => accessor.query(getState())[0];
     const _mod = flow(accessor.mod, modState);
-    const focus = (acc) => subState(
-      { getState: _get, modState: _mod, subscribe: createFocusedSubscribe() },
-      acc
-    );
-    const _prop = flow(props, focus);
-    const subscribeToState = (signal, callback) => {
-      let lastValue = _get();
-      const unsubscribe = subscribe((parentState) => {
-        const newValue = accessor.query(parentState)[0];
-        if (newValue !== lastValue) {
-          lastValue = newValue;
-          callback(newValue);
-        }
-      });
-      signal.addEventListener("abort", unsubscribe, { once: true });
-    };
     function createFocusedSubscribe() {
       return (listener) => {
         let lastValue = _get();
@@ -80,6 +62,19 @@
         });
       };
     }
+    const focus = (acc) => subState({ getState: _get, modState: _mod, subscribe: createFocusedSubscribe() }, acc);
+    const _prop = flow(props, focus);
+    const subscribeToState = (signal, callback) => {
+      let lastValue = _get();
+      const unsubscribe = subscribe((parentState) => {
+        const newValue = accessor.query(parentState)[0];
+        if (newValue !== lastValue) {
+          lastValue = newValue;
+          callback(newValue);
+        }
+      });
+      signal.addEventListener("abort", unsubscribe, { once: true });
+    };
     return {
       get: _get,
       query: (acc) => comp(accessor, acc).query(getState()),
@@ -105,6 +100,12 @@
     return { getState, modState, subscribe };
   };
   var funState = (initialState) => pureState(standaloneEngine(initialState));
+
+  // ../accessor/dist/esm/accessor.js
+  var prop2 = () => (k) => ({
+    query: (obj) => [obj[k]],
+    mod: (transform) => (obj) => Object.assign(Object.assign({}, obj), { [k]: transform(obj[k]) })
+  });
 
   // src/dom.ts
   var h = (tag, attrs2, children) => {
@@ -191,7 +192,7 @@
   var App = (signal) => {
     const state = funState({
       title: "Fun-Web Counter Example",
-      counterValue: { count: 0 },
+      counterValue: { count: 0 }
     });
     const heading = h("h1", { textContent: state.get().title });
     state.prop("title").subscribe(signal, (title) => {
@@ -203,7 +204,7 @@
       {
         label: "Click Counter",
         onReset: () => state.prop("counterValue").set({ count: 0 }),
-        state: state.focus(prop()("counterValue"))
+        state: state.focus(prop2()("counterValue"))
       }
     );
     return h("div", { className: "app" }, [heading, counter]);

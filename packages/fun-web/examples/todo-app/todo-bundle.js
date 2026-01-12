@@ -1,6 +1,6 @@
 "use strict";
 (() => {
-  // ../accessor/dist/esm/util.js
+  // ../fun-state/node_modules/@fun-land/accessor/dist/esm/util.js
   var flow = (f, g) => (x) => g(f(x));
   var K = (a) => (_b) => a;
   var flatmap = (f) => (xs) => {
@@ -10,16 +10,11 @@
     }
     return out;
   };
-  var prepend = (x) => (xs) => [x, ...xs];
 
-  // ../accessor/dist/esm/accessor.js
+  // ../fun-state/node_modules/@fun-land/accessor/dist/esm/accessor.js
   var prop = () => (k) => ({
     query: (obj) => [obj[k]],
     mod: (transform) => (obj) => Object.assign(Object.assign({}, obj), { [k]: transform(obj[k]) })
-  });
-  var index = (i) => ({
-    query: (s) => [s[i]],
-    mod: (f) => (xs) => xs.map((x, j) => i === j ? f(x) : x)
   });
   var _comp = (acc1, acc2) => ({
     query: flow(acc1.query, flatmap(acc2.query)),
@@ -28,50 +23,14 @@
   function comp(...accs) {
     return accs.reduce(_comp);
   }
-  var all = () => ({
-    query: (xs) => xs,
-    mod: (transform) => (xs) => xs.map(transform)
-  });
-  var filter = (pred) => ({
-    query: (xs) => xs.filter(pred),
-    mod: (transform) => (s) => s.map((x) => pred(x) ? transform(x) : x)
-  });
   var set = (acc) => flow(K, acc.mod);
-  var unit = () => ({
-    query: (x) => [x],
-    mod: (transform) => (x) => transform(x)
-  });
-  var optional = () => ({
-    mod: (f) => (s) => s !== void 0 ? f(s) : s,
-    query: (s) => s !== void 0 ? [s] : []
-  });
-  function Acc(acc = unit()) {
-    return focusedAcc(acc);
-  }
-  var focusedAcc = (acc) => ({
-    query: (struct) => acc.query(struct),
-    get: (struct) => {
-      var _a;
-      return (_a = acc.query(struct)[0]) !== null && _a !== void 0 ? _a : void 0;
-    },
-    mod: acc.mod,
-    set: flow(K, acc.mod),
-    focus: (bcc) => focusedAcc(comp(acc, bcc)),
-    prop(k) {
-      return this.focus(prop()(k));
-    },
-    at: (idx) => focusedAcc(comp(acc, index(idx))),
-    all: () => focusedAcc(comp(acc, all())),
-    optional: () => focusedAcc(comp(acc, optional()))
-  });
 
-  // src/state.ts
-  var pureState = (engine) => {
-    const { getState, modState, subscribe } = engine;
+  // ../fun-state/dist/esm/src/FunState.js
+  var pureState = ({ getState, modState, subscribe }) => {
     const setState = (v) => {
       modState(() => v);
     };
-    const focus = (acc) => subState(engine, acc);
+    const focus = (acc) => subState({ getState, modState, subscribe }, acc);
     const subscribeToState = (signal, callback) => {
       const unsubscribe = subscribe(callback);
       signal.addEventListener("abort", unsubscribe, { once: true });
@@ -87,27 +46,10 @@
     };
     return fs;
   };
-  var subState = (engine, accessor) => {
-    const { getState, modState, subscribe } = engine;
+  var subState = ({ getState, modState, subscribe }, accessor) => {
     const props = prop();
     const _get = () => accessor.query(getState())[0];
     const _mod = flow(accessor.mod, modState);
-    const focus = (acc) => subState(
-      { getState: _get, modState: _mod, subscribe: createFocusedSubscribe() },
-      acc
-    );
-    const _prop = flow(props, focus);
-    const subscribeToState = (signal, callback) => {
-      let lastValue = _get();
-      const unsubscribe = subscribe((parentState) => {
-        const newValue = accessor.query(parentState)[0];
-        if (newValue !== lastValue) {
-          lastValue = newValue;
-          callback(newValue);
-        }
-      });
-      signal.addEventListener("abort", unsubscribe, { once: true });
-    };
     function createFocusedSubscribe() {
       return (listener) => {
         let lastValue = _get();
@@ -120,6 +62,19 @@
         });
       };
     }
+    const focus = (acc) => subState({ getState: _get, modState: _mod, subscribe: createFocusedSubscribe() }, acc);
+    const _prop = flow(props, focus);
+    const subscribeToState = (signal, callback) => {
+      let lastValue = _get();
+      const unsubscribe = subscribe((parentState) => {
+        const newValue = accessor.query(parentState)[0];
+        if (newValue !== lastValue) {
+          lastValue = newValue;
+          callback(newValue);
+        }
+      });
+      signal.addEventListener("abort", unsubscribe, { once: true });
+    };
     return {
       get: _get,
       query: (acc) => comp(accessor, acc).query(getState()),
@@ -146,12 +101,77 @@
   };
   var funState = (initialState2) => pureState(standaloneEngine(initialState2));
 
+  // ../accessor/dist/esm/util.js
+  var flow2 = (f, g) => (x) => g(f(x));
+  var K2 = (a) => (_b) => a;
+  var flatmap2 = (f) => (xs) => {
+    let out = [];
+    for (const x of xs) {
+      out = out.concat(f(x));
+    }
+    return out;
+  };
+  var prepend = (x) => (xs) => [x, ...xs];
+
+  // ../accessor/dist/esm/accessor.js
+  var prop2 = () => (k) => ({
+    query: (obj) => [obj[k]],
+    mod: (transform) => (obj) => Object.assign(Object.assign({}, obj), { [k]: transform(obj[k]) })
+  });
+  var index2 = (i) => ({
+    query: (s) => [s[i]],
+    mod: (f) => (xs) => xs.map((x, j) => i === j ? f(x) : x)
+  });
+  var _comp2 = (acc1, acc2) => ({
+    query: flow2(acc1.query, flatmap2(acc2.query)),
+    mod: flow2(acc2.mod, acc1.mod)
+  });
+  function comp2(...accs) {
+    return accs.reduce(_comp2);
+  }
+  var all2 = () => ({
+    query: (xs) => xs,
+    mod: (transform) => (xs) => xs.map(transform)
+  });
+  var filter = (pred) => ({
+    query: (xs) => xs.filter(pred),
+    mod: (transform) => (s) => s.map((x) => pred(x) ? transform(x) : x)
+  });
+  var unit = () => ({
+    query: (x) => [x],
+    mod: (transform) => (x) => transform(x)
+  });
+  var optional = () => ({
+    mod: (f) => (s) => s !== void 0 ? f(s) : s,
+    query: (s) => s !== void 0 ? [s] : []
+  });
+  function Acc(acc = unit()) {
+    return focusedAcc(acc);
+  }
+  var focusedAcc = (acc) => ({
+    query: (struct) => acc.query(struct),
+    get: (struct) => {
+      var _a;
+      return (_a = acc.query(struct)[0]) !== null && _a !== void 0 ? _a : void 0;
+    },
+    mod: acc.mod,
+    set: flow2(K2, acc.mod),
+    focus: (bcc) => focusedAcc(comp2(acc, bcc)),
+    prop(k) {
+      return this.focus(prop2()(k));
+    },
+    at: (idx) => focusedAcc(comp2(acc, index2(idx))),
+    all: () => focusedAcc(comp2(acc, all2())),
+    optional: () => focusedAcc(comp2(acc, optional()))
+  });
+
   // src/dom.ts
   var h = (tag, attrs2, children) => {
     const element = document.createElement(tag);
     if (attrs2) {
       for (const [key, value] of Object.entries(attrs2)) {
-        if (value == null) continue;
+        if (value == null)
+          continue;
         if (key.startsWith("on") && typeof value === "function") {
           const eventName = key.slice(2).toLowerCase();
           element.addEventListener(eventName, value);
@@ -204,7 +224,8 @@
       const seen = /* @__PURE__ */ new Set();
       for (const it of items) {
         const k = it.key;
-        if (seen.has(k)) throw new Error(`keyedChildren: duplicate key "${k}"`);
+        if (seen.has(k))
+          throw new Error(`keyedChildren: duplicate key "${k}"`);
         seen.add(k);
         nextKeys.push(k);
       }
@@ -249,7 +270,7 @@
       unmount: () => {
         controller.abort();
         element.remove();
-      },
+      }
     };
   };
 
@@ -257,7 +278,7 @@
   var Todo = (signal, { state, removeItem }) => {
     const prioritySelect = h("select", {}, [
       h("option", { value: "0" }, "High"),
-      h("option", { value: "1" }, "Low"),
+      h("option", { value: "1" }, "Low")
     ]);
     prioritySelect.value = String(state.get().priority);
     state.prop("priority").subscribe(signal, (priority) => {
@@ -283,7 +304,7 @@
     const labelInput = on(
       bindProperty(
         h("input", {
-          type: "text",
+          type: "text"
         }),
         "value",
         state.prop("label"),
@@ -300,36 +321,29 @@
       prioritySelect,
       labelInput,
       // you can even inline to go tacit
-      on(h("button", { textContent: "X" }), "click", removeItem, signal),
+      on(h("button", { textContent: "X" }), "click", removeItem, signal)
     ]);
   };
 
   // examples/todo-app/todo-app.ts
   var stateFoci = Acc();
-  var addItem = (state) =>
-    stateFoci.prop("items").mod(
-      prepend({
-        checked: false,
-        label: state.value,
-        priority: 1,
-        key: crypto.randomUUID(),
-      })
-    )(state);
+  var addItem = (state) => stateFoci.prop("items").mod(
+    prepend({
+      checked: false,
+      label: state.value,
+      priority: 1,
+      key: crypto.randomUUID()
+    })
+  )(state);
   var clearValue = stateFoci.prop("value").set("");
   var markAllDone = stateFoci.prop("items").all().prop("checked").set(true);
-  var removeByKey = (key) =>
-    stateFoci.prop("items").mod((xs) => xs.filter((t) => t.key !== key));
+  var removeByKey = (key) => stateFoci.prop("items").mod((xs) => xs.filter((t) => t.key !== key));
   var initialState = {
     value: "",
     items: [
       { checked: false, label: "Learn fun-web", priority: 0, key: "asdf" },
-      {
-        checked: true,
-        label: "Build something cool",
-        priority: 1,
-        key: "fdas",
-      },
-    ],
+      { checked: true, label: "Build something cool", priority: 1, key: "fdas" }
+    ]
   };
   var TodoApp = (signal) => {
     const state = funState(initialState);
@@ -337,7 +351,7 @@
       h("input", {
         type: "text",
         value: state.get().value,
-        placeholder: "Add a todo...",
+        placeholder: "Add a todo..."
       }),
       "value",
       state.prop("value"),
@@ -358,7 +372,7 @@
       (e) => {
         e.preventDefault();
         if (state.get().value.trim()) {
-          state.mod(flow(addItem, clearValue));
+          state.mod(flow2(addItem, clearValue));
         }
       },
       signal
@@ -377,17 +391,16 @@
       todoList,
       signal,
       state.prop("items"),
-      (rowSignal, todoState) =>
-        Todo(rowSignal, {
-          removeItem: () => state.mod(removeByKey(todoState.prop("key").get())),
-          state: todoState,
-        })
+      (rowSignal, todoState) => Todo(rowSignal, {
+        removeItem: () => state.mod(removeByKey(todoState.prop("key").get())),
+        state: todoState
+      })
     );
     return h("div", { className: "todo-app" }, [
       h("h1", { textContent: "Todo App" }),
       form,
       h("div", {}, [markAllBtn, allDoneText]),
-      todoList,
+      todoList
     ]);
   };
   var app = document.getElementById("app");

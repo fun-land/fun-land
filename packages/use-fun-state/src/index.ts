@@ -7,6 +7,8 @@ export default function useFunState<State>(initialState: State): FunState<State>
   const ref = useRef(initialState)
   // creating an unused react state engine just to get rerender to happen when state changes
   const [_, setState] = useState(initialState)
+  const listenersRef = useRef(new Set<(state: State) => void>())
+
   return useMemo(
     () =>
       pureState({
@@ -14,6 +16,12 @@ export default function useFunState<State>(initialState: State): FunState<State>
         modState: (f) => {
           ref.current = f(ref.current)
           setState(ref.current)
+          // Notify subscribers
+          listenersRef.current.forEach(listener => listener(ref.current))
+        },
+        subscribe: (listener) => {
+          listenersRef.current.add(listener)
+          return () => listenersRef.current.delete(listener)
         }
       }),
     [ref]
