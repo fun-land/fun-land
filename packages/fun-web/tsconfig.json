@@ -10,7 +10,7 @@
     "moduleResolution": "node",
     "module": "CommonJS",
     "composite": true,
-    "rootDir": "src"
+    "lib": ["ES2015", "DOM"]
   },
   "include": ["src/**/*.ts"]
 }

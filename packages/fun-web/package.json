@@ -1,0 +1,48 @@
+{
+  "name": "@fun-land/fun-web",
+  "version": "0.1.0",
+  "description": "A web library for component-based development using fun-land",
+  "main": "dist/index.js",
+  "module": "dist/esm/index.js",
+  "author": "jethro larson",
+  "maintainers": [
+    "jethrolarson <jethrolarson@gmail.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fun-land/fun-land.git"
+  },
+  "homepage": "https://github.com/fun-land/fun-land/tree/main/packages/fun-web",
+  "keywords": [
+    "web",
+    "components",
+    "functional",
+    "fun-land"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": false,
+  "peerDependencies": {
+    "@fun-land/accessor": "^4.0.0"
+  },
+  "devDependencies": {
+    "@fun-land/accessor": "^4.0.1"
+  },
+  "scripts": {
+    "build-cjs": "tsc -p ./tsconfig.publish.json",
+    "build-esm": "tsc -p ./tsconfig.publish.json --module esnext --outDir dist/esm",
+    "build": "yarn build-cjs && yarn build-esm",
+    "build:counter": "npx esbuild examples/counter/counter.ts --bundle --outfile=examples/counter/bundle.js --format=iife",
+    "build:todo": "npx esbuild examples/todo-app/todo-app.ts --bundle --outfile=examples/todo-app/todo-bundle.js --format=iife",
+    "build:examples": "yarn build:counter && yarn build:todo",
+    "lint": "eslint . --ext .ts",
+    "test": "jest",
+    "test-cover": "jest --coverage",
+    "prepublishOnly": "yarn build"
+  },
+  "bugs": {
+    "url": "https://github.com/fun-land/fun-land/issues"
+  },
+  "license": "MIT"
+}

@@ -507,6 +507,26 @@
   dependencies:
     levn "^0.4.1"
 
+"@fun-land/accessor@^4.0.1":
+  version "3.3.5"
+  resolved "https://registry.yarnpkg.com/@fun-land/accessor/-/accessor-3.3.5.tgz#125e582e15a6dd545eff2148683c9a91bc88c220"
+  integrity sha512-UABATXCE0RADZ7GsMLm2Yug1X++jWlJGNKp7JH4lBzijYNyUQyt/Vc0v7cN3Zm9FluYSZMEOzrzSVQL6UY2aOw==
+
+"@fun-land/fun-state@^7.0.1":
+  version "6.2.8"
+  resolved "https://registry.yarnpkg.com/@fun-land/fun-state/-/fun-state-6.2.8.tgz#2443fae132fc985337bd3494dd9ad8ad0e926c78"
+  integrity sha512-AHsuRTpay61b+nUJ9rPnED9XYz5opHrM7t42LOXTu8Ef3mxtp05k6JdfMiQcUIuxWp/eQ3d9OdZYWBhKm3Nljg==
+
+"@fun-land/use-fun-state@^3.0.1":
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/@fun-land/use-fun-state/-/use-fun-state-1.3.2.tgz#27f825e9ef4e87797547c51c3167cfbe7f94e11f"
+  integrity sha512-V0yGAZmQGNm31/xK50QVD+f82au7yrUP97U9xU/NB9l7YOSj7yOJYO6OPWOAK0iRoZIyFogTsMN1fITyHV0NSg==
+
+"@fun-land/validation@^2.0.1":
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/@fun-land/validation/-/validation-1.0.7.tgz#8573cf50cb712ce34a0601a469372559ae532c5e"
+  integrity sha512-rtYN4R6NvhiyudIBPNdASm8C4Y7WGZQ2Z9DiQEd2NWJ/hXOnK9qyAwaBMHQK16jYzHSMCsrZCNXI5xvmDQwyaA==
+
 "@gar/promisify@^1.1.3":
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/@gar/promisify/-/promisify-1.1.3.tgz#555193ab2e3bb3b6adc3d551c9c030d9e860daf6"

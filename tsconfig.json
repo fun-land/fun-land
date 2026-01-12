@@ -10,5 +10,14 @@
     "paths": {
       "*": ["node_modules/*", "packages/*/src"]
     }
-  }
+  },
+  "references": [
+    { "path": "./packages/accessor" },
+    { "path": "./packages/fun-state" },
+    { "path": "./packages/use-fun-state" },
+    { "path": "./packages/validation" },
+    { "path": "./packages/react-validation" },
+    { "path": "./packages/observable-fun-state" },
+    { "path": "./packages/fun-web" }
+  ]
 }
