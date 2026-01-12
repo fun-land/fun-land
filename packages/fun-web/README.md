@@ -32,16 +32,16 @@ yarn add @fun-land/fun-web @fun-land/accessor
 ```typescript
 import {
   h,
-  useFunWebState,
+  funState,
   mount,
   bindProperty,
   on,
   type Component,
-  type FunWebState,
+  type FunState,
 } from "@fun-land/fun-web";
 
 interface CounterProps {
-  state: FunWebState<number>;
+  state: FunState<number>;
 }
 
 const Counter: Component<CounterProps> = (signal, props) => {
@@ -58,7 +58,7 @@ const Counter: Component<CounterProps> = (signal, props) => {
 };
 
 // Create reactive state and mount
-const state = useFunWebState<CounterState>({ count: 0 });
+const state = funState<CounterState>({ count: 0 });
 const mounted = mount(Counter, { state }, document.body);
 ```
 
@@ -69,7 +69,7 @@ const mounted = mount(Counter, { state }, document.body);
 **The most important difference from React/Vue/Svelte:** fun-web components execute once when mounted, set up subscriptions, and never re-run.
 
 ```typescript
-const Counter: Component<{ count: FunWebState<number> }> = (signal, props) => {
+const Counter: Component<{ count: FunState<number> }> = (signal, props) => {
   console.log("Component runs once");
 
   const display = h("div");
@@ -118,7 +118,7 @@ function ReactCounter() {
 }
 
 // In fun-web - component executes once
-const FunWebCounter: Component<{ count: FunWebState<number> }> = (signal, props) => {
+const FunWebCounter: Component<{ count: FunState<number> }> = (signal, props) => {
   console.log("Mounting!"); // Logs once, never again
 
   const display = h("div");
@@ -134,31 +134,31 @@ const FunWebCounter: Component<{ count: FunWebState<number> }> = (signal, props)
 
 In React, clicking the button causes the entire component to re-execute. In fun-web, clicking the button just calls `count.mod()`, which triggers the `bindProperty` subscription to update `display.textContent`. The component function never runs again.
 
-### FunWebState - Reactive State with Subscriptions
+### FunState - Reactive State with Subscriptions
 
-`FunWebState<T>` follows the compositional FunState pattern (from @fun-land/fun-state) and adds subscription support for DOM updates:
+`FunState<T>` follows the compositional state pattern from @fun-land/fun-state with subscription support for DOM updates:
 
 ```typescript
-interface FunWebState<State> {
+interface FunState<State> {
   // Core operations (from FunState pattern)
   get(): State
   set(value: State): void
   mod(fn: (s: State) => State): void
 
   // Focusing (from FunState pattern)
-  prop<K extends keyof State>(key: K): FunWebState<State[K]>
-  focus<Sub>(accessor: Accessor<State, Sub>): FunWebState<Sub>
+  prop<K extends keyof State>(key: K): FunState<State[K]>
+  focus<Sub>(accessor: Accessor<State, Sub>): FunState<Sub>
   query<A>(accessor: Accessor<State, A>): A[]
 
-  // Subscriptions (unique to FunWebState)
+  // Subscriptions
   subscribe(signal: AbortSignal, callback: (state: State) => void): void
 }
 ```
 
-**Key difference from the FunState pattern:** Adds the `.subscribe()` method for subscriptions. DOM elements can subscribe to state changes and the AbortSignal handles cleanup automatically.
+The `.subscribe()` method allows DOM elements to subscribe to state changes with AbortSignal handling cleanup automatically.
 
 ```typescript
-const userState = useFunWebState({ name: "Alice", age: 30 });
+const userState = funState({ name: "Alice", age: 30 });
 
 // Get current value
 userState.prop("name").get(); // "Alice"
@@ -192,14 +192,14 @@ const Static: Component<{ title: string }> = (signal, props) =>
   h("h1", {}, props.title);
 
 // Reactive state in props
-const Counter: Component<{ count: FunWebState<number> }> = (signal, props) =>
+const Counter: Component<{ count: FunState<number> }> = (signal, props) =>
   h("div", {}, String(props.count.get()));
 
 // Mix of static and reactive
 const Dashboard: Component<{
   onLogout: () => void;
-  user: FunWebState<User>;
-  settings: FunWebState<Settings>;
+  user: FunState<User>;
+  settings: FunState<Settings>;
 }> = (signal, props) => {
   // props.onLogout is a static callback
   // props.user is reactive state
@@ -213,7 +213,7 @@ const Dashboard: Component<{
 
 ```typescript
 const nameEl = h("div");
-const nameState: FunWebState<string> = state.prop("user").prop("name");
+const nameState: FunState<string> = state.prop("user").prop("name");
 
 bindProperty(nameEl, "textContent", nameState, signal);
 // nameEl.textContent stays in sync with nameState
@@ -259,7 +259,7 @@ state.subscribe(signal, (s) => {
 All subscriptions and event listeners require an AbortSignal. When the signal aborts, everything cleans up automatically:
 
 ```typescript
-const MyComponent: Component<{ state: FunWebState<State> }> = (signal, props) => {
+const MyComponent: Component<{ state: FunState<State> }> = (signal, props) => {
   const display = h("div");
   const button = h("button");
 
@@ -323,18 +323,18 @@ state.subscribe(signal, (s) => {
 
 ### State
 
-#### `useFunWebState<T>(initialState: T): FunWebState<T>`
+#### `funState<T>(initialState: T): FunState<T>`
 
 Create a reactive state instance for standalone usage.
 
 ```typescript
-const state = useFunWebState({ count: 0, name: "Alice" });
+const state = funState({ count: 0, name: "Alice" });
 ```
 
-#### `FunWebState<State>`
+#### `FunState<State>`
 
 ```typescript
-interface FunWebState<State> {
+interface FunState<State> {
   // Read
   get(): State
   query<A>(accessor: Accessor<State, A>): A[]
@@ -344,8 +344,8 @@ interface FunWebState<State> {
   mod(fn: (s: State) => State): void
 
   // Focus
-  prop<K extends keyof State>(key: K): FunWebState<State[K]>
-  focus<Sub>(accessor: Accessor<State, Sub>): FunWebState<Sub>
+  prop<K extends keyof State>(key: K): FunState<State[K]>
+  focus<Sub>(accessor: Accessor<State, Sub>): FunState<Sub>
 
   // Subscribe
   subscribe(signal: AbortSignal, callback: (state: State) => void): void
@@ -370,7 +370,7 @@ const div: HTMLDivElement = h("div", { id: "app" }, [
 - Properties starting with `on` → `addEventListener()`
 - Everything else → property assignment
 
-#### `bindProperty<E extends Element, K extends keyof E>(el: E, key: K, state: FunWebState<E[K]>, signal: AbortSignal): E`
+#### `bindProperty<E extends Element, K extends keyof E>(el: E, key: K, state: FunState<E[K]>, signal: AbortSignal): E`
 
 Bind element property to state. Returns element for chaining.
 
@@ -391,7 +391,7 @@ on(h("button"), "click", (e) => {
 }, signal);
 ```
 
-#### `keyedChildren<T extends { key: string }>(parent: Element, signal: AbortSignal, list: FunWebState<T[]>, renderRow: (rowSignal: AbortSignal, item: FunWebState<T>) => Element): KeyedChildren<T>`
+#### `keyedChildren<T extends { key: string }>(parent: Element, signal: AbortSignal, list: FunState<T[]>, renderRow: (rowSignal: AbortSignal, item: FunState<T>) => Element): KeyedChildren<T>`
 
 Render and reconcile keyed lists efficiently.
 
@@ -402,7 +402,7 @@ interface Todo {
   done: boolean;
 }
 
-const todos: FunWebState<Todo[]> = useFunWebState([
+const todos: FunState<Todo[]> = funState([
   { key: "a", label: "First", done: false }
 ]);
 
@@ -410,7 +410,7 @@ keyedChildren(
   h("ul"),
   signal,
   todos,
-  (rowSignal, todo: FunWebState<Todo>) => {
+  (rowSignal, todo: FunState<Todo>) => {
     const li = h("li");
     bindProperty(li, "textContent", todo.prop("label"), rowSignal);
     return li;
@@ -440,7 +440,7 @@ pipe: <T>(...fns: Array<(x: T) => T>) => (x: T) => T
 Mount component to DOM and manage lifecycle.
 
 ```typescript
-const state = useFunWebState({ count: 0 });
+const state = funState({ count: 0 });
 const mounted = mount(
   Counter,
   { label: "Clicks", state },
@@ -470,7 +470,7 @@ interface AppState {
   settings: Settings;
 }
 
-const App: Component<{ state: FunWebState<AppState> }> = (signal, props) => {
+const App: Component<{ state: FunState<AppState> }> = (signal, props) => {
   const userSection = UserProfile(signal, {
     editable: true,
     state: props.state.focus(prop<AppState>()("user")),
@@ -484,7 +484,7 @@ const App: Component<{ state: FunWebState<AppState> }> = (signal, props) => {
 };
 ```
 
-Focused states only trigger updates when their slice changes. Components can also create **local state** using `useFunWebState()` instead of receiving it via props - there's no distinction, state is just data.
+Focused states only trigger updates when their slice changes. Components can also create **local state** using `funState()` instead of receiving it via props - there's no distinction, state is just data.
 
 ## Examples
 

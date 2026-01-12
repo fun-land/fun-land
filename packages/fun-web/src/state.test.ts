@@ -1,32 +1,32 @@
-import { useFunWebState } from "./state";
+import { funState } from "./state";
 import { prop } from "@fun-land/accessor";
 
-describe("useFunWebState", () => {
+describe("funState", () => {
   it("should create state with initial value", () => {
-    const state = useFunWebState({ count: 0 });
+    const state = funState({ count: 0 });
     expect(state.get()).toEqual({ count: 0 });
   });
 
   it("should update state with set", () => {
-    const state = useFunWebState({ count: 0 });
+    const state = funState({ count: 0 });
     state.set({ count: 5 });
     expect(state.get()).toEqual({ count: 5 });
   });
 
   it("should update state with mod", () => {
-    const state = useFunWebState({ count: 0 });
-    state.mod((s) => ({ count: s.count + 1 }));
+    const state = funState({ count: 0 });
+    state.mod((s: { count: number }) => ({ count: s.count + 1 }));
     expect(state.get()).toEqual({ count: 1 });
   });
 
   it("should focus on property", () => {
-    const state = useFunWebState({ count: 0, name: "test" });
+    const state = funState({ count: 0, name: "test" });
     const countState = state.prop("count");
     expect(countState.get()).toBe(0);
   });
 
   it("should update focused state", () => {
-    const state = useFunWebState({ count: 0, name: "test" });
+    const state = funState({ count: 0, name: "test" });
     const countState = state.prop("count");
     countState.set(5);
     expect(state.get()).toEqual({ count: 5, name: "test" });
@@ -34,7 +34,7 @@ describe("useFunWebState", () => {
 
   describe("subscribe subscriptions", () => {
     it("should call subscriber when state changes", () => {
-      const state = useFunWebState({ count: 0 });
+      const state = funState({ count: 0 });
       const controller = new AbortController();
       const callback = jest.fn();
 
@@ -45,7 +45,7 @@ describe("useFunWebState", () => {
     });
 
     it("should call subscriber multiple times", () => {
-      const state = useFunWebState({ count: 0 });
+      const state = funState({ count: 0 });
       const controller = new AbortController();
       const callback = jest.fn();
 
@@ -59,7 +59,7 @@ describe("useFunWebState", () => {
     });
 
     it("should call focused state subscriber only when that property changes", () => {
-      const state = useFunWebState({ count: 0, name: "test" });
+      const state = funState({ count: 0, name: "test" });
       const countState = state.prop("count");
       const controller = new AbortController();
       const callback = jest.fn();
@@ -81,7 +81,7 @@ describe("useFunWebState", () => {
     });
 
     it("should support multiple subscribers", () => {
-      const state = useFunWebState({ count: 0 });
+      const state = funState({ count: 0 });
       const controller = new AbortController();
       const callback1 = jest.fn();
       const callback2 = jest.fn();
@@ -100,7 +100,7 @@ describe("useFunWebState", () => {
         name: string;
         age: number;
       }
-      const state = useFunWebState<User>({ name: "Alice", age: 30 });
+      const state = funState<User>({ name: "Alice", age: 30 });
       const nameState = state.focus(prop<User>()("name"));
       const controller = new AbortController();
       const callback = jest.fn();
@@ -115,7 +115,7 @@ describe("useFunWebState", () => {
 
   describe("query with accessors", () => {
     it("should query state using accessor", () => {
-      const state = useFunWebState({ count: 5 });
+      const state = funState({ count: 5 });
       const result = state.query(prop<{ count: number }>()("count"));
       expect(result).toEqual([5]);
     });
@@ -127,7 +127,7 @@ describe("useFunWebState", () => {
           age: number;
         };
       }
-      const state = useFunWebState<User>({
+      const state = funState<User>({
         profile: { name: "Alice", age: 30 },
       });
       const profileState = state.prop("profile");
@@ -145,7 +145,7 @@ describe("useFunWebState", () => {
           };
         };
       }
-      const state = useFunWebState<AppState>({
+      const state = funState<AppState>({
         user: { profile: { name: "Alice" } },
       });
 
@@ -167,7 +167,7 @@ describe("useFunWebState", () => {
           };
         };
       }
-      const state = useFunWebState<AppState>({
+      const state = funState<AppState>({
         user: { profile: { name: "Alice" } },
       });
 
@@ -196,7 +196,7 @@ describe("useFunWebState", () => {
           };
         };
       }
-      const state = useFunWebState<AppState>({
+      const state = funState<AppState>({
         user: { profile: { name: "Alice", age: 30 } },
       });
 

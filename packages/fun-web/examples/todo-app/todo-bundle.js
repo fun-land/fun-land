@@ -144,15 +144,14 @@
     };
     return { getState, modState, subscribe };
   };
-  var useFunWebState = (initialState2) => pureState(standaloneEngine(initialState2));
+  var funState = (initialState2) => pureState(standaloneEngine(initialState2));
 
   // src/dom.ts
   var h = (tag, attrs2, children) => {
     const element = document.createElement(tag);
     if (attrs2) {
       for (const [key, value] of Object.entries(attrs2)) {
-        if (value == null)
-          continue;
+        if (value == null) continue;
         if (key.startsWith("on") && typeof value === "function") {
           const eventName = key.slice(2).toLowerCase();
           element.addEventListener(eventName, value);
@@ -205,8 +204,7 @@
       const seen = /* @__PURE__ */ new Set();
       for (const it of items) {
         const k = it.key;
-        if (seen.has(k))
-          throw new Error(`keyedChildren: duplicate key "${k}"`);
+        if (seen.has(k)) throw new Error(`keyedChildren: duplicate key "${k}"`);
         seen.add(k);
         nextKeys.push(k);
       }
@@ -251,7 +249,7 @@
       unmount: () => {
         controller.abort();
         element.remove();
-      }
+      },
     };
   };
 
@@ -259,7 +257,7 @@
   var Todo = (signal, { state, removeItem }) => {
     const prioritySelect = h("select", {}, [
       h("option", { value: "0" }, "High"),
-      h("option", { value: "1" }, "Low")
+      h("option", { value: "1" }, "Low"),
     ]);
     prioritySelect.value = String(state.get().priority);
     state.prop("priority").subscribe(signal, (priority) => {
@@ -285,7 +283,7 @@
     const labelInput = on(
       bindProperty(
         h("input", {
-          type: "text"
+          type: "text",
         }),
         "value",
         state.prop("label"),
@@ -302,37 +300,44 @@
       prioritySelect,
       labelInput,
       // you can even inline to go tacit
-      on(h("button", { textContent: "X" }), "click", removeItem, signal)
+      on(h("button", { textContent: "X" }), "click", removeItem, signal),
     ]);
   };
 
   // examples/todo-app/todo-app.ts
   var stateFoci = Acc();
-  var addItem = (state) => stateFoci.prop("items").mod(
-    prepend({
-      checked: false,
-      label: state.value,
-      priority: 1,
-      key: crypto.randomUUID()
-    })
-  )(state);
+  var addItem = (state) =>
+    stateFoci.prop("items").mod(
+      prepend({
+        checked: false,
+        label: state.value,
+        priority: 1,
+        key: crypto.randomUUID(),
+      })
+    )(state);
   var clearValue = stateFoci.prop("value").set("");
   var markAllDone = stateFoci.prop("items").all().prop("checked").set(true);
-  var removeByKey = (key) => stateFoci.prop("items").mod((xs) => xs.filter((t) => t.key !== key));
+  var removeByKey = (key) =>
+    stateFoci.prop("items").mod((xs) => xs.filter((t) => t.key !== key));
   var initialState = {
     value: "",
     items: [
       { checked: false, label: "Learn fun-web", priority: 0, key: "asdf" },
-      { checked: true, label: "Build something cool", priority: 1, key: "fdas" }
-    ]
+      {
+        checked: true,
+        label: "Build something cool",
+        priority: 1,
+        key: "fdas",
+      },
+    ],
   };
   var TodoApp = (signal) => {
-    const state = useFunWebState(initialState);
+    const state = funState(initialState);
     const input = bindProperty(
       h("input", {
         type: "text",
         value: state.get().value,
-        placeholder: "Add a todo..."
+        placeholder: "Add a todo...",
       }),
       "value",
       state.prop("value"),
@@ -372,16 +377,17 @@
       todoList,
       signal,
       state.prop("items"),
-      (rowSignal, todoState) => Todo(rowSignal, {
-        removeItem: () => state.mod(removeByKey(todoState.prop("key").get())),
-        state: todoState
-      })
+      (rowSignal, todoState) =>
+        Todo(rowSignal, {
+          removeItem: () => state.mod(removeByKey(todoState.prop("key").get())),
+          state: todoState,
+        })
     );
     return h("div", { className: "todo-app" }, [
       h("h1", { textContent: "Todo App" }),
       form,
       h("div", {}, [markAllBtn, allDoneText]),
-      todoList
+      todoList,
     ]);
   };
   var app = document.getElementById("app");

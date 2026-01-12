@@ -1,7 +1,7 @@
 import { mount } from "./mount";
 import { h } from "./dom";
-import { useFunWebState } from "./state";
-import type { Component, FunWebState } from "./index";
+import { funState } from "./state";
+import type { Component, FunState } from "./index";
 
 describe("mount()", () => {
   let container: HTMLDivElement;
@@ -90,14 +90,14 @@ describe("mount()", () => {
     }
 
     interface Props {
-      state: FunWebState<State>;
+      state: FunState<State>;
     }
 
     const Component: Component<Props> = (signal, props) => {
       return h("div", { textContent: String(props.state.get().count) });
     };
 
-    const state = useFunWebState<State>({ count: 42 });
+    const state = funState<State>({ count: 42 });
     mount(Component, { state }, container);
     expect(container.textContent).toBe("42");
   });
@@ -108,7 +108,7 @@ describe("mount()", () => {
     }
 
     interface Props {
-      state: FunWebState<State>;
+      state: FunState<State>;
     }
 
     const Component: Component<Props> = (signal, props) => {
@@ -122,7 +122,7 @@ describe("mount()", () => {
       return div;
     };
 
-    const state = useFunWebState<State>({ count: 0 });
+    const state = funState<State>({ count: 0 });
     mount(Component, { state }, container);
 
     expect(container.textContent).toBe("0");
@@ -141,7 +141,7 @@ describe("mount()", () => {
     }
 
     interface Props {
-      state: FunWebState<State>;
+      state: FunState<State>;
     }
 
     const callback = jest.fn();
@@ -153,7 +153,7 @@ describe("mount()", () => {
       return div;
     };
 
-    const state = useFunWebState<State>({ count: 0 });
+    const state = funState<State>({ count: 0 });
     const mounted = mount(Component, { state }, container);
 
     // Update should trigger callback
@@ -177,8 +177,8 @@ describe("mount()", () => {
     }
 
     interface Props {
-      userState: FunWebState<User>;
-      settingsState: FunWebState<Settings>;
+      userState: FunState<User>;
+      settingsState: FunState<Settings>;
     }
 
     const Component: Component<Props> = (signal, props) => {
@@ -201,8 +201,8 @@ describe("mount()", () => {
       return h("div", {}, [nameEl, themeEl]);
     };
 
-    const userState = useFunWebState<User>({ name: "Alice" });
-    const settingsState = useFunWebState<Settings>({ theme: "dark" });
+    const userState = funState<User>({ name: "Alice" });
+    const settingsState = funState<Settings>({ theme: "dark" });
 
     mount(Component, { userState, settingsState }, container);
 

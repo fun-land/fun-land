@@ -1,11 +1,11 @@
 // @fun-land/fun-web - Web component library for fun-land
 
 export type { Component, ElementChild } from "./types";
-export type { FunWebState } from "./state";
+export type { FunState } from "./state";
 export type { MountedComponent } from "./mount";
 export type { KeyedChildren } from "./dom";
 
-export { useFunWebState } from "./state";
+export { funState } from "./state";
 export {
   h,
   text,

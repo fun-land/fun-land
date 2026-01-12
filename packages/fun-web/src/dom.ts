@@ -1,5 +1,5 @@
 /** DOM utilities for functional element creation and manipulation */
-import { FunWebState } from "./state";
+import { FunState } from "./state";
 import type { ElementChild } from "./types";
 import { filter } from "@fun-land/accessor";
 
@@ -102,14 +102,14 @@ export const attrs =
 export function bindProperty<E extends Element, K extends keyof E>(
   el: E,
   key: K,
-  fs: FunWebState<E[K]>,
+  fs: FunState<E[K]>,
   signal: AbortSignal
 ): E {
   // initial sync
   el[key] = fs.get();
 
   // reactive sync
-  fs.subscribe(signal, (v) => {
+  fs.subscribe(signal, (v: E[K]) => {
     el[key] = v;
   });
   return el;
@@ -197,7 +197,7 @@ export type KeyedChildren<T extends Keyed> = {
 };
 
 /**
- * Keep a DOM container's children in sync with a FunWebState<Array<T>> using stable `t.key`.
+ * Keep a DOM container's children in sync with a FunState<Array<T>> using stable `t.key`.
  *
  * - No VDOM
  * - Preserves existing row elements across updates
@@ -208,8 +208,8 @@ export type KeyedChildren<T extends Keyed> = {
 export function keyedChildren<T extends Keyed>(
   parent: Element,
   signal: AbortSignal,
-  list: FunWebState<T[]>,
-  renderRow: (rowSignal: AbortSignal, item: FunWebState<T>) => Element
+  list: FunState<T[]>,
+  renderRow: (rowSignal: AbortSignal, item: FunState<T>) => Element
 ): KeyedChildren<T> {
   const rows = new Map<string, MountedRow>();
 

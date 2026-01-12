@@ -1,5 +1,4 @@
 /** Component mounting utilities */
-import { FunWebState } from "./state";
 import type { Component } from "./types";
 
 export interface MountedComponent {

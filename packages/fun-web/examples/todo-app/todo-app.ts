@@ -1,12 +1,12 @@
 import {
   h,
-  useFunWebState,
+  funState,
   mount,
   bindProperty,
   on,
   keyedChildren,
   type Component,
-  type FunWebState,
+  type FunState,
 } from "../../src/index";
 import { prepend, flow, Acc } from "@fun-land/accessor";
 import { TodoState, Todo } from "./Todo";
@@ -50,7 +50,7 @@ const initialState: TodoAppState = {
 };
 
 const TodoApp: Component = (signal) => {
-  const state = useFunWebState(initialState);
+  const state = funState(initialState);
   const input = bindProperty(
     h("input", {
       type: "text",

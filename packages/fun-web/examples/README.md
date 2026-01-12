@@ -19,7 +19,7 @@ open examples/counter/index.html
 ```
 
 **Demonstrates:**
-- Creating reactive state with `useFunWebState()`
+- Creating reactive state with `funState()`
 - Building a component with `(signal, props, ...states) => Element`
 - Property binding with `bindProperty()`
 - Event listeners with cleanup via `on()` and `AbortSignal`

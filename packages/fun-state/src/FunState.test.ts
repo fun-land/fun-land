@@ -1,4 +1,4 @@
-import {pureState, standaloneEngine, mockState, merge} from './FunState'
+import {pureState, standaloneEngine, funState, merge, extractArray} from './FunState'
 import {comp, all, prop, prepend} from '@fun-land/accessor'
 
 describe('standaloneEngine', () => {
@@ -11,12 +11,12 @@ describe('standaloneEngine', () => {
 })
 
 describe('merge', () => {
-  it('merges a partial state into a mockState', () => {
+  it('merges a partial state into a funState', () => {
     interface Obj {
       a: number
       b: boolean
     }
-    const fs = mockState<Obj>({a: 1, b: false})
+    const fs = funState<Obj>({a: 1, b: false})
 
     merge(fs)({b: true})
     expect(fs.get()).toEqual({a: 1, b: true})
@@ -26,14 +26,14 @@ describe('merge', () => {
       a: number | undefined
       b: boolean | undefined
     }
-    const fs = mockState<Obj>({a: 1, b: false})
+    const fs = funState<Obj>({a: 1, b: false})
 
     merge(fs)({b: undefined})
     expect(fs.get()).toEqual({a: 1, b: undefined})
   })
 })
 
-describe('mockState', () => {
+describe('funState', () => {
   it('sets initial state', () => {
     const fs = pureState(standaloneEngine(1))
 
@@ -54,7 +54,7 @@ describe('mockState', () => {
     expect(fs.get()).toBe(3)
   })
   it('creates sub state for prop', () => {
-    const fs = mockState({a: {b: 1}})
+    const fs = funState({a: {b: 1}})
     expect(fs.get()).toEqual({a: {b: 1}})
     const afs = fs.prop('a')
     // focusing down still gives state
@@ -76,7 +76,7 @@ describe('mockState', () => {
       a: Jface[]
     }
     const initial = Object.freeze({a: [{b: 1}, {b: 2}]})
-    const fs = mockState(initial)
+    const fs = funState(initial)
     expect(fs.get()).toEqual(initial)
     const acc = comp(prop<Iface>()('a'), all<Jface>(), prop<Jface>()('b'))
     const afs = fs.focus(acc)
@@ -102,7 +102,7 @@ describe('mockState', () => {
       a: Jface[]
     }
     const initial = Object.freeze({a: [{b: 1}, {b: 2}]})
-    const fs = mockState(initial)
+    const fs = funState(initial)
     const afs = fs.focus(prop<Iface>()('a')).focus(all<Jface>()).focus(prop<Jface>()('b'))
     // mutating subs works
     afs.mod((a) => a + 1)
@@ -114,5 +114,120 @@ describe('mockState', () => {
     expect(afs.get()).toEqual(0)
 
     expect(fs.focus(prop<Iface>()('a')).focus(all<Jface>()).query(prop<Jface>()('b'))).toEqual([0, 2, 3])
+  })
+
+  describe('subscribe', () => {
+    it('should call subscriber when state changes', () => {
+      const fs = funState({count: 0})
+      const controller = new AbortController()
+      const callback = jest.fn()
+
+      fs.subscribe(controller.signal, callback)
+      fs.set({count: 1})
+
+      expect(callback).toHaveBeenCalledWith({count: 1})
+    })
+
+    it('should call subscriber multiple times', () => {
+      const fs = funState({count: 0})
+      const controller = new AbortController()
+      const callback = jest.fn()
+
+      fs.subscribe(controller.signal, callback)
+      fs.set({count: 1})
+      fs.set({count: 2})
+
+      expect(callback).toHaveBeenCalledTimes(2)
+      expect(callback).toHaveBeenNthCalledWith(1, {count: 1})
+      expect(callback).toHaveBeenNthCalledWith(2, {count: 2})
+    })
+
+    it('should stop calling subscriber after signal aborts', () => {
+      const fs = funState({count: 0})
+      const controller = new AbortController()
+      const callback = jest.fn()
+
+      fs.subscribe(controller.signal, callback)
+      fs.set({count: 1})
+      expect(callback).toHaveBeenCalledTimes(1)
+
+      controller.abort()
+      fs.set({count: 2})
+      expect(callback).toHaveBeenCalledTimes(1) // Still 1, not called again
+    })
+
+    it('should support focused subscriptions', () => {
+      const fs = funState({a: 1, b: 2})
+      const controller = new AbortController()
+      const callback = jest.fn()
+
+      fs.prop('a').subscribe(controller.signal, callback)
+      fs.set({a: 10, b: 2})
+
+      expect(callback).toHaveBeenCalledWith(10)
+    })
+
+    it('should only notify focused subscriber when focused value changes', () => {
+      const fs = funState({a: 1, b: 2})
+      const controller = new AbortController()
+      const callback = jest.fn()
+
+      fs.prop('a').subscribe(controller.signal, callback)
+
+      // Change b only - should not notify
+      fs.set({a: 1, b: 20})
+      expect(callback).not.toHaveBeenCalled()
+
+      // Change a - should notify
+      fs.set({a: 10, b: 20})
+      expect(callback).toHaveBeenCalledWith(10)
+    })
+
+    it('should support deeply focused subscriptions', () => {
+      const fs = funState({a: {b: {c: 1}}})
+      const controller = new AbortController()
+      const callback = jest.fn()
+
+      fs.prop('a').prop('b').prop('c').subscribe(controller.signal, callback)
+      fs.set({a: {b: {c: 10}}})
+
+      expect(callback).toHaveBeenCalledWith(10)
+    })
+
+    it('should only notify deeply focused subscriber when focused value changes', () => {
+      const fs = funState({a: {b: {c: 1}}})
+      const controller = new AbortController()
+      const callback = jest.fn()
+
+      fs.prop('a').prop('b').prop('c').subscribe(controller.signal, callback)
+
+      // Change parent without changing focused value
+      fs.set({a: {b: {c: 1}}})
+      expect(callback).not.toHaveBeenCalled()
+
+      // Change focused value
+      fs.set({a: {b: {c: 5}}})
+      expect(callback).toHaveBeenCalledWith(5)
+    })
+  })
+
+  describe('extractArray', () => {
+    it('should convert array state into array of focused states', () => {
+      const fs = funState([{id: 1}, {id: 2}, {id: 3}])
+      const items = extractArray(fs)
+
+      expect(items.length).toBe(3)
+      expect(items[0].get()).toEqual({id: 1})
+      expect(items[1].get()).toEqual({id: 2})
+      expect(items[2].get()).toEqual({id: 3})
+    })
+
+    it('should allow mutation through extracted states', () => {
+      const fs = funState([{id: 1}, {id: 2}])
+      const items = extractArray(fs)
+
+      items[0].set({id: 10})
+      expect(fs.get()).toEqual([{id: 10}, {id: 2}])
+    })
   })
 })

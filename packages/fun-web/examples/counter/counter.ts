@@ -3,10 +3,10 @@
  */
 import {
   h,
-  useFunWebState,
+  funState,
   mount,
   type Component,
-  type FunWebState,
+  type FunState,
 } from "../../src/index";
 import { prop } from "@fun-land/accessor";
 
@@ -19,7 +19,7 @@ interface CounterState {
 interface CounterProps {
   label: string;
   onReset: () => void;
-  state: FunWebState<CounterState>;
+  state: FunState<CounterState>;
 }
 
 // Counter component - evaluates once, subscriptions handle updates
@@ -76,7 +76,7 @@ interface AppState {
 }
 
 const App: Component = (signal) => {
-  const state = useFunWebState<AppState>({
+  const state = funState<AppState>({
     title: "Fun-Web Counter Example",
     counterValue: { count: 0 },
   });

@@ -8,7 +8,7 @@ import {
   pipeEndo,
   keyedChildren,
 } from "./dom";
-import { FunWebState } from "./state";
+import { FunState, funState } from "./state";
 
 describe("h()", () => {
   it("should create an element", () => {
@@ -274,9 +274,8 @@ describe("bindProperty()", () => {
     const el = document.createElement("input") as HTMLInputElement;
     const controller = new AbortController();
     const { bindProperty } = require("./dom");
-    const { useFunWebState } = require("./state");
 
-    const state = useFunWebState("hello");
+    const state = funState("hello");
     bindProperty(el, "value", state, controller.signal);
 
     expect(el.value).toBe("hello");
@@ -287,9 +286,8 @@ describe("bindProperty()", () => {
     const el = document.createElement("input") as HTMLInputElement;
     const controller = new AbortController();
     const { bindProperty } = require("./dom");
-    const { useFunWebState } = require("./state");
 
-    const state = useFunWebState("hello");
+    const state = funState("hello");
     bindProperty(el, "value", state, controller.signal);
 
     expect(el.value).toBe("hello");
@@ -304,9 +302,8 @@ describe("bindProperty()", () => {
     const el = document.createElement("input") as HTMLInputElement;
     const controller = new AbortController();
     const { bindProperty } = require("./dom");
-    const { useFunWebState } = require("./state");
 
-    const state = useFunWebState("hello");
+    const state = funState("hello");
     bindProperty(el, "value", state, controller.signal);
 
     controller.abort();
@@ -319,9 +316,8 @@ describe("bindProperty()", () => {
     const el = document.createElement("input") as HTMLInputElement;
     const controller = new AbortController();
     const { bindProperty } = require("./dom");
-    const { useFunWebState } = require("./state");
 
-    const state = useFunWebState("hello");
+    const state = funState("hello");
     const result = bindProperty(el, "value", state, controller.signal);
 
     expect(result).toBe(el);
@@ -390,61 +386,17 @@ function makeAbortSignal(): {
 }
 
 /**
- * Minimal reactive state harness for tests.
- * - updated(signal, cb) unsubscribes on abort
- * - listState.focus(...) returns a "view" state for the current item by key
- *
- * NOTE: In prod your focus uses accessors; for tests we just do key lookup.
+ * Helper to create a funState with introspection for tests
  */
 function makeListState(initial: Item[]): {
-  list: FunWebState<Item[]>;
+  list: FunState<Item[]>;
   setItems: (next: Item[]) => void;
-  // introspection
-  getSubscriberCount: () => number;
 } {
-  let items = initial;
-  const listeners = new Set<(xs: Item[]) => void>();
-
-  const list: FunWebState<Item[]> = {
-    get: () => items,
-    query: () => {
-      throw new Error("query not needed in these tests");
-    },
-    mod: (f: (xs: Item[]) => Item[]) => {
-      items = f(items);
-      listeners.forEach((l) => l(items));
-    },
-    set: (v: Item[]) => {
-      items = v;
-      listeners.forEach((l) => l(items));
-    },
-    focus: (_acc: any) => {
-      // keyedChildren in your implementation focuses via filter(key === k).
-      // We can't see that key in acc, so we'll instead return a state that
-      // resolves "the current item" by reading the element's dataset key in renderRow.
-      // For this test harness we won't rely on focus at all; renderRow can close
-      // over the key it is rendering and call makeItemState(key).
-      throw new Error("focus should not be called on list harness directly");
-    },
-    prop: (_k: any) => {
-      throw new Error("prop not needed in these tests");
-    },
-    subscribe: (signal: AbortSignal, cb: (xs: Item[]) => void) => {
-      listeners.add(cb);
-      signal.addEventListener(
-        "abort",
-        () => {
-          listeners.delete(cb);
-        },
-        { once: true }
-      );
-    },
-  };
+  const list = funState<Item[]>(initial);
 
   return {
     list,
     setItems: (next) => list.set(next),
-    getSubscriberCount: () => listeners.size,
   };
 }
 
@@ -458,7 +410,7 @@ function makeListState(initial: Item[]): {
 function setupKeyedChildren(
   parent: Element,
   signal: AbortSignal,
-  listState: FunWebState<Item[]>
+  listState: FunState<Item[]>
 ) {
   const mountCountByKey = new Map<string, number>();
   const abortCountByKey = new Map<string, number>();
@@ -468,7 +420,7 @@ function setupKeyedChildren(
     signal,
     listState,
     (rowSignal, itemState: any) => {
-      // In your real keyedChildren, itemState is a focused FunWebState<Item>.
+      // In your real keyedChildren, itemState is a focused FunState<Item>.
       // In tests we don't need it; we just need an element and lifecycle tracking.
 
       // We'll attach a listener to verify rowSignal abort happens:
@@ -506,7 +458,7 @@ function setupKeyedChildren(
 function setupKeyedChildrenWithKeyAwareRenderer(
   parent: Element,
   signal: AbortSignal,
-  listState: { get: () => Item[]; subscribe: FunWebState<Item[]>["subscribe"] }
+  listState: { get: () => Item[]; subscribe: FunState<Item[]>["subscribe"] }
 ) {
   const mountCountByKey = new Map<string, number>();
   const abortCountByKey = new Map<string, number>();
@@ -516,7 +468,7 @@ function setupKeyedChildrenWithKeyAwareRenderer(
     parent,
     signal,
     listState as any,
-    (rowSignal: AbortSignal, itemState: FunWebState<Item>) => {
+    (rowSignal: AbortSignal, itemState: FunState<Item>) => {
       // In your real impl, itemState.get().key should exist.
       const item = itemState.get();
       const k = item.key;
@@ -544,77 +496,10 @@ describe("keyedChildren", () => {
     const container = document.createElement("ul");
     const { controller, signal } = makeAbortSignal();
 
-    // We need a listState that supports focus/filter semantics used by keyedChildren.
-    // For this test, we'll use your real FunWebState in the repo if available.
-    // If not, you can adapt the harness below to implement list.focus.
-    //
-    // Minimal way: use your real useFunWebState in tests.
-    //
-    // For this snippet, we'll build a small compatible state with focus-by-key.
-    const listeners = new Set<(xs: Item[]) => void>();
-    let items: Item[] = [
+    const listState = funState<Item[]>([
       { key: "a", label: "A" },
       { key: "b", label: "B" },
-    ];
-
-    const listState: FunWebState<Item[]> = {
-      get: () => items,
-      query: () => {
-        throw new Error("not used");
-      },
-      mod: (f) => {
-        items = f(items);
-        listeners.forEach((l) => l(items));
-      },
-      set: (v) => {
-        items = v;
-        listeners.forEach((l) => l(items));
-      },
-      // focus used by keyedChildren(filter(key===k)):
-      focus: (acc: any) => {
-        return {
-          get: () => {
-            const found = acc.query(items)[0];
-            if (!found) throw new Error("focused item missing");
-            return found;
-          },
-          query: () => {
-            throw new Error("not used");
-          },
-          mod: () => {
-            throw new Error("not used");
-          },
-          set: () => {
-            throw new Error("not used");
-          },
-          focus: () => {
-            throw new Error("not used");
-          },
-          prop: () => {
-            throw new Error("not used");
-          },
-          subscribe: (sig: HTMLElement, cb: unknown) => {
-            // update is not needed for these keyedChildren tests
-            // (child components handle it in real app)
-            sig.addEventListener("abort", () => void 0, { once: true });
-            void cb;
-          },
-        } as any;
-      },
-      prop: () => {
-        throw new Error("not used");
-      },
-      subscribe: (sig, cb) => {
-        listeners.add(cb);
-        sig.addEventListener(
-          "abort",
-          () => {
-            listeners.delete(cb);
-          },
-          { once: true }
-        );
-      },
-    };
+    ]);
 
     // Use the key-aware renderer; it expects itemState.get()
     const { elByKey } = setupKeyedChildrenWithKeyAwareRenderer(
@@ -636,44 +521,10 @@ describe("keyedChildren", () => {
     const container = document.createElement("ul");
     const { controller, signal } = makeAbortSignal();
 
-    const listeners = new Set<(xs: Item[]) => void>();
-    let items: Item[] = [
+    const listState = funState<Item[]>([
       { key: "a", label: "A" },
       { key: "b", label: "B" },
-    ];
-
-    const listState: FunWebState<Item[]> = {
-      get: () => items,
-      query: () => {
-        throw new Error("not used");
-      },
-      mod: (f) => {
-        items = f(items);
-        listeners.forEach((l) => l(items));
-      },
-      set: (v) => {
-        items = v;
-        listeners.forEach((l) => l(items));
-      },
-      focus: (acc: any) =>
-        ({
-          get: () => acc.query(items)[0],
-          subscribe: (_s: AbortSignal, _cb: any) => void 0,
-        }) as any,
-      prop: () => {
-        throw new Error("not used");
-      },
-      subscribe: (sig, cb) => {
-        listeners.add(cb);
-        sig.addEventListener(
-          "abort",
-          () => {
-            listeners.delete(cb);
-          },
-          { once: true }
-        );
-      },
-    };
+    ]);
 
     const { mountCountByKey } = setupKeyedChildrenWithKeyAwareRenderer(
       container,
@@ -712,16 +563,16 @@ describe("keyedChildren", () => {
       { key: "c", label: "C" },
     ];
 
-    const listState: FunWebState<Item[]> = {
+    const listState: FunState<Item[]> = {
       get: () => items,
       query: () => {
         throw new Error("not used");
       },
-      mod: (f) => {
+      mod: (f: (items: Item[]) => Item[]) => {
         items = f(items);
         listeners.forEach((l) => l(items));
       },
-      set: (v) => {
+      set: (v: Item[]) => {
         items = v;
         listeners.forEach((l) => l(items));
       },
@@ -733,7 +584,7 @@ describe("keyedChildren", () => {
       prop: () => {
         throw new Error("not used");
       },
-      subscribe: (sig, cb) => {
+      subscribe: (sig: AbortSignal, cb: (items: Item[]) => void) => {
         listeners.add(cb);
         sig.addEventListener(
           "abort",
@@ -789,16 +640,16 @@ describe("keyedChildren", () => {
       { key: "b", label: "B" },
     ];
 
-    const listState: FunWebState<Item[]> = {
+    const listState: FunState<Item[]> = {
       get: () => items,
       query: () => {
         throw new Error("not used");
       },
-      mod: (f) => {
+      mod: (f: (items: Item[]) => Item[]) => {
         items = f(items);
         listeners.forEach((l) => l(items));
       },
-      set: (v) => {
+      set: (v: Item[]) => {
         items = v;
         listeners.forEach((l) => l(items));
       },
@@ -810,7 +661,7 @@ describe("keyedChildren", () => {
       prop: () => {
         throw new Error("not used");
       },
-      subscribe: (sig, cb) => {
+      subscribe: (sig: AbortSignal, cb: (items: Item[]) => void) => {
         listeners.add(cb);
         sig.addEventListener(
           "abort",
@@ -846,30 +697,20 @@ describe("keyedChildren", () => {
     const container = document.createElement("ul");
     const { controller, signal } = makeAbortSignal();
 
-    const { list, setItems, getSubscriberCount } = makeListState([
-      { key: "a", label: "A" },
-    ]);
+    const list = funState<Item[]>([{ key: "a", label: "A" }]);
 
-    // We need a keyedChildren that doesn't rely on list.focus for this test;
-    // This test is only about updated(signal, ...) cleanup.
-    // If your keyedChildren always calls list.focus(filter(...)), run this test against
-    // your real listState implementation instead of makeListState.
-    //
-    // Easiest: just assert updated unsubscribed by checking getSubscriberCount.
-    expect(getSubscriberCount()).toBe(0);
+    // Subscribe and verify callback is called before abort
+    const callback = jest.fn();
+    list.subscribe(signal, callback);
 
-    // Fake: directly subscribe like keyedChildren would
-    list.subscribe(signal, () => void 0);
+    list.set([{ key: "a", label: "A2" }]);
+    expect(callback).toHaveBeenCalledTimes(1);
 
-    expect(getSubscriberCount()).toBe(1);
-
+    // After abort, callback should not be called
     controller.abort();
 
-    expect(getSubscriberCount()).toBe(0);
-
-    // Should not throw after abort
-    setItems([{ key: "a", label: "A2" }]);
-    expect(true).toBe(true);
+    list.set([{ key: "a", label: "A3" }]);
+    expect(callback).toHaveBeenCalledTimes(1); // Still 1, not called again
 
     void container;
   });
@@ -878,51 +719,17 @@ describe("keyedChildren", () => {
     const container = document.createElement("ul");
     const { controller, signal } = makeAbortSignal();
 
-    const listeners = new Set<(xs: Item[]) => void>();
-    let items: Item[] = [
+    const listState = funState<Item[]>([
       { key: "a", label: "A" },
       { key: "a", label: "B" }, // duplicate key!
-    ];
-
-    const listState: FunWebState<Item[]> = {
-      get: () => items,
-      query: () => {
-        throw new Error("not used");
-      },
-      mod: (f) => {
-        items = f(items);
-        listeners.forEach((l) => l(items));
-      },
-      set: (v) => {
-        items = v;
-        listeners.forEach((l) => l(items));
-      },
-      focus: (acc: any) =>
-        ({
-          get: () => acc.query(items)[0],
-          subscribe: (_s: AbortSignal, _cb: any) => void 0,
-        }) as any,
-      prop: () => {
-        throw new Error("not used");
-      },
-      subscribe: (sig, cb) => {
-        listeners.add(cb);
-        sig.addEventListener(
-          "abort",
-          () => {
-            listeners.delete(cb);
-          },
-          { once: true }
-        );
-      },
-    };
+    ]);
 
     expect(() => {
       keyedChildren(
         container,
         signal,
         listState,
-        (rowSignal: AbortSignal, itemState: FunWebState<Item>) => {
+        (rowSignal: AbortSignal, itemState: FunState<Item>) => {
           return document.createElement("li");
         }
       );

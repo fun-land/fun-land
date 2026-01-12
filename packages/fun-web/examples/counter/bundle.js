@@ -104,7 +104,7 @@
     };
     return { getState, modState, subscribe };
   };
-  var useFunWebState = (initialState) => pureState(standaloneEngine(initialState));
+  var funState = (initialState) => pureState(standaloneEngine(initialState));
 
   // src/dom.ts
   var h = (tag, attrs2, children) => {
@@ -189,9 +189,9 @@
     ]);
   };
   var App = (signal) => {
-    const state = useFunWebState({
+    const state = funState({
       title: "Fun-Web Counter Example",
-      counterValue: { count: 0 }
+      counterValue: { count: 0 },
     });
     const heading = h("h1", { textContent: state.get().title });
     state.prop("title").subscribe(signal, (title) => {

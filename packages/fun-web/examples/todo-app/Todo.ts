@@ -3,7 +3,7 @@ import {
   bindProperty,
   on,
   type Component,
-  type FunWebState,
+  type FunState,
 } from "../../src/index";
 
 export interface TodoState {
@@ -15,7 +15,7 @@ export interface TodoState {
 
 interface TodoProps {
   removeItem: () => void;
-  state: FunWebState<TodoState>;
+  state: FunState<TodoState>;
 }
 
 export const Todo: Component<TodoProps> = (signal, { state, removeItem }) => {
