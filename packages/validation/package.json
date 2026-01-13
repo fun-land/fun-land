@@ -31,9 +31,9 @@
   },
   "gitHead": "ac5fab3928f2be91f00c79f3f5764b599283129d",
   "peerDependencies": {
-    "@fun-land/accessor": "^3.3.3"
+    "@fun-land/accessor": "workspace:*"
   },
   "devDependencies": {
-    "@fun-land/accessor": "^4.0.1"
+    "@fun-land/accessor": "workspace:*"
   }
 }

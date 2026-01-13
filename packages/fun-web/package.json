@@ -24,10 +24,10 @@
   },
   "sideEffects": false,
   "peerDependencies": {
-    "@fun-land/accessor": "^4.0.0"
+    "@fun-land/accessor": "workspace:*"
   },
   "devDependencies": {
-    "@fun-land/accessor": "^4.0.1"
+    "@fun-land/accessor": "workspace:*"
   },
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.publish.json",

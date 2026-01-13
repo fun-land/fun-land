@@ -6,9 +6,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@fun-land/accessor": "^4.0.1",
-    "@fun-land/fun-state": "^7.0.1",
-    "@fun-land/use-fun-state": "^3.0.1",
+    "@fun-land/accessor": "workspace:*",
+    "@fun-land/fun-state": "workspace:*",
+    "@fun-land/use-fun-state": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

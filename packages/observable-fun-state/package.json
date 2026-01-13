@@ -11,8 +11,8 @@
     "lib"
   ],
   "dependencies": {
-    "@fun-land/accessor": "^4.0.1",
-    "@fun-land/fun-state": "^7.0.1",
+    "@fun-land/accessor": "^workspace:*",
+    "@fun-land/fun-state": "workspace:*",
     "zen-observable": "^0.8.15"
   },
   "publishConfig": {
