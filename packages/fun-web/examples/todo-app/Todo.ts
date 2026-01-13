@@ -1,4 +1,4 @@
-import { viewed } from "accessor";
+import { viewed } from "@fun-land/accessor";
 import {
   h,
   type Component,

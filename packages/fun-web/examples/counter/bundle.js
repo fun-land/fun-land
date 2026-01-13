@@ -1,6 +1,6 @@
 "use strict";
 (() => {
-  // ../fun-state/node_modules/@fun-land/accessor/dist/esm/util.js
+  // ../accessor/dist/esm/util.js
   var flow = (f, g) => (x) => g(f(x));
   var K = (a) => (_b) => a;
   var flatmap = (f) => (xs) => {
@@ -11,7 +11,7 @@
     return out;
   };
 
-  // ../fun-state/node_modules/@fun-land/accessor/dist/esm/accessor.js
+  // ../accessor/dist/esm/accessor.js
   var prop = () => (k) => ({
     query: (obj) => [obj[k]],
     mod: (transform) => (obj) => Object.assign(Object.assign({}, obj), { [k]: transform(obj[k]) })
@@ -24,67 +24,67 @@
     return accs.reduce(_comp);
   }
   var set = (acc) => flow(K, acc.mod);
+  var get = (acc) => (s) => {
+    var _a;
+    return (_a = acc.query(s)) === null || _a === void 0 ? void 0 : _a[0];
+  };
+  var unit = () => ({
+    query: (x) => [x],
+    mod: (transform) => (x) => transform(x)
+  });
 
   // ../fun-state/dist/esm/src/FunState.js
-  var pureState = ({ getState, modState, subscribe }) => {
-    const setState = (v) => {
-      modState(() => v);
+  var pureState = ({ getState, modState, subscribe }) => mkFunState({ getState, modState, subscribe }, unit());
+  function mkFunState(engine, viewAcc) {
+    const select = get(viewAcc);
+    const _get = () => {
+      const v = select(engine.getState());
+      return v;
     };
-    const focus = (acc) => subState({ getState, modState, subscribe }, acc);
-    const subscribeToState = (signal, callback) => {
-      const unsubscribe = subscribe(callback);
+    const _query = (acc) => comp(viewAcc, acc).query(engine.getState());
+    const _mod = (f) => engine.modState(viewAcc.mod(f));
+    const _set = (val) => engine.modState(set(viewAcc)(val));
+    const _focus = (acc) => {
+      return mkFunState(engine, comp(viewAcc, acc));
+    };
+    const _prop = (key) => {
+      return _focus(prop()(key));
+    };
+    const _watch = (signal, callback) => {
+      let last = select(engine.getState());
+      callback(last);
+      const unsubscribe = engine.subscribe((rootState) => {
+        const next = select(rootState);
+        if (!Object.is(next, last)) {
+          last = next;
+          callback(next);
+        }
+      });
       signal.addEventListener("abort", unsubscribe, { once: true });
     };
-    const fs = {
-      get: getState,
-      query: (acc) => acc.query(getState()),
-      mod: modState,
-      set: setState,
-      focus,
-      prop: flow(prop(), focus),
-      subscribe: subscribeToState
-    };
-    return fs;
-  };
-  var subState = ({ getState, modState, subscribe }, accessor) => {
-    const props = prop();
-    const _get = () => accessor.query(getState())[0];
-    const _mod = flow(accessor.mod, modState);
-    function createFocusedSubscribe() {
-      return (listener) => {
-        let lastValue = _get();
-        return subscribe((parentState) => {
-          const newValue = accessor.query(parentState)[0];
-          if (newValue !== lastValue) {
-            lastValue = newValue;
-            listener(newValue);
-          }
-        });
-      };
-    }
-    const focus = (acc) => subState({ getState: _get, modState: _mod, subscribe: createFocusedSubscribe() }, acc);
-    const _prop = flow(props, focus);
-    const subscribeToState = (signal, callback) => {
-      let lastValue = _get();
-      const unsubscribe = subscribe((parentState) => {
-        const newValue = accessor.query(parentState)[0];
-        if (newValue !== lastValue) {
-          lastValue = newValue;
-          callback(newValue);
+    const _watchAll = (signal, callback) => {
+      let last = viewAcc.query(engine.getState());
+      callback(last);
+      const unsubscribe = engine.subscribe((rootState) => {
+        const next = viewAcc.query(rootState);
+        if (last.length !== next.length || next.some((v, i) => !Object.is(v, last[i]))) {
+          last = next;
+          callback(next);
         }
       });
       signal.addEventListener("abort", unsubscribe, { once: true });
     };
     return {
       get: _get,
-      query: (acc) => comp(accessor, acc).query(getState()),
+      query: _query,
       mod: _mod,
-      set: flow(set(accessor), modState),
-      focus,
+      set: _set,
+      focus: _focus,
       prop: _prop,
-      subscribe: subscribeToState
+      watch: _watch,
+      watchAll: _watchAll
     };
-  };
+  }
   var standaloneEngine = (initialState) => {
     let state = initialState;
     const listeners = /* @__PURE__ */ new Set();
@@ -101,19 +101,12 @@
   };
   var funState = (initialState) => pureState(standaloneEngine(initialState));
 
-  // ../accessor/dist/esm/accessor.js
-  var prop2 = () => (k) => ({
-    query: (obj) => [obj[k]],
-    mod: (transform) => (obj) => Object.assign(Object.assign({}, obj), { [k]: transform(obj[k]) })
-  });
-
   // src/dom.ts
   var h = (tag, attrs2, children) => {
     const element = document.createElement(tag);
     if (attrs2) {
       for (const [key, value] of Object.entries(attrs2)) {
-        if (value == null)
-          continue;
+        if (value == null) continue;
         if (key.startsWith("on") && typeof value === "function") {
           const eventName = key.slice(2).toLowerCase();
           element.addEventListener(eventName, value);
@@ -165,7 +158,7 @@
     const incrementBtn = h("button", { textContent: "+" });
     const decrementBtn = h("button", { textContent: "-" });
     const resetBtn = h("button", { textContent: "Reset" });
-    state.prop("count").subscribe(signal, (count) => {
+    state.prop("count").watch(signal, (count) => {
       display.textContent = String(count);
     });
     incrementBtn.addEventListener(
@@ -195,7 +188,7 @@
       counterValue: { count: 0 }
     });
     const heading = h("h1", { textContent: state.get().title });
-    state.prop("title").subscribe(signal, (title) => {
+    state.prop("title").watch(signal, (title) => {
       heading.textContent = title;
     });
     const counter = Counter(
@@ -204,15 +197,14 @@
       {
         label: "Click Counter",
         onReset: () => state.prop("counterValue").set({ count: 0 }),
-        state: state.focus(prop2()("counterValue"))
+        state: state.focus(prop()("counterValue"))
       }
     );
     return h("div", { className: "app" }, [heading, counter]);
   };
   var runExample = () => {
     const container = document.getElementById("app");
-    if (!container)
-      throw new Error("No #app element found");
+    if (!container) throw new Error("No #app element found");
     const mounted = mount(App, {}, container);
     return () => mounted.unmount();
   };

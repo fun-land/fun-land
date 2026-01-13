@@ -29,7 +29,8 @@
   },
   "devDependencies": {
     "@fun-land/accessor": "workspace:*",
-    "@fun-land/fun-state": "workspace:*"
+    "@fun-land/fun-state": "workspace:*",
+    "esbuild": "^0.24.2"
   },
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.publish.json",

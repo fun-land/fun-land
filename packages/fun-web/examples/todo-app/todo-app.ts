@@ -100,10 +100,16 @@ const TodoApp: Component = (signal) => {
     })
   );
 
+  const allDoneText = h("span", { textContent: "" });
+  state
+    .focus(Acc<TodoAppState>().prop("items").all().prop("checked"))
+    .watchAll(signal, (checks) => {
+      allDoneText.textContent = checks.every(Boolean) ? "All Done!" : "";
+    });
   return h("div", { className: "todo-app" }, [
     h("h1", { textContent: "Todo App" }),
     form,
-    h("div", {}, [markAllBtn, h("span", { textContent: "" })]),
+    h("div", {}, [markAllBtn, allDoneText]),
     todoList,
   ]);
 };
