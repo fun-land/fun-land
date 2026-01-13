@@ -125,8 +125,8 @@
       watchAll: _watchAll
     };
   }
-  var standaloneEngine = (initialState2) => {
-    let state = initialState2;
+  var standaloneEngine = (initialState) => {
+    let state = initialState;
     const listeners = /* @__PURE__ */ new Set();
     const getState = () => state;
     const modState = (f) => {
@@ -139,7 +139,7 @@
     };
     return { getState, modState, subscribe };
   };
-  var funState = (initialState2) => pureState(standaloneEngine(initialState2));
+  var funState = (initialState) => pureState(standaloneEngine(initialState));
 
   // src/dom.ts
   var h = (tag, attrs2, children) => {
@@ -256,11 +256,35 @@
     };
   };
 
+  // examples/todo-app/TodoAppState.ts
+  var init_TodoAppState = () => ({
+    value: "",
+    items: [
+      { checked: false, label: "Learn fun-web", priority: 0, key: "asdf" },
+      { checked: true, label: "Build something cool", priority: 1, key: "fdas" }
+    ]
+  });
+  var stateAcc = Acc();
+  var allCheckedAcc = stateAcc.prop("items").all().prop("checked");
+  var markAllDone = allCheckedAcc.set(true);
+  var clearValue = stateAcc.prop("value").set("");
+  var addItem = (state) => Acc().prop("items").mod(
+    prepend({
+      checked: false,
+      label: state.value,
+      priority: 1,
+      key: crypto.randomUUID()
+    })
+  )(state);
+
+  // examples/todo-app/TodoState.ts
+  var stateAcc2 = Acc();
+  var priorityAsString = stateAcc2.prop("priority").focus(viewed(String, Number));
+
   // examples/todo-app/Todo.ts
-  var stringNumberView = viewed(String, Number);
   var Todo = (signal, { state, removeItem, onDragStart, onDragEnd, onDragOver }) => {
     const todoData = state.get();
-    const priorityState = state.prop("priority").focus(stringNumberView);
+    const priorityState = state.focus(priorityAsString);
     const prioritySelect = enhance(
       h("select", {}, [
         h("option", { value: "0" }, "High"),
@@ -318,10 +342,14 @@
       );
     }
     if (onDragEnd) {
-      dragHandle.addEventListener("dragend", () => {
-        li.classList.remove("dragging");
-        onDragEnd();
-      }, { signal });
+      dragHandle.addEventListener(
+        "dragend",
+        () => {
+          li.classList.remove("dragging");
+          onDragEnd();
+        },
+        { signal }
+      );
     }
     if (onDragOver) {
       li.addEventListener(
@@ -481,28 +509,8 @@
     return todoList;
   };
 
-  // examples/todo-app/todo-app.ts
-  var stateAcc = Acc();
-  var addItem = (state) => stateAcc.prop("items").mod(
-    prepend({
-      checked: false,
-      label: state.value,
-      priority: 1,
-      key: crypto.randomUUID()
-    })
-  )(state);
-  var clearValue = stateAcc.prop("value").set("");
-  var allCheckedAcc = stateAcc.prop("items").all().prop("checked");
-  var markAllDone = allCheckedAcc.set(true);
-  var initialState = {
-    value: "",
-    items: [
-      { checked: false, label: "Learn fun-web", priority: 0, key: "asdf" },
-      { checked: true, label: "Build something cool", priority: 1, key: "fdas" }
-    ]
-  };
-  var TodoApp = (signal) => {
-    const state = funState(initialState);
+  // examples/todo-app/AddTodoForm.ts
+  var AddTodoForm = (signal, { state }) => {
     const input = enhance(
       h("input", {
         type: "text",
@@ -518,7 +526,7 @@
         signal
       )
     );
-    const form = enhance(
+    return enhance(
       h("form", { className: "todo-form" }, [
         input,
         h("button", {
@@ -538,6 +546,11 @@
         signal
       )
     );
+  };
+
+  // examples/todo-app/TodoApp.ts
+  var TodoApp = (signal) => {
+    const state = funState(init_TodoAppState());
     const markAllBtn = enhance(
       h("button", {
         textContent: "Mark All Done",
@@ -559,8 +572,8 @@
       allDoneText.textContent = checks.length > 0 && checks.every(Boolean) ? "\u{1F389} All Done!" : "";
     });
     return h("div", { className: "todo-app" }, [
-      h("h1", { textContent: "\u{1F680} Advanced Todo App" }),
-      form,
+      h("h1", { textContent: "Todo Example" }),
+      AddTodoForm(signal, { state }),
       h("div", { className: "controls" }, [markAllBtn, allDoneText]),
       DraggableTodoList(signal, { items: state.prop("items") })
     ]);

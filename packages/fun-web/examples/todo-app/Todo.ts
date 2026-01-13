@@ -1,4 +1,3 @@
-import { viewed } from "@fun-land/accessor";
 import {
   h,
   type Component,
@@ -7,13 +6,7 @@ import {
   bindPropertyTo,
   onTo,
 } from "../../src/index";
-
-export interface TodoState {
-  key: string;
-  checked: boolean;
-  priority: number;
-  label: string;
-}
+import { priorityAsString, TodoState } from "./TodoState";
 
 export interface TodoProps {
   removeItem: () => void;
@@ -24,14 +17,13 @@ export interface TodoProps {
 }
 
 // a special Accessor that reads as string but writes as number
-const stringNumberView = viewed(String, Number);
 
 export const Todo: Component<TodoProps> = (
   signal,
   { state, removeItem, onDragStart, onDragEnd, onDragOver }
 ) => {
   const todoData = state.get();
-  const priorityState = state.prop("priority").focus(stringNumberView);
+  const priorityState = state.focus(priorityAsString);
 
   const prioritySelect = enhance(
     h("select", {}, [
@@ -99,10 +91,14 @@ export const Todo: Component<TodoProps> = (
   }
 
   if (onDragEnd) {
-    dragHandle.addEventListener("dragend", () => {
-      li.classList.remove("dragging");
-      onDragEnd();
-    }, { signal });
+    dragHandle.addEventListener(
+      "dragend",
+      () => {
+        li.classList.remove("dragging");
+        onDragEnd();
+      },
+      { signal }
+    );
   }
 
   if (onDragOver) {
@@ -119,7 +115,7 @@ export const Todo: Component<TodoProps> = (
     );
   }
 
-  // Enter animation
+  // play enter animation on mount
   requestAnimationFrame(() => {
     li.classList.add("todo-item-enter");
   });

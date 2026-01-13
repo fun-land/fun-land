@@ -1,6 +1,7 @@
-import { h, keyedChildren, type Component, $ } from "../../src/index";
+import { h, keyedChildren, type Component } from "../../src/index";
 import type { FunState } from "../../src/state";
-import { Todo, type TodoState } from "./Todo";
+import { Todo } from "./Todo";
+import { type TodoState } from "./TodoState";
 
 const ANIMATION_DURATION = 300;
 
@@ -8,7 +9,8 @@ interface DraggableTodoListProps {
   items: FunState<TodoState[]>;
 }
 
-const getElementByKey = (key: string) => $(`[data-key="${key}"]`);
+const getElementByKey = (key: string) =>
+  document.querySelector(`[data-key="${key}"]`);
 
 // Complex component to show off how you can use all the normal DOM and CSS techniques without having to figure out frameworks or do special stuff
 export const DraggableTodoList: Component<DraggableTodoListProps> = (
@@ -26,13 +28,13 @@ export const DraggableTodoList: Component<DraggableTodoListProps> = (
       // New item added - capture positions and animate
       const positions = new Map<string, DOMRect>();
       currentItems.forEach((item) => {
-        const el = $(`[data-key="${item.key}"]`);
+        const el = getElementByKey(item.key);
         if (el) positions.set(item.key, el.getBoundingClientRect());
       });
 
       requestAnimationFrame(() => {
         positions.forEach((first, key) => {
-          const el = $(`[data-key="${key}"]`);
+          const el = getElementByKey(key);
           if (!el) return;
           const last = el.getBoundingClientRect();
           const deltaY = first.top - last.top;
@@ -121,14 +123,14 @@ export const DraggableTodoList: Component<DraggableTodoListProps> = (
   keyedChildren(todoList, signal, items, (row) =>
     Todo(row.signal, {
       removeItem: () => {
-        const element = $<HTMLElement>(`[data-key="${row.state.get().key}"]`);
+        const element = getElementByKey(row.state.get().key);
         if (element) {
           element.classList.add("todo-item-exit");
           setTimeout(() => {
             // Capture positions before removal
             const positions = new Map<string, DOMRect>();
             items.get().forEach((item) => {
-              const el = $(`[data-key="${item.key}"]`);
+              const el = getElementByKey(item.key);
               if (el) positions.set(item.key, el.getBoundingClientRect());
             });
 

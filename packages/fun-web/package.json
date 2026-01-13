@@ -37,7 +37,7 @@
     "build-esm": "tsc -p ./tsconfig.publish.json --module esnext --outDir dist/esm",
     "build": "pnpm run build-cjs && pnpm run build-esm",
     "build:counter": "npx esbuild examples/counter/counter.ts --bundle --outfile=examples/counter/bundle.js --format=iife",
-    "build:todo": "npx esbuild examples/todo-app/todo-app.ts --bundle --outfile=examples/todo-app/todo-bundle.js --format=iife",
+    "build:todo": "npx esbuild examples/todo-app/TodoApp.ts --bundle --outfile=examples/todo-app/TodoApp.js --format=iife",
     "build:examples": "pnpm run build:counter && pnpm run build:todo",
     "lint": "eslint . --ext .ts",
     "test": "jest",
