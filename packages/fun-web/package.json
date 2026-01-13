@@ -4,6 +4,7 @@
   "description": "A web library for component-based development using fun-land",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
+  "types": "src/index.ts",
   "author": "jethro larson",
   "maintainers": [
     "jethrolarson <jethrolarson@gmail.com>"
@@ -24,8 +25,8 @@
   },
   "sideEffects": false,
   "peerDependencies": {
-    "@fun-land/accessor": "workspace:*",
-    "@fun-land/fun-state": "workspace:*"
+    "@fun-land/accessor": "^4.0.0",
+    "@fun-land/fun-state": "^9.0.0"
   },
   "devDependencies": {
     "@fun-land/accessor": "workspace:*",

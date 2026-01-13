@@ -25,8 +25,8 @@
   },
   "sideEffects": false,
   "peerDependencies": {
-    "@fun-land/accessor": "workspace:*",
-    "@fun-land/fun-state": "workspace:*",
+    "@fun-land/accessor": "^4.0.0",
+    "@fun-land/fun-state": "^9.0.0",
     "react": ">=16.8"
   },
   "devDependencies": {

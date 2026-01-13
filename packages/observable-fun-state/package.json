@@ -10,9 +10,9 @@
   "files": [
     "lib"
   ],
-  "dependencies": {
-    "@fun-land/accessor": "workspace:*",
-    "@fun-land/fun-state": "workspace:*",
+  "peerDependencies": {
+    "@fun-land/accessor": "^4.0.0",
+    "@fun-land/fun-state": "^9.0.0",
     "zen-observable": "^0.8.15"
   },
   "publishConfig": {
