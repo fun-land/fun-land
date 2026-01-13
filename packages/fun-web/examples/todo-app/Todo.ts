@@ -6,7 +6,7 @@ import {
   bindPropertyTo,
   onTo,
 } from "../../src/index";
-import { priorityAsString, TodoState } from "./TodoState";
+import { TodoState } from "./TodoState";
 
 export interface TodoProps {
   removeItem: () => void;
@@ -23,16 +23,6 @@ export const Todo: Component<TodoProps> = (
   { state, removeItem, onDragStart, onDragEnd, onDragOver }
 ) => {
   const todoData = state.get();
-  const priorityState = state.focus(priorityAsString);
-
-  const prioritySelect = enhance(
-    h("select", {}, [
-      h("option", { value: "0" }, "High"),
-      h("option", { value: "1" }, "Low"),
-    ]),
-    bindPropertyTo("value", priorityState, signal),
-    onTo("change", (e) => priorityState.set(e.currentTarget.value), signal)
-  );
 
   const checkedState = state.prop("checked");
   const checkbox = enhance(
@@ -64,7 +54,6 @@ export const Todo: Component<TodoProps> = (
   const li = h("li", { className: "todo-item", "data-key": todoData.key }, [
     dragHandle,
     checkbox,
-    prioritySelect,
     labelInput,
     deleteBtn,
   ]);

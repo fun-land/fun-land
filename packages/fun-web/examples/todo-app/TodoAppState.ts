@@ -10,8 +10,8 @@ export interface TodoAppState {
 export const init_TodoAppState = (): TodoAppState => ({
   value: "",
   items: [
-    { checked: false, label: "Learn fun-web", priority: 0, key: "asdf" },
-    { checked: true, label: "Build something cool", priority: 1, key: "fdas" },
+    { checked: false, label: "Learn fun-web", key: "asdf" },
+    { checked: true, label: "Build something cool", key: "fdas" },
   ],
 });
 
@@ -27,7 +27,6 @@ export const addItem = (state: TodoAppState): TodoAppState =>
       prepend<TodoState>({
         checked: false,
         label: state.value,
-        priority: 1,
         key: crypto.randomUUID(),
       })
     )(state);
