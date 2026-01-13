@@ -1,5 +1,5 @@
 import {ChangeEvent, act, createElement as e, useState} from 'react'
-import {FunState, mockState} from '@fun-land/fun-state'
+import {FunState, funState} from '@fun-land/fun-state'
 import useFunState, {bindChecked, bindValue} from './index'
 import {fireEvent, render, renderHook} from '@testing-library/react'
 
@@ -89,12 +89,12 @@ describe('useFunState', () => {
 describe('bindValue', () => {
   it('sets value', () => {
     const bob = 'bob'
-    const state = mockState(bob)
+    const state = funState(bob)
     expect(bindValue(state).value).toBe(bob)
   })
   it('onChange updates value', () => {
     const bob = 'bob'
-    const state = mockState(bob)
+    const state = funState(bob)
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const mockChangeEvent = {currentTarget: {value: 'Bob'}} as ChangeEvent<HTMLInputElement>
     bindValue(state).onChange(mockChangeEvent)
@@ -103,11 +103,11 @@ describe('bindValue', () => {
 })
 describe('bindChecked', () => {
   it('sets checked', () => {
-    const state = mockState(false)
+    const state = funState(false)
     expect(bindChecked(state).checked).toBe(false)
   })
   it('onChange updates checked', () => {
-    const state = mockState(false)
+    const state = funState(false)
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const mockChangeEvent = {currentTarget: {checked: true}} as ChangeEvent<HTMLInputElement>
     bindChecked(state).onChange(mockChangeEvent)

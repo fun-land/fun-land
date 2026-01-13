@@ -8,6 +8,7 @@ type UnpackState<FS> = FS extends FunState<infer State> ? State : never
 
 /** Merge a partial state into a FunState instance */
 export const merge =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <FState extends FunState<any>>(fs: FState) =>
   (part: Partial<UnpackState<FState>>): void => {
     fs.mod(mergeInto(part))

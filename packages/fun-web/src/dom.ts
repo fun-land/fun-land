@@ -17,6 +17,7 @@ import { filter } from "@fun-land/accessor";
  */
 export const h = <Tag extends keyof HTMLElementTagNameMap>(
   tag: Tag,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   attrs?: Record<string, any> | null,
   children?: ElementChild | ElementChild[]
 ): HTMLElementTagNameMap[Tag] => {
@@ -30,12 +31,14 @@ export const h = <Tag extends keyof HTMLElementTagNameMap>(
       if (key.startsWith("on") && typeof value === "function") {
         // Event listener: onclick, onchange, etc.
         const eventName = key.slice(2).toLowerCase();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         element.addEventListener(eventName, value);
       } else if (key.includes("-") || key === "role") {
         // Attribute: data-*, aria-*, role, etc.
         element.setAttribute(key, String(value));
       } else {
         // Property: className, id, textContent, etc.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         (element as any)[key] = value;
       }
     }
@@ -189,7 +192,7 @@ type MountedRow = {
   ctrl: AbortController;
 };
 
-export type KeyedChildren<T extends Keyed> = {
+export type KeyedChildren = {
   /** Reconcile DOM children to match current list state */
   reconcile: () => void;
   /** Abort + remove all mounted children */
@@ -214,7 +217,7 @@ export function keyedChildren<T extends Keyed>(
     state: FunState<T>;
     remove: () => void;
   }) => Element
-): KeyedChildren<T> {
+): KeyedChildren {
   const rows = new Map<string, MountedRow>();
 
   const dispose = (): void => {

@@ -388,63 +388,6 @@ function makeAbortSignal(): {
 }
 
 /**
- * Helper to create a funState with introspection for tests
- */
-function makeListState(initial: Item[]): {
-  list: FunState<Item[]>;
-  setItems: (next: Item[]) => void;
-} {
-  const list = funState<Item[]>(initial);
-
-  return {
-    list,
-    setItems: (next) => list.set(next),
-  };
-}
-
-/**
- * Helper: build a keyedChildren instance with a renderRow that creates stable elements
- * and allows us to track mounts/unmounts.
- *
- * We do not depend on list.focus() here; instead renderRow captures the key and
- * reads the item directly from the list by key at event time if needed.
- */
-function setupKeyedChildren(
-  parent: Element,
-  signal: AbortSignal,
-  listState: FunState<Item[]>
-) {
-  const mountCountByKey = new Map<string, number>();
-  const abortCountByKey = new Map<string, number>();
-
-  const api = keyedChildren<Item>(parent, signal, listState, (row) => {
-    // In your real keyedChildren, itemState is a focused FunState<Item>.
-    // In tests we don't need it; we just need an element and lifecycle tracking.
-
-    // We'll attach a listener to verify rowSignal abort happens:
-    const key = row.state.get().key;
-
-    // However, because we can't rely on itemState.get() in this harness,
-    // we'll patch this by using a data attribute later in the test.
-    const el = document.createElement("li");
-
-    // Count mounts by key (key set later by caller using dataset)
-    el.dataset.key = key;
-
-    const prevMounts = mountCountByKey.get(key) ?? 0;
-    mountCountByKey.set(key, prevMounts + 1);
-
-    row.signal.addEventListener("abort", () => {
-      abortCountByKey.set(key, (abortCountByKey.get(key) ?? 0) + 1);
-    });
-
-    return el;
-  });
-
-  return { api, mountCountByKey, abortCountByKey };
-}
-
-/**
  * Because the renderRow above can't reliably read the key from itemState in this harness,
  * we’ll make a dedicated renderRow for tests that receives the key by closure from the list.
  *
@@ -768,9 +711,7 @@ describe("$ (querySelector)", () => {
     const result = $<HTMLInputElement>("#myinput");
     expect(result).toBe(input);
     // TypeScript should know this is HTMLInputElement
-    if (result) {
-      expect(result.value).toBeDefined();
-    }
+    expect(result!.value).toBeDefined();
   });
 });
 
