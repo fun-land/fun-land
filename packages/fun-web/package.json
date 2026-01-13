@@ -44,5 +44,6 @@
   "bugs": {
     "url": "https://github.com/fun-land/fun-land/issues"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "gitHead": "ac5fab3928f2be91f00c79f3f5764b599283129d"
 }
