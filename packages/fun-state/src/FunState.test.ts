@@ -1,5 +1,5 @@
 import {pureState, standaloneEngine, funState, merge, extractArray} from './FunState'
-import {comp, all, prop, prepend} from '@fun-land/accessor'
+import {comp, all, prop, prepend, set} from '@fun-land/accessor'
 
 describe('standaloneEngine', () => {
   it('sets', () => {
@@ -208,6 +208,32 @@ describe('funState', () => {
       // Change focused value
       fs.set({a: {b: {c: 5}}})
       expect(callback).toHaveBeenCalledWith(5)
+    })
+
+    it('should handle nested focus subscriptions correctly', () => {
+      interface St {
+        a: {b: {c: number}}
+        x: number
+      }
+      const fs = funState<St>({a: {b: {c: 1}}, x: 0})
+      const controller = new AbortController()
+      const callback = jest.fn()
+
+      // Create nested focused states via .focus() on focused states
+      const aState = fs.prop('a')
+      const bState = aState.prop('b')
+      bState.subscribe(controller.signal, callback)
+
+      // Change unrelated field x - the accessor library will preserve 'a' reference
+      const xProp = prop<St>()('x')
+      fs.mod(set(xProp)(1))
+      expect(callback).not.toHaveBeenCalled()
+
+      // Change c within b - should notify
+      const cProp = comp(prop<St>()('a'), prop<St['a']>()('b'), prop<St['a']['b']>()('c'))
+      fs.mod(set(cProp)(2))
+      expect(callback).toHaveBeenCalledWith({c: 2})
+      expect(callback).toHaveBeenCalledTimes(1)
     })
   })
 

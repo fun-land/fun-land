@@ -74,6 +74,7 @@ export function comp<A, B, C, D, E, F, G, H>(
   acc6: Accessor<F, G>,
   acc7: Accessor<G, H>
 ): Accessor<A, H>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function comp(...accs: Array<Accessor<any, any>>): Accessor<any, any> {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return accs.reduce(_comp)
@@ -236,6 +237,7 @@ export interface Foci<S, A> extends Accessor<S, A> {
 
 export function Acc<S>(): Foci<S, S>
 export function Acc<S, A>(acc: Accessor<S, A>): Foci<S, A>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function Acc<S>(acc = unit<S>()): Foci<S, any> {
   return focusedAcc(acc)
 }

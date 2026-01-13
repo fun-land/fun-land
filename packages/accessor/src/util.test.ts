@@ -1,4 +1,4 @@
-import {head, empty, not, tail, prepend, append, removeAt, mergeInto, flatmap, B, flow} from './util'
+import {head, empty, not, tail, prepend, append, removeAt, mergeInto, flatmap, B, flow, K, I} from './util'
 
 describe('B', () => {
   it('composes functions', () => {
@@ -14,6 +14,21 @@ describe('flow', () => {
         (a: number) => a / 2
       )(3)
     ).toBe(2)
+  })
+})
+
+describe('K', () => {
+  it('returns constant value', () => {
+    expect(K(5)('ignored')).toBe(5)
+    expect(K('hello')(123)).toBe('hello')
+  })
+})
+
+describe('I', () => {
+  it('returns the same value', () => {
+    expect(I(5)).toBe(5)
+    expect(I('hello')).toBe('hello')
+    expect(I([1, 2, 3])).toEqual([1, 2, 3])
   })
 })
 
@@ -64,8 +79,7 @@ describe('head', () => {
   })
 
   it('returns undefined for empty (an typechecks as such)', () => {
-    // @ts-expect-error
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // @ts-expect-error - Testing that head returns undefined for empty array, which is incompatible with string type
     const a: string = head<string>([])
     expect(a).toBeUndefined()
   })
