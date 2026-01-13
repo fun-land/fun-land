@@ -6,3 +6,4 @@ lerna-debug.log
 coverage
 wip
 *.tsbuildinfo
+tsconfig.tsbuildinfo
