@@ -4,12 +4,12 @@ import {
   mount,
   bindPropertyTo,
   onTo,
-  keyedChildren,
   type Component,
   enhance,
 } from "../../src/index";
 import { prepend, flow, Acc } from "@fun-land/accessor";
-import { TodoState, Todo } from "./Todo";
+import type { TodoState } from "./Todo";
+import { DraggableTodoList } from "./DraggableTodoList";
 
 // ===== Types =====
 
@@ -20,10 +20,10 @@ interface TodoAppState {
 
 // ===== Accessors and helpers =====
 
-const stateFoci = Acc<TodoAppState>();
+const stateAcc = Acc<TodoAppState>();
 
 const addItem = (state: TodoAppState): TodoAppState =>
-  stateFoci.prop("items").mod(
+  stateAcc.prop("items").mod(
     prepend<TodoState>({
       checked: false,
       label: state.value,
@@ -32,9 +32,9 @@ const addItem = (state: TodoAppState): TodoAppState =>
     })
   )(state);
 
-const clearValue = stateFoci.prop("value").set("");
-
-const markAllDone = stateFoci.prop("items").all().prop("checked").set(true);
+const clearValue = stateAcc.prop("value").set("");
+const allCheckedAcc = stateAcc.prop("items").all().prop("checked");
+const markAllDone = allCheckedAcc.set(true);
 
 // ===== Todo App Component =====
 
@@ -48,11 +48,14 @@ const initialState: TodoAppState = {
 
 const TodoApp: Component = (signal) => {
   const state = funState(initialState);
+
+  // ===== Form Components =====
+
   const input = enhance(
     h("input", {
       type: "text",
-      value: state.get().value,
       placeholder: "Add a todo...",
+      className: "todo-input",
     }),
     bindPropertyTo("value", state.prop("value"), signal),
     onTo(
@@ -64,10 +67,15 @@ const TodoApp: Component = (signal) => {
     )
   );
 
-  const addBtn = h("button", { type: "submit", textContent: "Add" });
-
   const form = enhance(
-    h("form", {}, [input, addBtn]),
+    h("form", { className: "todo-form" }, [
+      input,
+      h("button", {
+        type: "submit",
+        textContent: "Add",
+        className: "add-btn",
+      }),
+    ]),
     onTo(
       "submit",
       (e) => {
@@ -80,9 +88,11 @@ const TodoApp: Component = (signal) => {
     )
   );
 
-  // Because `on` returns the element you can pipe through
   const markAllBtn = enhance(
-    h("button", { textContent: "Mark All Done" }),
+    h("button", {
+      textContent: "Mark All Done",
+      className: "mark-all-btn",
+    }),
     onTo(
       "click",
       () => {
@@ -92,25 +102,21 @@ const TodoApp: Component = (signal) => {
     )
   );
 
-  const todoList = h("ul", {});
-  keyedChildren(todoList, signal, state.prop("items"), (row) =>
-    Todo(row.signal, {
-      removeItem: row.remove,
-      state: row.state,
-    })
-  );
+  // "All Done" indicator
+  const allDoneText = h("span", {
+    textContent: "",
+    className: "all-done-text",
+  });
+  state.focus(allCheckedAcc).watchAll(signal, (checks) => {
+    allDoneText.textContent =
+      checks.length > 0 && checks.every(Boolean) ? "🎉 All Done!" : "";
+  });
 
-  const allDoneText = h("span", { textContent: "" });
-  state
-    .focus(Acc<TodoAppState>().prop("items").all().prop("checked"))
-    .watchAll(signal, (checks) => {
-      allDoneText.textContent = checks.every(Boolean) ? "All Done!" : "";
-    });
   return h("div", { className: "todo-app" }, [
-    h("h1", { textContent: "Todo App" }),
+    h("h1", { textContent: "🚀 Advanced Todo App" }),
     form,
-    h("div", {}, [markAllBtn, allDoneText]),
-    todoList,
+    h("div", { className: "controls" }, [markAllBtn, allDoneText]),
+    DraggableTodoList(signal, { items: state.prop("items") }),
   ]);
 };
 

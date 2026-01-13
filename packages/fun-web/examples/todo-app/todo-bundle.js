@@ -240,6 +240,7 @@
     reconcile();
     return { reconcile, dispose };
   }
+  var $ = (selector) => document.querySelector(selector) ?? void 0;
 
   // src/mount.ts
   var mount = (component, props, container) => {
@@ -257,7 +258,8 @@
 
   // examples/todo-app/Todo.ts
   var stringNumberView = viewed(String, Number);
-  var Todo = (signal, { state, removeItem }) => {
+  var Todo = (signal, { state, removeItem, onDragStart, onDragEnd, onDragOver }) => {
+    const todoData = state.get();
     const priorityState = state.prop("priority").focus(stringNumberView);
     const prioritySelect = enhance(
       h("select", {}, [
@@ -265,15 +267,12 @@
         h("option", { value: "1" }, "Low")
       ]),
       bindPropertyTo("value", priorityState, signal),
-      // native event binding works but for easier event binding use `on` helper for better type inferrence and you can't forget to cleanup
       onTo("change", (e) => priorityState.set(e.currentTarget.value), signal)
     );
     const checkedState = state.prop("checked");
     const checkbox = enhance(
       h("input", { type: "checkbox" }),
-      // use bindPropertyTo to automatically update a property when the focused state changes
       bindPropertyTo("checked", checkedState, signal),
-      // when state.checked updates the checkbox.checked updates
       onTo("change", (e) => checkedState.set(e.currentTarget.checked), signal)
     );
     const labelState = state.prop("label");
@@ -284,20 +283,207 @@
       bindPropertyTo("value", labelState, signal),
       onTo("input", (e) => labelState.set(e.currentTarget.value), signal)
     );
-    return h("li", {}, [
+    const dragHandle = h("span", {
+      className: "drag-handle",
+      textContent: "\u22EE\u22EE",
+      draggable: true
+    });
+    const deleteBtn = enhance(
+      h("button", { className: "delete-btn", textContent: "\xD7" }),
+      onTo("click", removeItem, signal)
+    );
+    const li = h("li", { className: "todo-item", "data-key": todoData.key }, [
+      dragHandle,
       checkbox,
       prioritySelect,
       labelInput,
-      enhance(
-        h("button", { textContent: "X" }),
-        onTo("click", removeItem, signal)
-      )
+      deleteBtn
     ]);
+    if (onDragStart) {
+      dragHandle.addEventListener(
+        "dragstart",
+        (e) => {
+          if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", todoData.key);
+            const rect = li.getBoundingClientRect();
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
+            e.dataTransfer.setDragImage(li, offsetX, offsetY);
+          }
+          li.classList.add("dragging");
+          onDragStart(todoData.key);
+        },
+        { signal }
+      );
+    }
+    if (onDragEnd) {
+      dragHandle.addEventListener("dragend", () => {
+        li.classList.remove("dragging");
+        onDragEnd();
+      }, { signal });
+    }
+    if (onDragOver) {
+      li.addEventListener(
+        "dragover",
+        (e) => {
+          e.preventDefault();
+          if (e.dataTransfer) {
+            e.dataTransfer.dropEffect = "move";
+          }
+          onDragOver(todoData.key);
+        },
+        { signal }
+      );
+    }
+    requestAnimationFrame(() => {
+      li.classList.add("todo-item-enter");
+    });
+    return li;
+  };
+
+  // examples/todo-app/DraggableTodoList.ts
+  var ANIMATION_DURATION = 300;
+  var getElementByKey = (key) => $(`[data-key="${key}"]`);
+  var DraggableTodoList = (signal, { items }) => {
+    let draggedKey = null;
+    let lastTargetKey = null;
+    let previousItemCount = items.get().length;
+    items.watch(signal, (currentItems) => {
+      const currentCount = currentItems.length;
+      if (currentCount > previousItemCount) {
+        const positions = /* @__PURE__ */ new Map();
+        currentItems.forEach((item) => {
+          const el = $(`[data-key="${item.key}"]`);
+          if (el) positions.set(item.key, el.getBoundingClientRect());
+        });
+        requestAnimationFrame(() => {
+          positions.forEach((first, key) => {
+            const el = $(`[data-key="${key}"]`);
+            if (!el) return;
+            const last = el.getBoundingClientRect();
+            const deltaY = first.top - last.top;
+            if (deltaY) {
+              el.animate(
+                [
+                  { transform: `translateY(${deltaY}px)` },
+                  { transform: "translateY(0)" }
+                ],
+                {
+                  duration: ANIMATION_DURATION,
+                  easing: "cubic-bezier(0.4, 0, 0.2, 1)"
+                }
+              );
+            }
+          });
+        });
+      }
+      previousItemCount = currentCount;
+    });
+    const handleDragStart = (key) => {
+      draggedKey = key;
+      lastTargetKey = null;
+    };
+    const handleDragOver = (targetKey) => {
+      if (!draggedKey || draggedKey === targetKey || lastTargetKey === targetKey)
+        return;
+      lastTargetKey = targetKey;
+      const allItems = items.get();
+      const draggedIndex = allItems.findIndex((item) => item.key === draggedKey);
+      const targetIndex = allItems.findIndex((item) => item.key === targetKey);
+      if (draggedIndex !== -1 && targetIndex !== -1) {
+        const newItems = [...allItems];
+        const [draggedItem] = newItems.splice(draggedIndex, 1);
+        newItems.splice(targetIndex, 0, draggedItem);
+        items.set(newItems);
+      }
+    };
+    const handleDragEnd = () => {
+      if (lastTargetKey) {
+        const positions = /* @__PURE__ */ new Map();
+        items.get().forEach((item) => {
+          const el = getElementByKey(item.key);
+          if (el) positions.set(item.key, el.getBoundingClientRect());
+        });
+        requestAnimationFrame(() => {
+          positions.forEach((first, key) => {
+            const el = getElementByKey(key);
+            if (!el) return;
+            const last = el.getBoundingClientRect();
+            const deltaX = first.left - last.left;
+            const deltaY = first.top - last.top;
+            if (deltaX || deltaY) {
+              el.animate(
+                [
+                  { transform: `translate(${deltaX}px, ${deltaY}px)` },
+                  { transform: "translate(0, 0)" }
+                ],
+                {
+                  duration: ANIMATION_DURATION,
+                  easing: "cubic-bezier(0.4, 0, 0.2, 1)"
+                }
+              );
+            }
+          });
+        });
+      }
+      draggedKey = null;
+      lastTargetKey = null;
+    };
+    const todoList = h("ul", { className: "todo-list" });
+    keyedChildren(
+      todoList,
+      signal,
+      items,
+      (row) => Todo(row.signal, {
+        removeItem: () => {
+          const element = $(`[data-key="${row.state.get().key}"]`);
+          if (element) {
+            element.classList.add("todo-item-exit");
+            setTimeout(() => {
+              const positions = /* @__PURE__ */ new Map();
+              items.get().forEach((item) => {
+                const el = $(`[data-key="${item.key}"]`);
+                if (el) positions.set(item.key, el.getBoundingClientRect());
+              });
+              row.remove();
+              requestAnimationFrame(() => {
+                positions.forEach((first, key) => {
+                  const el = getElementByKey(key);
+                  if (!el) return;
+                  const last = el.getBoundingClientRect();
+                  const deltaY = first.top - last.top;
+                  if (deltaY) {
+                    el.animate(
+                      [
+                        { transform: `translateY(${deltaY}px)` },
+                        { transform: "translateY(0)" }
+                      ],
+                      {
+                        duration: ANIMATION_DURATION,
+                        easing: "cubic-bezier(0.4, 0, 0.2, 1)"
+                      }
+                    );
+                  }
+                });
+              });
+            }, ANIMATION_DURATION);
+          } else {
+            row.remove();
+          }
+        },
+        state: row.state,
+        onDragStart: handleDragStart,
+        onDragEnd: handleDragEnd,
+        onDragOver: handleDragOver
+      })
+    );
+    return todoList;
   };
 
   // examples/todo-app/todo-app.ts
-  var stateFoci = Acc();
-  var addItem = (state) => stateFoci.prop("items").mod(
+  var stateAcc = Acc();
+  var addItem = (state) => stateAcc.prop("items").mod(
     prepend({
       checked: false,
       label: state.value,
@@ -305,8 +491,9 @@
       key: crypto.randomUUID()
     })
   )(state);
-  var clearValue = stateFoci.prop("value").set("");
-  var markAllDone = stateFoci.prop("items").all().prop("checked").set(true);
+  var clearValue = stateAcc.prop("value").set("");
+  var allCheckedAcc = stateAcc.prop("items").all().prop("checked");
+  var markAllDone = allCheckedAcc.set(true);
   var initialState = {
     value: "",
     items: [
@@ -319,8 +506,8 @@
     const input = enhance(
       h("input", {
         type: "text",
-        value: state.get().value,
-        placeholder: "Add a todo..."
+        placeholder: "Add a todo...",
+        className: "todo-input"
       }),
       bindPropertyTo("value", state.prop("value"), signal),
       onTo(
@@ -331,9 +518,15 @@
         signal
       )
     );
-    const addBtn = h("button", { type: "submit", textContent: "Add" });
     const form = enhance(
-      h("form", {}, [input, addBtn]),
+      h("form", { className: "todo-form" }, [
+        input,
+        h("button", {
+          type: "submit",
+          textContent: "Add",
+          className: "add-btn"
+        })
+      ]),
       onTo(
         "submit",
         (e) => {
@@ -346,7 +539,10 @@
       )
     );
     const markAllBtn = enhance(
-      h("button", { textContent: "Mark All Done" }),
+      h("button", {
+        textContent: "Mark All Done",
+        className: "mark-all-btn"
+      }),
       onTo(
         "click",
         () => {
@@ -355,25 +551,18 @@
         signal
       )
     );
-    const todoList = h("ul", {});
-    keyedChildren(
-      todoList,
-      signal,
-      state.prop("items"),
-      (row) => Todo(row.signal, {
-        removeItem: row.remove,
-        state: row.state
-      })
-    );
-    const allDoneText = h("span", { textContent: "" });
-    state.focus(Acc().prop("items").all().prop("checked")).watchAll(signal, (checks) => {
-      allDoneText.textContent = checks.every(Boolean) ? "All Done!" : "";
+    const allDoneText = h("span", {
+      textContent: "",
+      className: "all-done-text"
+    });
+    state.focus(allCheckedAcc).watchAll(signal, (checks) => {
+      allDoneText.textContent = checks.length > 0 && checks.every(Boolean) ? "\u{1F389} All Done!" : "";
     });
     return h("div", { className: "todo-app" }, [
-      h("h1", { textContent: "Todo App" }),
+      h("h1", { textContent: "\u{1F680} Advanced Todo App" }),
       form,
-      h("div", {}, [markAllBtn, allDoneText]),
-      todoList
+      h("div", { className: "controls" }, [markAllBtn, allDoneText]),
+      DraggableTodoList(signal, { items: state.prop("items") })
     ]);
   };
   var app = document.getElementById("app");

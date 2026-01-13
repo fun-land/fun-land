@@ -18,33 +18,37 @@ export interface TodoState {
 export interface TodoProps {
   removeItem: () => void;
   state: FunState<TodoState>;
+  onDragStart?: (key: string) => void;
+  onDragEnd?: () => void;
+  onDragOver?: (key: string) => void;
 }
 
 // a special Accessor that reads as string but writes as number
 const stringNumberView = viewed(String, Number);
 
-export const Todo: Component<TodoProps> = (signal, { state, removeItem }) => {
+export const Todo: Component<TodoProps> = (
+  signal,
+  { state, removeItem, onDragStart, onDragEnd, onDragOver }
+) => {
+  const todoData = state.get();
   const priorityState = state.prop("priority").focus(stringNumberView);
-  // h is a much more ergonomic way of creating html but it's just document.createElement under the hood
+
   const prioritySelect = enhance(
     h("select", {}, [
       h("option", { value: "0" }, "High"),
       h("option", { value: "1" }, "Low"),
     ]),
     bindPropertyTo("value", priorityState, signal),
-    // native event binding works but for easier event binding use `on` helper for better type inferrence and you can't forget to cleanup
     onTo("change", (e) => priorityState.set(e.currentTarget.value), signal)
   );
 
   const checkedState = state.prop("checked");
   const checkbox = enhance(
     h("input", { type: "checkbox" }),
-    // use bindPropertyTo to automatically update a property when the focused state changes
-    bindPropertyTo("checked", checkedState, signal), // when state.checked updates the checkbox.checked updates
+    bindPropertyTo("checked", checkedState, signal),
     onTo("change", (e) => checkedState.set(e.currentTarget.checked), signal)
   );
 
-  // 😎 or do both at the same time since they both return the element
   const labelState = state.prop("label");
   const labelInput = enhance(
     h("input", {
@@ -54,13 +58,71 @@ export const Todo: Component<TodoProps> = (signal, { state, removeItem }) => {
     onTo("input", (e) => labelState.set(e.currentTarget.value), signal)
   );
 
-  return h("li", {}, [
+  const dragHandle = h("span", {
+    className: "drag-handle",
+    textContent: "⋮⋮",
+    draggable: true,
+  });
+
+  const deleteBtn = enhance(
+    h("button", { className: "delete-btn", textContent: "×" }),
+    onTo("click", removeItem, signal)
+  );
+
+  const li = h("li", { className: "todo-item", "data-key": todoData.key }, [
+    dragHandle,
     checkbox,
     prioritySelect,
     labelInput,
-    enhance(
-      h("button", { textContent: "X" }),
-      onTo("click", removeItem, signal)
-    ),
+    deleteBtn,
   ]);
+
+  // HTML5 drag and drop
+  if (onDragStart) {
+    dragHandle.addEventListener(
+      "dragstart",
+      (e) => {
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", todoData.key);
+          // Calculate offset from mouse to element's top-left
+          const rect = li.getBoundingClientRect();
+          const offsetX = e.clientX - rect.left;
+          const offsetY = e.clientY - rect.top;
+          e.dataTransfer.setDragImage(li, offsetX, offsetY);
+        }
+        li.classList.add("dragging");
+        onDragStart(todoData.key);
+      },
+      { signal }
+    );
+  }
+
+  if (onDragEnd) {
+    dragHandle.addEventListener("dragend", () => {
+      li.classList.remove("dragging");
+      onDragEnd();
+    }, { signal });
+  }
+
+  if (onDragOver) {
+    li.addEventListener(
+      "dragover",
+      (e) => {
+        e.preventDefault();
+        if (e.dataTransfer) {
+          e.dataTransfer.dropEffect = "move";
+        }
+        onDragOver(todoData.key);
+      },
+      { signal }
+    );
+  }
+
+  // Enter animation
+  requestAnimationFrame(() => {
+    li.classList.add("todo-item-enter");
+  });
+
+  return li;
 };
