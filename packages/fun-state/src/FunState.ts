@@ -1,4 +1,4 @@
-import {type Accessor, comp, set, prop, flow, mergeInto, all, index} from '@fun-land/accessor'
+import {type Accessor, comp, set, prop, mergeInto, all, index, unit, get as accGet} from '@fun-land/accessor'
 
 export type Updater<State> = (transform: (state: State) => State) => void
 export type Listener<State> = (state: State) => void
@@ -25,7 +25,11 @@ export interface StateEngine<State> {
 }
 
 export interface FunState<State> {
-  /** Extract the value stored as the state */
+  /**
+   * Extract the value stored as the state.
+   * @note This may return undefined if the Accessor would return no results.
+   * In those cases it's safer to us .query()
+   **/
   get: () => State
   /** Query the state using an accessor */
   query: <A>(acc: Accessor<State, A>) => A[]
@@ -37,90 +41,97 @@ export interface FunState<State> {
   focus: <SubState>(acc: Accessor<State, SubState>) => FunState<SubState>
   /** focus state at passed key (sugar over `focus(prop(k))`) */
   prop: <K extends keyof State>(key: K) => FunState<State[K]>
-  /** Subscribe to state changes with cleanup via AbortSignal */
-  subscribe: (signal: AbortSignal, callback: Listener<State>) => void
+  /** Watch the focused value.
+   * @note Like .get(), the callback may receive `undefined` if the Accessor yields no values.
+   * Use .watchAll() for the safe, complete view.
+   */
+  watch: (signal: AbortSignal, callback: Listener<State>) => void
+  /** Watch all focused values.
+   * Emits the full result of the Accessor (mirrors .query()).
+   */
+  watchAll: (signal: AbortSignal, callback: (values: State[]) => void) => void
 }
 
 /**
  * Create a FunState instance from a StateEngine
  */
-export const pureState = <State>({getState, modState, subscribe}: StateEngine<State>): FunState<State> => {
-  const setState = (v: State): void => {
-    modState(() => v)
-  }
-  const focus = <SubState>(acc: Accessor<State, SubState>): FunState<SubState> =>
-    subState({getState, modState, subscribe}, acc)
+export const pureState = <RootState>({getState, modState, subscribe}: StateEngine<RootState>): FunState<RootState> =>
+  mkFunState<RootState, RootState>({getState, modState, subscribe}, unit<RootState>())
 
-  const subscribeToState = (signal: AbortSignal, callback: Listener<State>): void => {
-    const unsubscribe = subscribe(callback)
+function mkFunState<RootState, ViewState>(
+  engine: StateEngine<RootState>,
+  viewAcc: Accessor<RootState, ViewState>
+): FunState<ViewState> {
+  const select = accGet(viewAcc)
+
+  const _get = (): ViewState => {
+    const v = select(engine.getState())
+    // unsafe get included for ergonomics but strictly speaking get on traversals may return undefined
+    return v as ViewState
+  }
+
+  // Query current view using a composed accessor from root.
+  const _query = <A>(acc: Accessor<ViewState, A>): A[] => comp(viewAcc, acc).query(engine.getState())
+
+  // Mod the focused view by lifting through the composed accessor into root.
+  const _mod: Updater<ViewState> = (f) => engine.modState(viewAcc.mod(f))
+
+  const _set = (val: ViewState): void => engine.modState(set(viewAcc)(val))
+
+  const _focus = <SubState>(acc: Accessor<ViewState, SubState>): FunState<SubState> => {
+    // Compose accessors: root -> view -> subview
+    return mkFunState(engine, comp(viewAcc, acc))
+  }
+
+  const _prop = <K extends keyof ViewState>(key: K): FunState<ViewState[K]> => {
+    return _focus(prop<ViewState>()(key))
+  }
+
+  const _watch = (signal: AbortSignal, callback: Listener<ViewState>): void => {
+    let last = select(engine.getState())
+    callback(last as ViewState)
+
+    const unsubscribe = engine.subscribe((rootState) => {
+      const next = select(rootState)
+      if (!Object.is(next, last)) {
+        last = next
+        callback(next as ViewState)
+      }
+    })
+
     signal.addEventListener('abort', unsubscribe, {once: true})
   }
 
-  const fs: FunState<State> = {
-    get: getState,
-    query: (acc) => acc.query(getState()),
-    mod: modState,
-    set: setState,
-    focus,
-    prop: flow(prop<State>(), focus),
-    subscribe: subscribeToState
-  }
-  return fs
-}
+  const _watchAll = (signal: AbortSignal, callback: (values: ViewState[]) => void): void => {
+    let last = viewAcc.query(engine.getState())
+    callback(last)
 
-/**
- * Create a new FunState focused at the passed accessor
- */
-const subState = <ParentState, ChildState>(
-  {getState, modState, subscribe}: StateEngine<ParentState>,
-  accessor: Accessor<ParentState, ChildState>
-): FunState<ChildState> => {
-  const props = prop<ChildState>()
-  const _get = (): ChildState => accessor.query(getState())[0]
-  const _mod = flow(accessor.mod, modState)
+    const unsubscribe = engine.subscribe((rootState) => {
+      const next = viewAcc.query(rootState)
 
-  function createFocusedSubscribe(): (listener: Listener<ChildState>) => Unsubscribe {
-    return (listener) => {
-      let lastValue = _get()
-      return subscribe((parentState) => {
-        const newValue = accessor.query(parentState)[0]
-        if (newValue !== lastValue) {
-          lastValue = newValue
-          listener(newValue)
-        }
-      })
-    }
-  }
-
-  const focus = <SubState>(acc: Accessor<ChildState, SubState>): FunState<SubState> =>
-    subState({getState: _get, modState: _mod, subscribe: createFocusedSubscribe()}, acc)
-  const _prop = flow(props, focus)
-
-  const subscribeToState = (signal: AbortSignal, callback: Listener<ChildState>): void => {
-    let lastValue = _get()
-    const unsubscribe = subscribe((parentState) => {
-      const newValue = accessor.query(parentState)[0]
-      if (newValue !== lastValue) {
-        lastValue = newValue
-        callback(newValue)
+      if (last.length !== next.length || next.some((v, i) => !Object.is(v, last[i]))) {
+        last = next
+        callback(next)
       }
     })
+
     signal.addEventListener('abort', unsubscribe, {once: true})
   }
 
   return {
     get: _get,
-    query: <A>(acc: Accessor<ChildState, A>): A[] => comp(accessor, acc).query(getState()),
+    query: _query,
     mod: _mod,
-    set: flow(set(accessor), modState),
-    focus,
+    set: _set,
+    focus: _focus,
     prop: _prop,
-    subscribe: subscribeToState
+    watch: _watch,
+    watchAll: _watchAll
   }
 }
 
 /**
- * Simple StateEngine that is just based on a single mutible variable. Primarilly used for unit testing.
+ * Simple StateEngine that is based on a single mutible variable.
  */
 export const standaloneEngine = <State>(initialState: State): StateEngine<State> => {
   let state: State = initialState

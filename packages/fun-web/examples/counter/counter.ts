@@ -38,7 +38,7 @@ const Counter: Component<CounterProps> = (
   const resetBtn = h("button", { textContent: "Reset" });
 
   // Subscribe to state changes
-  state.prop("count").subscribe(signal, (count) => {
+  state.prop("count").watch(signal, (count) => {
     display.textContent = String(count);
   });
 
@@ -83,7 +83,7 @@ const App: Component = (signal) => {
   const heading = h("h1", { textContent: state.get().title });
 
   // Subscribe to title changes
-  state.prop("title").subscribe(signal, (title) => {
+  state.prop("title").watch(signal, (title) => {
     heading.textContent = title;
   });
 

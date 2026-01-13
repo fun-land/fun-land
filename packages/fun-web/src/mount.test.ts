@@ -115,7 +115,7 @@ describe("mount()", () => {
       const { state } = props;
       const div = h("div", { textContent: String(state.get().count) });
 
-      state.prop("count").subscribe(signal, (count: number) => {
+      state.prop("count").watch(signal, (count: number) => {
         div.textContent = String(count);
       });
 
@@ -149,7 +149,7 @@ describe("mount()", () => {
     const Component: Component<Props> = (signal, props) => {
       const { state } = props;
       const div = h("div");
-      state.prop("count").subscribe(signal, callback);
+      state.prop("count").watch(signal, callback);
       return div;
     };
 
@@ -190,11 +190,11 @@ describe("mount()", () => {
         settingsState.get().theme
       );
 
-      userState.prop("name").subscribe(signal, (name: string) => {
+      userState.prop("name").watch(signal, (name: string) => {
         nameEl.textContent = name;
       });
 
-      settingsState.prop("theme").subscribe(signal, (theme: string) => {
+      settingsState.prop("theme").watch(signal, (theme: string) => {
         themeEl.textContent = theme;
       });
 

@@ -122,7 +122,7 @@ describe('funState', () => {
       const controller = new AbortController()
       const callback = jest.fn()
 
-      fs.subscribe(controller.signal, callback)
+      fs.watch(controller.signal, callback)
       fs.set({count: 1})
 
       expect(callback).toHaveBeenCalledWith({count: 1})
@@ -133,13 +133,15 @@ describe('funState', () => {
       const controller = new AbortController()
       const callback = jest.fn()
 
-      fs.subscribe(controller.signal, callback)
+      fs.watch(controller.signal, callback)
       fs.set({count: 1})
       fs.set({count: 2})
 
-      expect(callback).toHaveBeenCalledTimes(2)
-      expect(callback).toHaveBeenNthCalledWith(1, {count: 1})
-      expect(callback).toHaveBeenNthCalledWith(2, {count: 2})
+      // watch calls immediately with initial value, then on each change
+      expect(callback).toHaveBeenCalledTimes(3)
+      expect(callback).toHaveBeenNthCalledWith(1, {count: 0})
+      expect(callback).toHaveBeenNthCalledWith(2, {count: 1})
+      expect(callback).toHaveBeenNthCalledWith(3, {count: 2})
     })
 
     it('should stop calling subscriber after signal aborts', () => {
@@ -147,13 +149,14 @@ describe('funState', () => {
       const controller = new AbortController()
       const callback = jest.fn()
 
-      fs.subscribe(controller.signal, callback)
+      fs.watch(controller.signal, callback)
       fs.set({count: 1})
-      expect(callback).toHaveBeenCalledTimes(1)
+      // Called with initial value, then with new value
+      expect(callback).toHaveBeenCalledTimes(2)
 
       controller.abort()
       fs.set({count: 2})
-      expect(callback).toHaveBeenCalledTimes(1) // Still 1, not called again
+      expect(callback).toHaveBeenCalledTimes(2) // Still 2, not called again
     })
 
     it('should support focused subscriptions', () => {
@@ -161,7 +164,7 @@ describe('funState', () => {
       const controller = new AbortController()
       const callback = jest.fn()
 
-      fs.prop('a').subscribe(controller.signal, callback)
+      fs.prop('a').watch(controller.signal, callback)
       fs.set({a: 10, b: 2})
 
       expect(callback).toHaveBeenCalledWith(10)
@@ -172,9 +175,14 @@ describe('funState', () => {
       const controller = new AbortController()
       const callback = jest.fn()
 
-      fs.prop('a').subscribe(controller.signal, callback)
+      fs.prop('a').watch(controller.signal, callback)
 
-      // Change b only - should not notify
+      // Initial call with value 1
+      expect(callback).toHaveBeenCalledTimes(1)
+      expect(callback).toHaveBeenCalledWith(1)
+      callback.mockClear()
+
+      // Change b only - should not notify again
       fs.set({a: 1, b: 20})
       expect(callback).not.toHaveBeenCalled()
 
@@ -188,7 +196,7 @@ describe('funState', () => {
       const controller = new AbortController()
       const callback = jest.fn()
 
-      fs.prop('a').prop('b').prop('c').subscribe(controller.signal, callback)
+      fs.prop('a').prop('b').prop('c').watch(controller.signal, callback)
       fs.set({a: {b: {c: 10}}})
 
       expect(callback).toHaveBeenCalledWith(10)
@@ -199,13 +207,18 @@ describe('funState', () => {
       const controller = new AbortController()
       const callback = jest.fn()
 
-      fs.prop('a').prop('b').prop('c').subscribe(controller.signal, callback)
+      fs.prop('a').prop('b').prop('c').watch(controller.signal, callback)
 
-      // Change parent without changing focused value
+      // Initial call with value 1
+      expect(callback).toHaveBeenCalledTimes(1)
+      expect(callback).toHaveBeenCalledWith(1)
+      callback.mockClear()
+
+      // Change parent without changing focused value - should not notify again
       fs.set({a: {b: {c: 1}}})
       expect(callback).not.toHaveBeenCalled()
 
-      // Change focused value
+      // Change focused value - should notify
       fs.set({a: {b: {c: 5}}})
       expect(callback).toHaveBeenCalledWith(5)
     })
@@ -222,7 +235,12 @@ describe('funState', () => {
       // Create nested focused states via .focus() on focused states
       const aState = fs.prop('a')
       const bState = aState.prop('b')
-      bState.subscribe(controller.signal, callback)
+      bState.watch(controller.signal, callback)
+
+      // Initial call with {c: 1}
+      expect(callback).toHaveBeenCalledTimes(1)
+      expect(callback).toHaveBeenCalledWith({c: 1})
+      callback.mockClear()
 
       // Change unrelated field x - the accessor library will preserve 'a' reference
       const xProp = prop<St>()('x')
@@ -234,6 +252,101 @@ describe('funState', () => {
       fs.mod(set(cProp)(2))
       expect(callback).toHaveBeenCalledWith({c: 2})
       expect(callback).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not create layered subscriptions for deep props', () => {
+      const base = standaloneEngine({a: {b: {c: 1}}})
+      let subs = 0
+      const fs = pureState({
+        ...base,
+        subscribe: (l) => {
+          subs++
+          return base.subscribe(l)
+        }
+      })
+      const ac = new AbortController()
+
+      fs.prop('a')
+        .prop('b')
+        .prop('c')
+        .watch(ac.signal, () => {})
+      expect(subs).toBe(1) // old impl tends to end up >1 depending on how focus was chained
+    })
+  })
+  describe('subscribeAll', () => {
+    it('should support multi-focus accessors and deliver all focused values', () => {
+      interface Jface {
+        b: number
+      }
+      interface Iface {
+        a: Jface[]
+      }
+
+      const fs = funState<Iface>({a: [{b: 1}, {b: 2}]})
+      const controller = new AbortController()
+      const callback = jest.fn()
+
+      const acc = comp(prop<Iface>()('a'), all<Jface>(), prop<Jface>()('b'))
+      fs.focus(acc).watchAll(controller.signal, callback)
+
+      // Change all b's via the focused state
+      fs.focus(acc).mod((b) => b + 1)
+
+      // watchAll calls immediately with initial values, then with changed values
+      expect(callback).toHaveBeenCalledTimes(2)
+      expect(callback).toHaveBeenNthCalledWith(1, [1, 2])
+      expect(callback).toHaveBeenNthCalledWith(2, [2, 3])
+    })
+
+    it('should notify multi-focus subscriber when values/order change', () => {
+      interface Jface {
+        b: number
+      }
+      interface Iface {
+        a: Jface[]
+      }
+
+      const fs = funState<Iface>({a: [{b: 1}, {b: 2}]})
+      const controller = new AbortController()
+      const callback = jest.fn()
+
+      const acc = comp(prop<Iface>()('a'), all<Jface>(), prop<Jface>()('b'))
+      fs.focus(acc).watchAll(controller.signal, callback)
+
+      // Prepend changes traversal (values & order)
+      fs.prop('a').mod(prepend({b: 0}))
+
+      // watchAll calls immediately with initial values, then with changed values
+      expect(callback).toHaveBeenCalledTimes(2)
+      expect(callback).toHaveBeenNthCalledWith(1, [1, 2])
+      expect(callback).toHaveBeenNthCalledWith(2, [0, 1, 2])
+    })
+
+    it('should not notify multi-focus subscriber when no focused value changed', () => {
+      interface Jface {
+        b: number
+      }
+      interface Iface {
+        a: Jface[]
+        x: number
+      }
+
+      const fs = funState<Iface>({a: [{b: 1}, {b: 2}], x: 0})
+      const controller = new AbortController()
+      const callback = jest.fn()
+
+      const acc = comp(prop<Iface>()('a'), all<Jface>(), prop<Jface>()('b'))
+      fs.focus(acc).watchAll(controller.signal, callback)
+
+      // Initial call with [1, 2]
+      expect(callback).toHaveBeenCalledTimes(1)
+      expect(callback).toHaveBeenCalledWith([1, 2])
+      callback.mockClear()
+
+      // Change unrelated field x only - should not notify again
+      fs.set({a: fs.get().a, x: 1})
+
+      expect(callback).not.toHaveBeenCalled()
     })
   })
 

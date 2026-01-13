@@ -95,7 +95,7 @@ describe('bindValue', () => {
   it('onChange updates value', () => {
     const bob = 'bob'
     const state = funState(bob)
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+     
     const mockChangeEvent = {currentTarget: {value: 'Bob'}} as ChangeEvent<HTMLInputElement>
     bindValue(state).onChange(mockChangeEvent)
     expect(state.get()).toBe('Bob')
@@ -108,7 +108,7 @@ describe('bindChecked', () => {
   })
   it('onChange updates checked', () => {
     const state = funState(false)
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+     
     const mockChangeEvent = {currentTarget: {checked: true}} as ChangeEvent<HTMLInputElement>
     bindChecked(state).onChange(mockChangeEvent)
     expect(state.get()).toBe(true)

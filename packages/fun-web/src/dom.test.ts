@@ -2,10 +2,14 @@ import {
   h,
   text,
   attr,
+  attrs,
+  append,
+  bindProperty,
   addClass,
+  toggleClass,
   removeClass,
   on,
-  pipeEndo,
+  enhance,
   keyedChildren,
   $,
   $$,
@@ -149,7 +153,6 @@ describe("attr()", () => {
 describe("attrs()", () => {
   it("should set multiple attributes", () => {
     const el = document.createElement("div");
-    const { attrs } = require("./dom");
     attrs({ "data-test": "value", "aria-label": "Test" })(el);
     expect(el.getAttribute("data-test")).toBe("value");
     expect(el.getAttribute("aria-label")).toBe("Test");
@@ -157,7 +160,6 @@ describe("attrs()", () => {
 
   it("should return element for chaining", () => {
     const el = document.createElement("div");
-    const { attrs } = require("./dom");
     const result = attrs({ "data-test": "value" })(el);
     expect(result).toBe(el);
   });
@@ -203,14 +205,12 @@ describe("removeClass()", () => {
 describe("toggleClass()", () => {
   it("should toggle a class on", () => {
     const el = document.createElement("div");
-    const { toggleClass } = require("./dom");
     toggleClass("foo")(el);
     expect(el.classList.contains("foo")).toBe(true);
   });
 
   it("should toggle a class off", () => {
     const el = document.createElement("div");
-    const { toggleClass } = require("./dom");
     el.classList.add("foo");
     toggleClass("foo")(el);
     expect(el.classList.contains("foo")).toBe(false);
@@ -218,7 +218,6 @@ describe("toggleClass()", () => {
 
   it("should force add with true", () => {
     const el = document.createElement("div");
-    const { toggleClass } = require("./dom");
     toggleClass("foo", true)(el);
     expect(el.classList.contains("foo")).toBe(true);
     toggleClass("foo", true)(el);
@@ -227,7 +226,6 @@ describe("toggleClass()", () => {
 
   it("should force remove with false", () => {
     const el = document.createElement("div");
-    const { toggleClass } = require("./dom");
     el.classList.add("foo");
     toggleClass("foo", false)(el);
     expect(el.classList.contains("foo")).toBe(false);
@@ -235,7 +233,6 @@ describe("toggleClass()", () => {
 
   it("should return element for chaining", () => {
     const el = document.createElement("div");
-    const { toggleClass } = require("./dom");
     const result = toggleClass("foo")(el);
     expect(result).toBe(el);
   });
@@ -245,7 +242,6 @@ describe("append()", () => {
   it("should append a single child", () => {
     const parent = document.createElement("div");
     const child = document.createElement("span");
-    const { append } = require("./dom");
     append(child)(parent);
     expect(parent.children.length).toBe(1);
     expect(parent.children[0]).toBe(child);
@@ -255,7 +251,6 @@ describe("append()", () => {
     const parent = document.createElement("div");
     const child1 = document.createElement("span");
     const child2 = document.createElement("p");
-    const { append } = require("./dom");
     append(child1, child2)(parent);
     expect(parent.children.length).toBe(2);
     expect(parent.children[0]).toBe(child1);
@@ -265,7 +260,6 @@ describe("append()", () => {
   it("should return element for chaining", () => {
     const parent = document.createElement("div");
     const child = document.createElement("span");
-    const { append } = require("./dom");
     const result = append(child)(parent);
     expect(result).toBe(parent);
   });
@@ -275,7 +269,6 @@ describe("bindProperty()", () => {
   it("should set initial property value from state", () => {
     const el = document.createElement("input") as HTMLInputElement;
     const controller = new AbortController();
-    const { bindProperty } = require("./dom");
 
     const state = funState("hello");
     bindProperty(el, "value", state, controller.signal);
@@ -287,7 +280,6 @@ describe("bindProperty()", () => {
   it("should update property when state changes", () => {
     const el = document.createElement("input") as HTMLInputElement;
     const controller = new AbortController();
-    const { bindProperty } = require("./dom");
 
     const state = funState("hello");
     bindProperty(el, "value", state, controller.signal);
@@ -303,7 +295,6 @@ describe("bindProperty()", () => {
   it("should stop updating after signal aborts", () => {
     const el = document.createElement("input") as HTMLInputElement;
     const controller = new AbortController();
-    const { bindProperty } = require("./dom");
 
     const state = funState("hello");
     bindProperty(el, "value", state, controller.signal);
@@ -317,7 +308,6 @@ describe("bindProperty()", () => {
   it("should return element for chaining", () => {
     const el = document.createElement("input") as HTMLInputElement;
     const controller = new AbortController();
-    const { bindProperty } = require("./dom");
 
     const state = funState("hello");
     const result = bindProperty(el, "value", state, controller.signal);
@@ -362,11 +352,12 @@ describe("on()", () => {
 describe("pipeEndo()", () => {
   it("should apply functions in order", () => {
     const el = document.createElement("div");
-    const result = pipeEndo(
+    const result = enhance(
+      el,
       text("Hello"),
       addClass("foo", "bar"),
       attr("data-test", "value")
-    )(el);
+    );
 
     expect(result).toBe(el);
     expect(el.textContent).toBe("Hello");
@@ -396,7 +387,7 @@ function makeAbortSignal(): {
 function setupKeyedChildrenWithKeyAwareRenderer(
   parent: Element,
   signal: AbortSignal,
-  listState: { get: () => Item[]; subscribe: FunState<Item[]>["subscribe"] }
+  listState: { get: () => Item[]; watch: FunState<Item[]>["watch"] }
 ) {
   const mountCountByKey = new Map<string, number>();
   const abortCountByKey = new Map<string, number>();
@@ -512,12 +503,12 @@ describe("keyedChildren", () => {
       focus: (acc: any) =>
         ({
           get: () => acc.query(items)[0],
-          subscribe: (_s: AbortSignal, _cb: any) => void 0,
+          watch: (_s: AbortSignal, _cb: any) => void 0,
         }) as any,
       prop: () => {
         throw new Error("not used");
       },
-      subscribe: (sig: AbortSignal, cb: (items: Item[]) => void) => {
+      watch: (sig: AbortSignal, cb: (items: Item[]) => void) => {
         listeners.add(cb);
         sig.addEventListener(
           "abort",
@@ -526,6 +517,9 @@ describe("keyedChildren", () => {
           },
           { once: true }
         );
+      },
+      watchAll: (_sig: AbortSignal, _cb: (values: Item[][]) => void) => {
+        throw new Error("watchAll not used in these tests");
       },
     };
 
@@ -589,12 +583,12 @@ describe("keyedChildren", () => {
       focus: (acc: any) =>
         ({
           get: () => acc.query(items)[0],
-          subscribe: (_s: AbortSignal, _cb: any) => void 0,
+          watch: (_s: AbortSignal, _cb: any) => void 0,
         }) as any,
       prop: () => {
         throw new Error("not used");
       },
-      subscribe: (sig: AbortSignal, cb: (items: Item[]) => void) => {
+      watch: (sig: AbortSignal, cb: (items: Item[]) => void) => {
         listeners.add(cb);
         sig.addEventListener(
           "abort",
@@ -603,6 +597,9 @@ describe("keyedChildren", () => {
           },
           { once: true }
         );
+      },
+      watchAll: (_sig: AbortSignal, _cb: (values: Item[][]) => void) => {
+        throw new Error("watchAll not used in these tests");
       },
     };
 
@@ -634,16 +631,17 @@ describe("keyedChildren", () => {
 
     // Subscribe and verify callback is called before abort
     const callback = jest.fn();
-    list.subscribe(signal, callback);
+    list.watch(signal, callback);
 
     list.set([{ key: "a", label: "A2" }]);
-    expect(callback).toHaveBeenCalledTimes(1);
+    // Called with initial value, then with updated value
+    expect(callback).toHaveBeenCalledTimes(2);
 
     // After abort, callback should not be called
     controller.abort();
 
     list.set([{ key: "a", label: "A3" }]);
-    expect(callback).toHaveBeenCalledTimes(1); // Still 1, not called again
+    expect(callback).toHaveBeenCalledTimes(2); // Still 2, not called again
 
     void container;
   });

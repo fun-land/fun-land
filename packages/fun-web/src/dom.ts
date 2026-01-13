@@ -3,6 +3,8 @@ import { type FunState } from "@fun-land/fun-state";
 import type { ElementChild } from "./types";
 import { filter } from "@fun-land/accessor";
 
+export type Enhancer<El extends Element> = (element: El) => El;
+
 /**
  * Create an HTML element with attributes and children
  *
@@ -75,32 +77,32 @@ const appendChildren = (
  */
 export const text =
   (content: string | number) =>
-  (el: Element): Element => {
+  <El extends Element>(el: El): El => {
     el.textContent = String(content);
     return el;
-  };
+  };;
 
 /**
  * Set an attribute on an element (returns element for chaining)
  */
 export const attr =
   (name: string, value: string) =>
-  (el: Element): Element => {
+  <El extends Element>(el: El): El => {
     el.setAttribute(name, value);
     return el;
-  };
+  };;
 
 /**
  * Set multiple attributes on an element (returns element for chaining)
  */
 export const attrs =
   (obj: Record<string, string>) =>
-  (el: Element): Element => {
+  <El extends Element>(el: El): El => {
     Object.entries(obj).forEach(([name, value]) => {
       el.setAttribute(name, value);
     });
     return el;
-  };
+  };;
 
 export function bindProperty<E extends Element, K extends keyof E>(
   el: E,
@@ -112,31 +114,40 @@ export function bindProperty<E extends Element, K extends keyof E>(
   el[key] = fs.get();
 
   // reactive sync
-  fs.subscribe(signal, (v: E[K]) => {
+  fs.watch(signal, (v: E[K]) => {
     el[key] = v;
   });
   return el;
 }
+
+export const bindPropertyTo =
+  <E extends Element, K extends keyof E & string>(
+    key: K,
+    state: FunState<E[K]>,
+    signal: AbortSignal
+  ) =>
+  (el: E): E =>
+    bindProperty(el, key, state, signal);
 
 /**
  * Add CSS classes to an element (returns element for chaining)
  */
 export const addClass =
   (...classes: string[]) =>
-  (el: Element): Element => {
+  <El extends Element>(el: El): El => {
     el.classList.add(...classes);
     return el;
-  };
+  };;
 
 /**
  * Remove CSS classes from an element (returns element for chaining)
  */
 export const removeClass =
   (...classes: string[]) =>
-  (el: Element): Element => {
+  <El extends Element>(el: El): El => {
     el.classList.remove(...classes);
     return el;
-  };
+  };;
 
 /**
  * Toggle a CSS class on an element (returns element for chaining)
@@ -150,13 +161,14 @@ export const toggleClass =
 
 /**
  * Append children to an element (returns parent for chaining)
+ * @returns {Enhancer}
  */
 export const append =
   (...children: Element[]) =>
-  (el: Element): Element => {
+  <El extends Element>(el: El): El => {
     children.forEach((child) => el.appendChild(child));
     return el;
-  };
+  };;
 
 /**
  * Add event listener with required AbortSignal (returns element for chaining)
@@ -172,13 +184,23 @@ export const on = <E extends Element, K extends keyof HTMLElementEventMap>(
   return el;
 };
 
+/** Enhancer version of `on()` */
+export const onTo =
+  <E extends Element, K extends keyof HTMLElementEventMap>(
+    type: K,
+    handler: (ev: HTMLElementEventMap[K] & { currentTarget: E }) => void,
+    signal: AbortSignal
+  ) =>
+  (el: E): E =>
+    on(el, type, handler, signal);
+
 /**
- * Functional composition - apply endomorphic functions (`<T>(x: T) => T`) left to right
+ * Apply enhancers to an HTMLElement.
  */
-export const pipeEndo =
-  <T>(...fns: Array<(x: T) => T>) =>
-  (x: T): T =>
-    fns.reduce((acc, fn) => fn(acc), x);
+export const enhance = <El extends Element>(
+  x: El,
+  ...fns: Array<Enhancer<El>>
+) => fns.reduce((acc, fn) => fn(acc), x);
 
 /**
  *
@@ -279,7 +301,7 @@ export function keyedChildren<T extends Keyed>(
   };
 
   // Reconcile whenever the list changes; `subscribe` will unsubscribe on abort (per your fix).
-  list.subscribe(signal, reconcile);
+  list.watch(signal, reconcile);
 
   // Ensure all children clean up when parent aborts
   signal.addEventListener("abort", dispose, { once: true });

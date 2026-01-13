@@ -16,9 +16,11 @@ export {
   toggleClass,
   append,
   on,
+  onTo,
   bindProperty,
+  bindPropertyTo,
   keyedChildren,
-  pipeEndo,
+  enhance,
   $,
   $$,
 } from "./dom";

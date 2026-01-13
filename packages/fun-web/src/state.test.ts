@@ -38,10 +38,13 @@ describe("funState", () => {
       const controller = new AbortController();
       const callback = jest.fn();
 
-      state.subscribe(controller.signal, callback);
+      state.watch(controller.signal, callback);
       state.set({ count: 1 });
 
-      expect(callback).toHaveBeenCalledWith({ count: 1 });
+      // Called with initial value, then with new value
+      expect(callback).toHaveBeenCalledTimes(2);
+      expect(callback).toHaveBeenNthCalledWith(1, { count: 0 });
+      expect(callback).toHaveBeenNthCalledWith(2, { count: 1 });
     });
 
     it("should call subscriber multiple times", () => {
@@ -49,13 +52,15 @@ describe("funState", () => {
       const controller = new AbortController();
       const callback = jest.fn();
 
-      state.subscribe(controller.signal, callback);
+      state.watch(controller.signal, callback);
       state.set({ count: 1 });
       state.set({ count: 2 });
 
-      expect(callback).toHaveBeenCalledTimes(2);
-      expect(callback).toHaveBeenNthCalledWith(1, { count: 1 });
-      expect(callback).toHaveBeenNthCalledWith(2, { count: 2 });
+      // watch calls immediately with initial value, then on each change
+      expect(callback).toHaveBeenCalledTimes(3);
+      expect(callback).toHaveBeenNthCalledWith(1, { count: 0 });
+      expect(callback).toHaveBeenNthCalledWith(2, { count: 1 });
+      expect(callback).toHaveBeenNthCalledWith(3, { count: 2 });
     });
 
     it("should call focused state subscriber only when that property changes", () => {
@@ -64,7 +69,10 @@ describe("funState", () => {
       const controller = new AbortController();
       const callback = jest.fn();
 
-      countState.subscribe(controller.signal, callback);
+      countState.watch(controller.signal, callback);
+
+      // Initial call with 0
+      expect(callback).toHaveBeenCalledWith(0);
 
       // Change count - should trigger
       state.set({ count: 1, name: "test" });
@@ -86,13 +94,18 @@ describe("funState", () => {
       const callback1 = jest.fn();
       const callback2 = jest.fn();
 
-      state.subscribe(controller.signal, callback1);
-      state.subscribe(controller.signal, callback2);
+      state.watch(controller.signal, callback1);
+      state.watch(controller.signal, callback2);
 
       state.set({ count: 1 });
 
-      expect(callback1).toHaveBeenCalledWith({ count: 1 });
-      expect(callback2).toHaveBeenCalledWith({ count: 1 });
+      // Both should be called with initial value, then with new value
+      expect(callback1).toHaveBeenCalledTimes(2);
+      expect(callback1).toHaveBeenNthCalledWith(1, { count: 0 });
+      expect(callback1).toHaveBeenNthCalledWith(2, { count: 1 });
+      expect(callback2).toHaveBeenCalledTimes(2);
+      expect(callback2).toHaveBeenNthCalledWith(1, { count: 0 });
+      expect(callback2).toHaveBeenNthCalledWith(2, { count: 1 });
     });
 
     it("should work with accessor-based focus", () => {
@@ -105,11 +118,14 @@ describe("funState", () => {
       const controller = new AbortController();
       const callback = jest.fn();
 
-      nameState.subscribe(controller.signal, callback);
+      nameState.watch(controller.signal, callback);
 
       state.set({ name: "Bob", age: 30 });
 
-      expect(callback).toHaveBeenCalledWith("Bob");
+      // Called with initial value "Alice", then "Bob"
+      expect(callback).toHaveBeenCalledTimes(2);
+      expect(callback).toHaveBeenNthCalledWith(1, "Alice");
+      expect(callback).toHaveBeenNthCalledWith(2, "Bob");
     });
   });
 
@@ -178,11 +194,14 @@ describe("funState", () => {
       const controller = new AbortController();
       const callback = jest.fn();
 
-      nameState.subscribe(controller.signal, callback);
+      nameState.watch(controller.signal, callback);
 
       state.set({ user: { profile: { name: "Bob" } } });
 
-      expect(callback).toHaveBeenCalledWith("Bob");
+      // Called with initial value "Alice", then "Bob"
+      expect(callback).toHaveBeenCalledTimes(2);
+      expect(callback).toHaveBeenNthCalledWith(1, "Alice");
+      expect(callback).toHaveBeenNthCalledWith(2, "Bob");
 
       controller.abort();
     });
@@ -207,17 +226,24 @@ describe("funState", () => {
       const controller = new AbortController();
       const callback = jest.fn();
 
-      nameState.subscribe(controller.signal, callback);
+      nameState.watch(controller.signal, callback);
 
-      // Change age, not name
+      // Initial call with "Alice"
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith("Alice");
+
+      callback.mockClear();
+
+      // Change age, not name - should not trigger again
       state.set({ user: { profile: { name: "Alice", age: 31 } } });
 
       expect(callback).not.toHaveBeenCalled();
 
-      // Change name
+      // Change name - should trigger
       state.set({ user: { profile: { name: "Bob", age: 31 } } });
 
       expect(callback).toHaveBeenCalledWith("Bob");
+      expect(callback).toHaveBeenCalledTimes(1);
 
       controller.abort();
     });

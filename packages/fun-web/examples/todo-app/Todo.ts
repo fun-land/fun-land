@@ -1,9 +1,11 @@
+import { viewed } from "accessor";
 import {
   h,
-  bindProperty,
-  on,
   type Component,
   type FunState,
+  enhance,
+  bindPropertyTo,
+  onTo,
 } from "../../src/index";
 
 export interface TodoState {
@@ -18,62 +20,47 @@ export interface TodoProps {
   state: FunState<TodoState>;
 }
 
+// a special Accessor that reads as string but writes as number
+const stringNumberView = viewed(String, Number);
+
 export const Todo: Component<TodoProps> = (signal, { state, removeItem }) => {
+  const priorityState = state.prop("priority").focus(stringNumberView);
   // h is a much more ergonomic way of creating html but it's just document.createElement under the hood
-  const prioritySelect = h("select", {}, [
-    h("option", { value: "0" }, "High"),
-    h("option", { value: "1" }, "Low"),
-  ]);
-  // 😓 You can manually set initial state
-  prioritySelect.value = String(state.get().priority);
-  // 😓 and listen to when a state updates to update the element
-  state.prop("priority").subscribe(signal, (priority) => {
-    prioritySelect.value = String(priority);
-  });
-  // 😓 native event binding works but requires casting and dev must remember to pass signal so they don't leak memory
-  prioritySelect.addEventListener(
-    "change",
-    (e) => {
-      state.prop("priority").set(+(e.currentTarget as HTMLSelectElement).value);
-    },
-    { signal }
+  const prioritySelect = enhance(
+    h("select", {}, [
+      h("option", { value: "0" }, "High"),
+      h("option", { value: "1" }, "Low"),
+    ]),
+    bindPropertyTo("value", priorityState, signal),
+    // native event binding works but for easier event binding use `on` helper for better type inferrence and you can't forget to cleanup
+    onTo("change", (e) => priorityState.set(e.currentTarget.value), signal)
   );
 
-  const checkbox = h("input", { type: "checkbox" });
-  // 😎 For easier binding you can bind property to a reactive state
-  bindProperty(checkbox, "checked", state.prop("checked"), signal); // when state.checked updates the checkbox.checked updates
-  // 😎 For easier event binding use `on` helper for better type inferrence and you can't forget to cleanup
-  on(
-    checkbox,
-    "change",
-    (e) => {
-      state.prop("checked").set(e.currentTarget.checked);
-    },
-    signal
+  const checkedState = state.prop("checked");
+  const checkbox = enhance(
+    h("input", { type: "checkbox" }),
+    // use bindPropertyTo to automatically update a property when the focused state changes
+    bindPropertyTo("checked", checkedState, signal), // when state.checked updates the checkbox.checked updates
+    onTo("change", (e) => checkedState.set(e.currentTarget.checked), signal)
   );
 
   // 😎 or do both at the same time since they both return the element
-  const labelInput = on(
-    bindProperty(
-      h("input", {
-        type: "text",
-      }),
-      "value",
-      state.prop("label"),
-      signal
-    ),
-    "input",
-    (e) => {
-      state.prop("label").set(e.currentTarget.value);
-    },
-    signal
+  const labelState = state.prop("label");
+  const labelInput = enhance(
+    h("input", {
+      type: "text",
+    }),
+    bindPropertyTo("value", labelState, signal),
+    onTo("input", (e) => labelState.set(e.currentTarget.value), signal)
   );
 
   return h("li", {}, [
     checkbox,
     prioritySelect,
     labelInput,
-    // you can even inline to go tacit
-    on(h("button", { textContent: "X" }), "click", removeItem, signal),
+    enhance(
+      h("button", { textContent: "X" }),
+      onTo("click", removeItem, signal)
+    ),
   ]);
 };

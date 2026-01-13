@@ -32,8 +32,8 @@ export interface FunState<State> {
   /** Focus state at passed property key (sugar for `focus(prop(k))`) */
   prop: <K extends keyof State>(key: K) => FunState<State[K]>
 
-  /** Subscribe to state changes with cleanup via AbortSignal */
-  subscribe: (signal: AbortSignal, callback: (state: State) => void) => void
+  /** watch state changes. Unsubscribes when AbortSignal is triggered */
+  watch: (signal: AbortSignal, callback: (state: State) => void) => void
 }
 ```
 
@@ -98,16 +98,16 @@ Mutably merge a partial state into a FunState
 Transform a FunState holding an array of items into an array of FunState of the item. Usefull when you want to pass FunState instances to child components.
 
 
-### subscribe
+### watch
 
-The `subscribe` method allows you to listen for state changes with automatic cleanup via [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal):
+The `watch` method allows you to listen for state changes with automatic cleanup via [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal):
 
 ```ts
 const state = funState({ count: 0 });
 const controller = new AbortController();
 
-// Subscribe to changes
-state.subscribe(controller.signal, (newState) => {
+// watch value for changes. Emits initial state.
+state.watch(controller.signal, (newState) => {
   console.log('State changed:', newState);
 });
 
@@ -124,7 +124,7 @@ Focused state only notifies when the focused value actually changes:
 ```ts
 const state = funState({ user: { name: "Alice" }, count: 0 });
 
-state.prop("user").prop("name").subscribe(signal, (name) => {
+state.prop("user").prop("name").watch(signal, (name) => {
   console.log('Name changed:', name);
 });
 

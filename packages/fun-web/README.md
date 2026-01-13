@@ -143,7 +143,7 @@ userState.prop("name").get(); // "Alice"
 userState.prop("age").set(31);
 
 // Subscribe to changes (cleaned up when signal aborts)
-userState.prop("name").subscribe(signal, (name) => {
+userState.prop("name").watch(signal, (name) => {
   element.textContent = name; // runs when name changes
 });
 ```
@@ -220,10 +220,10 @@ const input = on(
 );
 ```
 
-**Use `.subscribe()` for complex logic:**
+**Use `.watch()` for complex logic:**
 
 ```typescript
-state.subscribe(signal, (s) => {
+state.watch(signal, (s) => {
   element.textContent = s.count > 100 ? "Max!" : String(s.count);
   element.className = s.count > 100 ? "maxed" : "normal";
   element.setAttribute("aria-label", `Count: ${s.count}`);
@@ -235,14 +235,14 @@ state.subscribe(signal, (s) => {
 All subscriptions and event listeners require an AbortSignal. When the signal aborts, everything cleans up automatically:
 
 ```typescript
-const MyComponent: Component<{ state: FunState<State> }> = (signal, props) => {
+const MyComponent: Component<{ state: FunState<State> }> = (signal, {state}) => {
   const display = h("div");
   const button = h("button");
 
   // All three clean up when signal aborts
-  bindProperty(display, "textContent", props.state.prop("count"), signal);
-  on(button, "click", () => props.state.mod(increment), signal);
-  props.state.subscribe(signal, (s) => console.log("Changed:", s));
+  bindProperty(display, "textContent", state.prop("count"), signal);
+  on(button, "click", () => state.mod(increment), signal);
+  state.watch(signal, (s) => console.log("Changed:", s));
 
   return h("div", {}, [display, button]);
 };
@@ -255,6 +255,22 @@ For the most part you won't have to worry about the abort signal if you use the 
 
 ## Best Practices
 
+**Don't have one big app state**
+This isn't redux. There's little reason to create giant state objects. Create state near the leaves and hoist it when you need to. That said
+
+**You can have more that one state**
+It's just a value. If having one state manage multiple properties works then great but if you want to have several that's fine too.
+
+**Deep chains of .prop() are a smell**
+Code like `state.prop('foo').prop('bar').prop('baz').get()` is a sign your data model is too complex. However if you want to keep it that way you can create accessors to focus down more simply.
+
+```ts
+// create an reusable accssor at module scope
+const bazFromState = Acc<MyState>().prop('foo').prop('bar').prop('baz')
+// in your component
+const baz = state.focus(bazFromState).get()
+```
+
 **Prefer helpers over manual subscriptions:**
 
 ```typescript
@@ -262,7 +278,7 @@ For the most part you won't have to worry about the abort signal if you use the 
 bindProperty(element, "textContent", state.prop("count"), signal);
 
 // ❌ Avoid (when bindProperty works)
-state.prop("count").subscribe(signal, (count) => {
+state.prop("count").watch(signal, (count) => {
   element.textContent = String(count);
 });
 ```
@@ -278,14 +294,21 @@ on(button, "click", (e) => {
 // ❌ Avoid - loses type information
 button.addEventListener("click", (e) => {
   (e.currentTarget as HTMLButtonElement).disabled = true;
-}, { signal });
+}); // ❌ Forgot {signal} !
+
+// ❌ Avoid binding events in props
+h('button', {onclick: (e) => {
+  // ❌ type info lost!
+  (e.currentTarget as HTMLButtonElement).disabled = true;
+  // ❌ event handler not cleaned up!
+}})
 ```
 
 **Manual subscriptions for complex updates:**
 
 ```typescript
-// ✅ complex updates may need subscribe
-state.subscribe(signal, (s) => {
+// ✅ complex updates may need watch
+state.watch(signal, (s) => {
   // Multiple DOM updates based on complex conditions
   if (s.status === "loading") {
     spinner.style.display = "block";
@@ -437,7 +460,8 @@ addClass: (...classes: string[]) => (el: Element) => Element
 removeClass: (...classes: string[]) => (el: Element) => Element
 toggleClass: (className: string, force?: boolean) => (el: Element) => Element
 append: (...children: Element[]) => (el: Element) => Element
-pipeEndo: <T>(...fns: Array<(x: T) => T>) => (x: T) => T
+// pipe a value through a series of endomorphisms
+pipeAll: <T>(x: T, ...fns: Array<(x: T) => T>) => T
 ```
 
 ### Mounting
@@ -474,20 +498,24 @@ Components compose by calling other components and passing focused state via pro
 
 ```typescript
 import { prop } from "@fun-land/accessor";
+import { UserProfile, UserData } from "./UserProfile";
+import { SettingsPanel, Settings } from "./Settings";
 
+// Parent state is composed from the child states
 interface AppState {
   user: UserData;
   settings: Settings;
 }
 
-const App: Component<{ state: FunState<AppState> }> = (signal, props) => 
+const App: Component<{ state: FunState<AppState> }> = (signal, {state}) => 
   h("div", {}, [
     UserProfile(signal, {
       editable: true,
-      state: props.state.focus(prop<AppState>()("user")),
+      // Focus the state on what the child needs
+      state: state.focus(prop<AppState>()("user")),
     }),
     SettingsPanel(signal, {
-      state: props.state.focus(prop<AppState>()("settings")),
+      state: state.focus(prop<AppState>()("settings")),
     })
   ]);
 ```
