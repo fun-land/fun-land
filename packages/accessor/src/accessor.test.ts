@@ -1,5 +1,6 @@
 import {
   Acc,
+  Accessor,
   prop,
   index,
   filter,
@@ -54,6 +55,19 @@ describe('get', () => {
   })
   it('returns undefined when matching no items', () => {
     expect(get(index(0))([])).toBe(undefined)
+  })
+  it('handles malformed accessor that returns nullish', () => {
+    // Test the optional chaining branch by creating a custom accessor
+    // that returns null/undefined from query (defensive programming case)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const malformedAccessor: Accessor<any, any> = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      query: (): any => null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mod: (_f: (x: any) => any) => (s: any): any => s
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    expect(get(malformedAccessor)({anything: true})).toBe(undefined)
   })
 })
 
@@ -160,9 +174,9 @@ describe('optional', () => {
   it('examples from docs work', () => {
     const maybeUserName = comp(optional<User | undefined>(), prop<User>()('name'))
     expect(maybeUserName.query(bob)).toEqual(['bob'])
-    expect(maybeUserName.query(undefined)).toEqual([]) // => []
-    expect(maybeUserName.mod(() => 'Robert')(bob)) // => (bob but with name set to "Robert")
-    expect(maybeUserName.mod(() => 'Robert')(undefined)) // => undefined
+    expect(maybeUserName.query(undefined)).toEqual([])
+    expect(maybeUserName.mod(() => 'Robert')(bob)).toEqual({...bob, name: 'Robert'})
+    expect(maybeUserName.mod(() => 'Robert')(undefined)).toBeUndefined()
   })
 })
 describe('readOnly', () => {

@@ -9,7 +9,8 @@
     "target": "ES2015",
     "moduleResolution": "node",
     "module": "CommonJS",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "composite": true
   },
   "include": ["src/**/*.ts"]
 }

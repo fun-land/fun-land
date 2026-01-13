@@ -13,12 +13,18 @@ export const observableFunState = <State>(
   const observers = new Set<
     ZenObservable.SubscriptionObserver<FunState<State>>
   >();
+  const listeners = new Set<(state: State) => void>();
   const getState = (): State => state;
   const modState: Updater<State> = (f): void => {
     state = f(getState());
     observers.forEach((observer) => observer.next(fs));
+    listeners.forEach((listener) => listener(state));
   };
-  const fs = pureState({ getState, modState });
+  const subscribe = (listener: (state: State) => void) => {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  };
+  const fs = pureState({ getState, modState, subscribe });
   return new Observable<FunState<State>>((observer) => {
     observers.add(observer);
     observer.next(fs);

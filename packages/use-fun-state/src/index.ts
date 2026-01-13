@@ -1,14 +1,31 @@
-import {type ChangeEventHandler, useReducer} from 'react'
+import {type ChangeEventHandler, useMemo, useRef, useState} from 'react'
 import {pureState, type FunState} from '@fun-land/fun-state'
 
 /** Create react-hooks-based FunState */
 export default function useFunState<State>(initialState: State): FunState<State> {
+  // create the mutable state engine
+  const ref = useRef(initialState)
   // creating an unused react state engine just to get rerender to happen when state changes
-  const [state, dispatch] = useReducer((state: State, mod: (s: State) => State) => mod(state), initialState)
-  return pureState({
-    getState: () => state,
-    modState: dispatch
-  })
+  const [_, setState] = useState(initialState)
+  const listenersRef = useRef(new Set<(state: State) => void>())
+
+  return useMemo(
+    () =>
+      pureState({
+        getState: () => ref.current,
+        modState: (f) => {
+          ref.current = f(ref.current)
+          setState(ref.current)
+          // Notify subscribers
+          listenersRef.current.forEach(listener => listener(ref.current))
+        },
+        subscribe: (listener) => {
+          listenersRef.current.add(listener)
+          return () => listenersRef.current.delete(listener)
+        }
+      }),
+    [ref]
+  )
 }
 
 /**

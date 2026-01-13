@@ -8,7 +8,9 @@
     "skipLibCheck": true,
     "target": "ES2015",
     "moduleResolution": "node",
-    "module": "CommonJS"
+    "module": "CommonJS",
+    "composite": true,
+    "rootDir": "src"
   },
   "include": ["src/**/*.ts"]
 }

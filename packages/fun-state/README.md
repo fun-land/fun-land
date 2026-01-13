@@ -31,26 +31,51 @@ export interface FunState<State> {
 
   /** Focus state at passed property key (sugar for `focus(prop(k))`) */
   prop: <K extends keyof State>(key: K) => FunState<State[K]>
+
+  /** Subscribe to state changes with cleanup via AbortSignal */
+  subscribe: (signal: AbortSignal, callback: (state: State) => void) => void
 }
 ```
 
-Data structure that holds the state along with a stateful methods that interact with it.
+Data structure that holds the state along with stateful methods that interact with it.
 
-## mockState
+## funState
 
 ```ts
 <State>(initialState: State) => FunState<State>
 ```
 
-Creates a library-agnostic instance of the state machine with a starting state. This is useful when unit testing functions or components that take a FunState instance.
+Creates a standalone FunState instance with the given initial state. This is useful for:
+- Unit testing functions or components that take a FunState instance
+- Creating state outside of framework hooks (e.g., in vanilla JS/DOM applications)
+- Prototyping and quick experiments
+
+```ts
+const state = funState({ count: 0, name: "Alice" });
+
+state.get(); // { count: 0, name: "Alice" }
+state.set({ count: 1, name: "Alice" });
+state.prop("count").mod(n => n + 1);
+```
 
 ## pureState
 
 ```ts
-<State>({getState, modState}: StateEngine<State>): FunState<State>
+<State>({getState, modState, subscribe}: StateEngine<State>): FunState<State>
 ```
 
-Creates an instance of funState given a custom StateEngine. If you want to add support for preact or other libraries with things like hooks you want this.
+Creates an instance of FunState given a custom StateEngine. If you want to add support for preact or other libraries with hooks, you want this.
+
+The StateEngine interface:
+```ts
+interface StateEngine<State> {
+  getState: () => State
+  modState: (transform: (state: State) => State) => void
+  subscribe: (listener: (state: State) => void) => Unsubscribe
+}
+```
+
+This allows FunState to work with any state management system that can provide these three operations.
 
 ## Accessor
 
@@ -71,6 +96,41 @@ Mutably merge a partial state into a FunState
 ```
 
 Transform a FunState holding an array of items into an array of FunState of the item. Usefull when you want to pass FunState instances to child components.
+
+
+### subscribe
+
+The `subscribe` method allows you to listen for state changes with automatic cleanup via [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal):
+
+```ts
+const state = funState({ count: 0 });
+const controller = new AbortController();
+
+// Subscribe to changes
+state.subscribe(controller.signal, (newState) => {
+  console.log('State changed:', newState);
+});
+
+state.set({ count: 1 }); // Logs: State changed: { count: 1 }
+
+// Cleanup - stops all subscriptions using this signal
+controller.abort();
+
+state.set({ count: 2 }); // No log - subscription cleaned up
+```
+
+Focused state only notifies when the focused value actually changes:
+
+```ts
+const state = funState({ user: { name: "Alice" }, count: 0 });
+
+state.prop("user").prop("name").subscribe(signal, (name) => {
+  console.log('Name changed:', name);
+});
+
+state.set({ user: { name: "Alice" }, count: 1 }); // No log - name unchanged
+state.set({ user: { name: "Bob" }, count: 1 });   // Logs: Name changed: Bob
+```
 
 # TODO / Contributing
 

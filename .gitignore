@@ -2,3 +2,6 @@ node_modules
 .vscode
 .nx
 lerna-debug.log
+.DS_Store
+coverage
+wip
