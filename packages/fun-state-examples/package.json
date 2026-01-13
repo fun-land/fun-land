@@ -1,6 +1,6 @@
 {
   "name": "@fun-land/fun-state-examples",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Examples of how to use fun-state",
   "publishConfig": {
     "access": "public"
