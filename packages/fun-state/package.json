@@ -29,7 +29,7 @@
   },
   "sideEffects": false,
   "peerDependencies": {
-    "@fun-land/accessor": "^workspace:*"
+    "@fun-land/accessor": "workspace:*"
   },
   "devDependencies": {
     "@fun-land/accessor": "workspace:*"
@@ -37,11 +37,11 @@
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.publish.json",
     "build-esm": "tsc -p ./tsconfig.publish.json --module esnext --outDir dist/esm",
-    "build": "yarn build-cjs && yarn build-esm",
+    "build": "pnpm run build-cjs && pnpm run build-esm",
     "lint": "eslint . --ext .ts",
     "test": "jest",
     "test-cover": "jest --coverage",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "pnpm run build"
   },
   "bugs": {
     "url": "https://github.com/fun-land/fun-land/issues"

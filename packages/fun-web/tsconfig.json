@@ -10,7 +10,7 @@
     "moduleResolution": "node",
     "module": "CommonJS",
     "composite": true,
-    "lib": ["ES2015", "DOM"]
+    "lib": ["ES2020", "DOM"]
   },
   "include": ["src/**/*.ts"]
 }

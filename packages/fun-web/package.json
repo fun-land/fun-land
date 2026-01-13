@@ -24,22 +24,24 @@
   },
   "sideEffects": false,
   "peerDependencies": {
-    "@fun-land/accessor": "workspace:*"
+    "@fun-land/accessor": "workspace:*",
+    "@fun-land/fun-state": "workspace:*"
   },
   "devDependencies": {
-    "@fun-land/accessor": "workspace:*"
+    "@fun-land/accessor": "workspace:*",
+    "@fun-land/fun-state": "workspace:*"
   },
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.publish.json",
     "build-esm": "tsc -p ./tsconfig.publish.json --module esnext --outDir dist/esm",
-    "build": "yarn build-cjs && yarn build-esm",
+    "build": "pnpm run build-cjs && pnpm run build-esm",
     "build:counter": "npx esbuild examples/counter/counter.ts --bundle --outfile=examples/counter/bundle.js --format=iife",
     "build:todo": "npx esbuild examples/todo-app/todo-app.ts --bundle --outfile=examples/todo-app/todo-bundle.js --format=iife",
-    "build:examples": "yarn build:counter && yarn build:todo",
+    "build:examples": "pnpm run build:counter && pnpm run build:todo",
     "lint": "eslint . --ext .ts",
     "test": "jest",
     "test-cover": "jest --coverage",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "pnpm run build"
   },
   "bugs": {
     "url": "https://github.com/fun-land/fun-land/issues"

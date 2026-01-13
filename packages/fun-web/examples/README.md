@@ -5,7 +5,7 @@ Standalone HTML examples that can be opened directly in a browser.
 ## Build All Examples
 
 ```bash
-yarn build:examples
+pnpm run build:examples
 ```
 
 ## Counter
@@ -14,7 +14,7 @@ A minimal counter example demonstrating the basics.
 
 **To view:**
 ```bash
-yarn build:counter
+pnpm run build:counter
 open examples/counter/index.html
 ```
 
@@ -37,7 +37,7 @@ A complete todo app demonstrating real-world patterns.
 
 **To view:**
 ```bash
-yarn build:todo
+pnpm run build:todo
 open examples/todo-app/todo.html
 ```
 
@@ -64,4 +64,4 @@ open examples/todo-app/todo.html
 
 ## Making Changes
 
-Edit the `.ts` files, rebuild with `yarn build:examples` (or individual scripts like `yarn build:counter`), and refresh your browser.
+Edit the `.ts` files, rebuild with `pnpm run build:examples` (or individual scripts like `pnpm run build:counter`), and refresh your browser.

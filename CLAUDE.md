@@ -8,7 +8,7 @@ Fun-land is a TypeScript monorepo containing a collection of practical functiona
 
 ## Monorepo Structure
 
-This is a Lerna + Nx + Yarn workspaces monorepo with independent package versioning. Packages are located in `packages/*`:
+This is a Lerna + Nx + PNPM workspaces monorepo with independent package versioning. Packages are located in `packages/*`:
 
 - **@fun-land/accessor** - Core optics library for immutable updates and queries on nested data structures
 - **@fun-land/fun-state** - Framework-agnostic fractal, compositional state management
@@ -23,41 +23,41 @@ This is a Lerna + Nx + Yarn workspaces monorepo with independent package version
 ### Running Tests
 ```bash
 # Run tests for all affected packages
-yarn test
+pnpm run test
 
 # Run tests for a specific package
 cd packages/<package-name>
-yarn test
+pnpm run test
 
 # Run tests with coverage
 cd packages/<package-name>
-yarn test-cover
+pnpm run test-cover
 ```
 
 ### Building
 ```bash
 # Build all affected packages
-yarn build
+pnpm run build
 
 # Build a specific package (generates both CJS and ESM)
 cd packages/<package-name>
-yarn build
+pnpm run build
 
 # Build only CommonJS
-yarn build-cjs
+pnpm run build-cjs
 
 # Build only ES modules
-yarn build-esm
+pnpm run build-esm
 ```
 
 ### Linting
 ```bash
 # Lint all affected packages
-yarn lint
+pnpm run lint
 
 # Lint a specific package
 cd packages/<package-name>
-yarn lint
+pnpm run lint
 ```
 
 ## Architecture

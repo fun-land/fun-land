@@ -32,6 +32,7 @@
   "devDependencies": {
     "@fun-land/accessor": "workspace:*",
     "@fun-land/fun-state": "workspace:*",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.0.1",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
@@ -41,11 +42,11 @@
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.publish.json",
     "build-esm": "tsc -p ./tsconfig.publish.json --module esnext --outDir dist/esm",
-    "build": "yarn build-cjs && yarn build-esm",
+    "build": "pnpm run build-cjs && pnpm run build-esm",
     "lint": "eslint . --ext .ts",
     "test": "jest",
     "test-cover": "jest --coverage",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "pnpm run build"
   },
   "bugs": {
     "url": "https://github.com/fun-land/fun-land/issues"

@@ -1,5 +1,5 @@
 /** DOM utilities for functional element creation and manipulation */
-import { FunState } from "./state";
+import { type FunState } from "@fun-land/fun-state";
 import type { ElementChild } from "./types";
 import { filter } from "@fun-land/accessor";
 
@@ -259,7 +259,8 @@ export function keyedChildren<T extends Keyed>(
         const el = renderRow({
           signal: ctrl.signal,
           state: itemState,
-          remove: () => list.mod((list) => list.filter((t) => t.key !== k)),
+          remove: () =>
+            list.mod((list: T[]) => list.filter((t) => t.key !== k)),
         });
         rows.set(k, { key: k, el, ctrl });
       }

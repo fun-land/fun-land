@@ -25,26 +25,26 @@
   },
   "sideEffects": false,
   "peerDependencies": {
-    "@fun-land/fun-state": "^workspace:*",
+    "@fun-land/fun-state": "workspace:*",
     "@fun-land/validation": "workspace:*",
     "react": ">=16.8"
   },
   "devDependencies": {
-    "@fun-land/fun-state": "^workspace:*",
+    "@fun-land/fun-state": "workspace:*",
     "@fun-land/validation": "workspace:*",
     "@types/react": "^18.0.5",
-    "@types/react-dom": "^17.0.9",
+    "@types/react-dom": "^18.3.7",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
   "scripts": {
     "build-cjs": "tsc -p ./tsconfig.publish.json",
     "build-esm": "tsc -p ./tsconfig.publish.json --module esnext --outDir dist/esm",
-    "build": "yarn build-cjs && yarn build-esm",
+    "build": "pnpm run build-cjs && pnpm run build-esm",
     "lint": "eslint . --ext .ts",
     "test": "jest",
     "test-cover": "jest --coverage",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "pnpm run build"
   },
   "bugs": {
     "url": "https://github.com/fun-land/fun-land/issues"

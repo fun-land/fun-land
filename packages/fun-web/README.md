@@ -24,7 +24,7 @@ Perfect for embedding interactive components in static sites, building lightweig
 ## Installation
 
 ```bash
-yarn add @fun-land/fun-web @fun-land/accessor
+pnpm add @fun-land/fun-web @fun-land/accessor
 ```
 
 ## Quick Start
@@ -501,7 +501,7 @@ See working examples:
 - `examples/todo-app/todo-app.ts` - Keyed lists and form binding
 
 ```bash
-yarn build:examples
+pnpm run build:examples
 open examples/counter/index.html
 open examples/todo-app/todo.html
 ```
