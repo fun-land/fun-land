@@ -1,6 +1,6 @@
 {
   "name": "@fun-land/fun-web",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "A web library for component-based development using fun-land",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
