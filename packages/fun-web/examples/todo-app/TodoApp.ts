@@ -5,6 +5,7 @@ import {
   onTo,
   type Component,
   enhance,
+  renderWhen,
 } from "../../src/index";
 import {
   type TodoAppState,
@@ -36,20 +37,26 @@ const TodoApp: Component = (signal) => {
     )
   );
 
-  // "All Done" indicator
-  const allDoneText = h("span", {
-    textContent: "",
-    className: "all-done-text",
-  });
+  // "All Done" indicator using renderWhen
+  const AllDoneComponent: Component = () => {
+    return h("span", {
+      textContent: "🎉 All Done!",
+      className: "all-done-text",
+    });
+  };
+
+  // Derive a boolean state for whether all todos are done
+  const allDoneState = funState(false);
   state.focus(allCheckedAcc).watchAll(signal, (checks) => {
-    allDoneText.textContent =
-      checks.length > 0 && checks.every(Boolean) ? "🎉 All Done!" : "";
+    allDoneState.set(checks.length > 0 && checks.every(Boolean));
   });
+
+  const allDoneEl = renderWhen(allDoneState, AllDoneComponent, {}, signal);
 
   return h("div", { className: "todo-app" }, [
     h("h1", { textContent: "Todo Example" }),
     AddTodoForm(signal, { state }),
-    h("div", { className: "controls" }, [markAllBtn, allDoneText]),
+    h("div", { className: "controls" }, [markAllBtn, allDoneEl]),
     DraggableTodoList(signal, { items: state.prop("items") }),
   ]);
 };

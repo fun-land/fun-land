@@ -13,6 +13,7 @@ import {
   keyedChildren,
   $,
   $$,
+  renderWhen,
 } from "./dom";
 import { FunState, funState } from "./state";
 
@@ -762,5 +763,241 @@ describe("$$ (querySelectorAll)", () => {
     // Should have array methods
     expect(typeof results.map).toBe("function");
     expect(typeof results.filter).toBe("function");
+  });
+});
+
+describe("renderWhen", () => {
+  const TestComponent = (signal: AbortSignal, props: { text: string }) => {
+    const el = h("div", { className: "test-component" }, props.text);
+    signal.addEventListener("abort", () => {
+      el.dataset.aborted = "true";
+    });
+    return el;
+  };
+
+  test("should render component when state is initially true", () => {
+    const controller = new AbortController();
+    const showState = funState(true);
+
+    const container = renderWhen(
+      showState,
+      TestComponent,
+      { text: "Hello" },
+      controller.signal
+    );
+
+    expect(container.children.length).toBe(1);
+    expect(container.children[0].textContent).toBe("Hello");
+    expect(container.children[0].classList.contains("test-component")).toBe(
+      true
+    );
+
+    controller.abort();
+  });
+
+  test("should not render component when state is initially false", () => {
+    const controller = new AbortController();
+    const showState = funState(false);
+
+    const container = renderWhen(
+      showState,
+      TestComponent,
+      { text: "Hello" },
+      controller.signal
+    );
+
+    expect(container.children.length).toBe(0);
+
+    controller.abort();
+  });
+
+  test("should mount component when state changes from false to true", () => {
+    const controller = new AbortController();
+    const showState = funState(false);
+
+    const container = renderWhen(
+      showState,
+      TestComponent,
+      { text: "Hello" },
+      controller.signal
+    );
+
+    expect(container.children.length).toBe(0);
+
+    showState.set(true);
+
+    expect(container.children.length).toBe(1);
+    expect(container.children[0].textContent).toBe("Hello");
+
+    controller.abort();
+  });
+
+  test("should unmount component when state changes from true to false", () => {
+    const controller = new AbortController();
+    const showState = funState(true);
+
+    const container = renderWhen(
+      showState,
+      TestComponent,
+      { text: "Hello" },
+      controller.signal
+    );
+
+    const child = container.children[0] as HTMLElement;
+    expect(container.children.length).toBe(1);
+
+    showState.set(false);
+
+    expect(container.children.length).toBe(0);
+    expect(child.dataset.aborted).toBe("true");
+
+    controller.abort();
+  });
+
+  test("should abort component signal on unmount", () => {
+    const controller = new AbortController();
+    const showState = funState(true);
+    const abortCallback = jest.fn();
+
+    const ComponentWithAbortListener = (
+      signal: AbortSignal,
+      props: { text: string }
+    ) => {
+      signal.addEventListener("abort", abortCallback);
+      return h("div", null, props.text);
+    };
+
+    renderWhen(
+      showState,
+      ComponentWithAbortListener,
+      { text: "Hello" },
+      controller.signal
+    );
+
+    expect(abortCallback).not.toHaveBeenCalled();
+
+    showState.set(false);
+
+    expect(abortCallback).toHaveBeenCalledTimes(1);
+
+    controller.abort();
+  });
+
+  test("should cleanup when parent signal aborts", () => {
+    const controller = new AbortController();
+    const showState = funState(true);
+    const abortCallback = jest.fn();
+
+    const ComponentWithAbortListener = (
+      signal: AbortSignal,
+      props: { text: string }
+    ) => {
+      signal.addEventListener("abort", abortCallback);
+      return h("div", null, props.text);
+    };
+
+    renderWhen(
+      showState,
+      ComponentWithAbortListener,
+      { text: "Hello" },
+      controller.signal
+    );
+
+    expect(abortCallback).not.toHaveBeenCalled();
+
+    controller.abort();
+
+    expect(abortCallback).toHaveBeenCalledTimes(1);
+  });
+
+  test("should toggle component multiple times", () => {
+    const controller = new AbortController();
+    const showState = funState(false);
+
+    const container = renderWhen(
+      showState,
+      TestComponent,
+      { text: "Hello" },
+      controller.signal
+    );
+
+    expect(container.children.length).toBe(0);
+
+    showState.set(true);
+    expect(container.children.length).toBe(1);
+
+    showState.set(false);
+    expect(container.children.length).toBe(0);
+
+    showState.set(true);
+    expect(container.children.length).toBe(1);
+
+    showState.set(false);
+    expect(container.children.length).toBe(0);
+
+    controller.abort();
+  });
+
+  test("should have display: contents to not affect layout", () => {
+    const controller = new AbortController();
+    const showState = funState(true);
+
+    const container = renderWhen(
+      showState,
+      TestComponent,
+      { text: "Hello" },
+      controller.signal
+    ) as HTMLElement;
+
+    expect(container.style.display).toBe("contents");
+
+    controller.abort();
+  });
+
+  test("should stop reacting to state changes after parent abort", () => {
+    const controller = new AbortController();
+    const showState = funState(true);
+
+    const container = renderWhen(
+      showState,
+      TestComponent,
+      { text: "Hello" },
+      controller.signal
+    );
+
+    expect(container.children.length).toBe(1);
+
+    controller.abort();
+
+    // Should not react to state changes after abort
+    showState.set(false);
+    expect(container.children.length).toBe(1);
+  });
+
+  test("should pass props to component", () => {
+    const controller = new AbortController();
+    const showState = funState(true);
+
+    const PropsComponent = (
+      _signal: AbortSignal,
+      props: { text: string; count: number }
+    ) => {
+      return h(
+        "div",
+        null,
+        `${props.text}: ${props.count}`
+      );
+    };
+
+    const container = renderWhen(
+      showState,
+      PropsComponent,
+      { text: "Count", count: 42 },
+      controller.signal
+    );
+
+    expect(container.children[0].textContent).toBe("Count: 42");
+
+    controller.abort();
   });
 });

@@ -1,5 +1,5 @@
 {
-  "packages": ["packages/*"],
+  "packages": ["packages/*", "!packages/fun-state-examples"],
   "version": "independent",
   "npmClient": "pnpm",
   "$schema": "node_modules/lerna/schemas/lerna-schema.json"

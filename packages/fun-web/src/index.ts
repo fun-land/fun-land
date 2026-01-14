@@ -20,6 +20,7 @@ export {
   bindProperty,
   bindPropertyTo,
   keyedChildren,
+  renderWhen,
   enhance,
   $,
   $$,

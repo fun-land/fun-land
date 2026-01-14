@@ -312,6 +312,57 @@ export function keyedChildren<T extends Keyed>(
   return { reconcile, dispose };
 }
 
+/**
+ * Conditionally render a component based on a boolean FunState.
+ * Returns a container element that mounts/unmounts the component as the state changes.
+ *
+ * @example
+ * const showDetails = state(false);
+ * const detailsEl = renderWhen(showDetails, DetailsComponent, {id: 123}, signal);
+ * parent.appendChild(detailsEl);
+ */
+export function renderWhen<Props>(
+  state: FunState<boolean>,
+  comp: (signal: AbortSignal, props: Props) => Element,
+  props: Props,
+  signal: AbortSignal
+): Element {
+  const container = document.createElement("span");
+  container.style.display = "contents";
+  let childCtrl: AbortController | null = null;
+  let childEl: Element | null = null;
+
+  const reconcile = () => {
+    const shouldRender = state.get();
+
+    if (shouldRender && !childEl) {
+      // Mount the component
+      childCtrl = new AbortController();
+      childEl = comp(childCtrl.signal, props);
+      container.appendChild(childEl);
+    } else if (!shouldRender && childEl) {
+      // Unmount the component
+      childCtrl?.abort();
+      childEl.remove();
+      childEl = null;
+      childCtrl = null;
+    }
+  };
+
+  // React to state changes
+  state.watch(signal, reconcile);
+
+  // Clean up when parent aborts
+  signal.addEventListener("abort", () => {
+    childCtrl?.abort();
+  }, { once: true });
+
+  // Initial render
+  reconcile();
+
+  return container;
+}
+
 export const $ = <T extends Element>(selector: string): T | undefined =>
   document.querySelector<T>(selector) ?? undefined;
 

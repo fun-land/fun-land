@@ -419,6 +419,71 @@ keyedChildren(h("ul"), signal, todos, (row) => {
 });
 ```
 
+#### renderWhen
+```ts
+<Props>(
+  state: FunState<boolean>,
+  comp: (signal: AbortSignal, props: Props) => Element,
+  props: Props,
+  signal: AbortSignal
+): Element
+```
+
+Conditionally render a component based on a boolean state. Returns a container element that mounts/unmounts the component as the state changes.
+
+**Key features:**
+- Component is mounted when state becomes `true`, unmounted when `false`
+- Each mount gets its own AbortController for proper cleanup
+- Container uses `display: contents` to not affect layout
+- Multiple toggles create fresh component instances each time
+
+```typescript
+const ShowDetails: Component<{ user: User }> = (signal, { user }) => {
+  return h("div", { className: "details" }, [
+    h("p", null, `Email: ${user.email}`),
+    h("p", null, `Joined: ${user.joinDate}`),
+  ]);
+};
+
+const App: Component = (signal) => {
+  const showDetailsState = funState(false);
+  const userState = funState({ email: "alice@example.com", joinDate: "2024" });
+
+  const toggleBtn = h("button", { textContent: "Toggle Details" });
+  on(toggleBtn, "click", () => {
+    showDetailsState.mod(show => !show);
+  }, signal);
+
+  // Details component mounts/unmounts based on showDetailsState
+  const detailsEl = renderWhen(
+    showDetailsState,
+    ShowDetails,
+    { user: userState.get() },
+    signal
+  );
+
+  return h("div", {}, [toggleBtn, detailsEl]);
+};
+```
+
+**When to use:**
+- Conditionally showing/hiding expensive components (better than CSS `display: none`)
+- Mounting components that need full cleanup when hidden
+- Components with their own timers, subscriptions, or resources
+
+**Simple visibility toggling:**
+If you just need to toggle visibility without full mount/unmount, use `bindProperty` with `style.display` instead:
+
+```typescript
+const element = h("div", {}, "Content");
+const showState = funState(true);
+
+// Just toggles visibility, element stays mounted
+showState.watch(signal, (show) => {
+  element.style.display = show ? "block" : "none";
+});
+```
+
 #### $ and $$ - DOM Query Utilities
 
 Convenient shortcuts for `querySelector` and `querySelectorAll` with better TypeScript support.
