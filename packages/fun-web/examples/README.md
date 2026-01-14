@@ -43,7 +43,7 @@ open examples/todo-app/todo.html
 
 **Demonstrates:**
 - Complex state management with nested data
-- Keyed list rendering with `keyedChildren()` (efficient DOM reconciliation)
+- Keyed list rendering with `bindListChildren()` (efficient DOM reconciliation)
 - Two-way form bindings using `bindProperty()` and `on()`
 - Multiple focused state slices with accessors
 - Business logic separation using accessor transformations

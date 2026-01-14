@@ -105,7 +105,7 @@ const Todo: Component<TodoProps> = (signal, props) => {
 ```
 
 ### State Management
-Using `keyedChildren()` for efficient list rendering:
+Using `bindListChildren()` for efficient list rendering:
 - Preserves DOM elements across reorders (crucial for animations!)
 - Each item gets its own AbortController for cleanup
 - Only affected elements update, others remain untouched

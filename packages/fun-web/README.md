@@ -36,6 +36,7 @@ import {
   mount,
   bindProperty,
   on,
+  enhance,
   type Component,
   type FunState,
 } from "@fun-land/fun-web";
@@ -45,11 +46,11 @@ const Counter: Component<{state: FunState<number>}> = (signal, {state}) => {
   // Component runs once - no re-rendering on state changes
   const button = h("button", {}, `Count: ${state.get()}`);
 
-  // bindProperty subscribes to the past state and updates named property
-  bindProperty(button, "textContent", state, signal);
+  // bindProperty subscribes to the state and updates named property
+  enhance(button, bindProperty("textContent", state, signal));
 
   // Event handlers never go stale (component doesn't re-run)
-  on(button, "click", () => state.mod((n) => n + 1), signal);
+  enhance(button, on("click", () => state.mod((n) => n + 1), signal));
 
   return button;
 };
@@ -72,8 +73,8 @@ const Counter: Component<{ count: FunState<number> }> = (signal, props) => {
   const button = h("button", {}, "Increment");
 
   // This subscription handles updates, not re-rendering
-  bindProperty(display, "textContent", props.count, signal);
-  on(button, "click", () => props.count.mod(n => n + 1), signal);
+  enhance(display, bindProperty("textContent", props.count, signal));
+  enhance(button, on("click", () => props.count.mod(n => n + 1), signal));
 
   return h("div", {}, [display, button]);
   // Component function exits, but subscriptions keep working
@@ -120,8 +121,8 @@ const FunWebCounter: Component<{ count: FunState<number> }> = (signal, props) =>
   const button = h("button", {}, "+");
 
   // No useCallback needed - this closure never goes stale
-  on(button, "click", () => props.count.mod(n => n + 1), signal);
-  bindProperty(display, "textContent", props.count, signal);
+  enhance(button, on("click", () => props.count.mod(n => n + 1), signal));
+  enhance(display, bindProperty("textContent", props.count, signal));
 
   return h("div", {}, [display, button]);
 };
@@ -191,7 +192,7 @@ const Dashboard: Component<{
 const nameEl = h("div");
 const nameState: FunState<string> = state.prop("user").prop("name");
 
-bindProperty(nameEl, "textContent", nameState, signal);
+enhance(nameEl, bindProperty("textContent", nameState, signal));
 // nameEl.textContent stays in sync with nameState
 ```
 
@@ -199,24 +200,18 @@ bindProperty(nameEl, "textContent", nameState, signal);
 
 ```typescript
 const button = h("button", {}, "Click me");
-on(button, "click", (e: MouseEvent & { currentTarget: HTMLButtonElement }) => {
+enhance(button, on("click", (e: MouseEvent & { currentTarget: HTMLButtonElement }) => {
   console.log(e.currentTarget.textContent);
-}, signal);
+}, signal));
 ```
 
 **Chain for two-way bindings:**
 
 ```typescript
-const input = on(
-  bindProperty(
-    h("input", { type: "text" }),
-    "value",
-    state.prop("name"),
-    signal
-  ),
-  "input",
-  (e) => state.prop("name").set(e.currentTarget.value),
-  signal
+const input = enhance(
+  h("input", { type: "text" }),
+  bindProperty("value", state.prop("name"), signal),
+  on("input", (e) => state.prop("name").set(e.currentTarget.value), signal)
 );
 ```
 
@@ -240,8 +235,8 @@ const MyComponent: Component<{ state: FunState<State> }> = (signal, {state}) => 
   const button = h("button");
 
   // All three clean up when signal aborts
-  bindProperty(display, "textContent", state.prop("count"), signal);
-  on(button, "click", () => state.mod(increment), signal);
+  enhance(display, bindProperty("textContent", state.prop("count"), signal));
+  enhance(button, on("click", () => state.mod(increment), signal));
   state.watch(signal, (s) => console.log("Changed:", s));
 
   return h("div", {}, [display, button]);
@@ -275,7 +270,7 @@ const baz = state.focus(bazFromState).get()
 
 ```typescript
 // ✅ Good
-bindProperty(element, "textContent", state.prop("count"), signal);
+enhance(element, bindProperty("textContent", state.prop("count"), signal));
 
 // ❌ Avoid (when bindProperty works)
 state.prop("count").watch(signal, (count) => {
@@ -287,9 +282,9 @@ state.prop("count").watch(signal, (count) => {
 
 ```typescript
 // ✅ Good - types inferred
-on(button, "click", (e) => {
+enhance(button, on("click", (e) => {
   e.currentTarget.disabled = true; // TypeScript knows it's HTMLButtonElement
-}, signal);
+}, signal));
 
 // ❌ Avoid - loses type information
 button.addEventListener("click", (e) => {
@@ -345,7 +340,10 @@ const div = h("div", { id: "app" }, [
 Bind element property to state. Returns `Enhancer`.
 
 ```typescript
-enhance(h("input"), bindProperty(input, "value", state.prop("name"), signal));
+const input = enhance(
+  h("input"),
+  bindProperty("value", state.prop("name"), signal)
+);
 // input.value syncs with state.name
 ```
 
@@ -354,70 +352,76 @@ enhance(h("input"), bindProperty(input, "value", state.prop("name"), signal));
 Add type-safe event listener. Returns `Enhancer`.
 
 ```typescript
-enhance(h("button"), on("click", (e) => {
-  e.currentTarget.disabled = true;
-}, signal));
+const button = enhance(
+  h("button"),
+  on("click", (e) => {
+    e.currentTarget.disabled = true;
+  }, signal)
+);
 ```
 
-#### keyedChildren TODO replace this with bindListChildren
-```ts
-<T extends { key: string }>(
-  parent: Element,
-  signal: AbortSignal,
-  list: FunState<T[]>,
-  renderRow: (row: {
-    signal: AbortSignal;
-    state: FunState<T>;
-    remove: () => void;
-  }) => Element
-): KeyedChildren<T>
-```
+#### bindListChildren
 
-Render and reconcile keyed lists efficiently. Each row gets its own AbortSignal for cleanup and a focused state.
+Render and reconcile keyed lists efficiently. Each row gets its own AbortSignal for cleanup and a focused state. Returns `Enhancer`.
 
 ```typescript
+import { Acc } from "@fun-land/accessor";
+
 interface Todo {
-  key: string;
+  id: string;
   label: string;
   done: boolean;
 }
 
 const todos: FunState<Todo[]> = funState([
-  { key: "a", label: "First", done: false }
+  { id: "a", label: "First", done: false }
 ]);
 
-keyedChildren(h("ul"), signal, todos, (row) => {
-  const li = h("li");
+const list = enhance(
+  h("ul"),
+  bindListChildren({
+    signal,
+    state: todos,
+    key: Acc<Todo>().prop("id"),
+    row: ({ signal, state, remove }) => {
+      const li = h("li");
 
-  // row.state is a focused FunState<Todo> for this item
-  bindProperty(li, "textContent", row.state.prop("label"), row.signal);
+      // state is a focused FunState<Todo> for this item
+      enhance(li, bindProperty("textContent", state.prop("label"), signal));
 
-  // row.remove() removes this item from the list
-  const deleteBtn = h("button", { textContent: "Delete" });
-  on(deleteBtn, "click", row.remove, row.signal);
+      // remove() removes this item from the list
+      const deleteBtn = h("button", { textContent: "Delete" });
+      enhance(deleteBtn, on("click", remove, signal));
 
-  li.appendChild(deleteBtn);
-  return li;
-});
+      li.appendChild(deleteBtn);
+      return li;
+    }
+  })
+);
 ```
 
 #### renderWhen
 ```ts
-<Props>(
-  state: FunState<boolean>,
-  comp: (signal: AbortSignal, props: Props) => Element,
-  props: Props,
-  signal: AbortSignal
-): Element
+function renderWhen<State, Props>(options: {
+  state: FunState<State>;
+  predicate?: (value: State) => boolean;
+  component: Component<Props>;
+  props: Props;
+  signal: AbortSignal;
+}): Element
 ```
 
-Conditionally render a component based on a boolean state. Returns a container element that mounts/unmounts the component as the state changes.
+Conditionally render a component based on state and an optional predicate. Returns a container element that mounts/unmounts the component as the condition changes.
 
 **Key features:**
-- Component is mounted when state becomes `true`, unmounted when `false`
+- Component is mounted when condition is `true`, unmounted when `false`
+- With boolean state, component mounts when state is `true`
+- With predicate, component mounts when `predicate(state)` returns `true`
 - Each mount gets its own AbortController for proper cleanup
 - Container uses `display: contents` to not affect layout
 - Multiple toggles create fresh component instances each time
+
+**Example with boolean state:**
 
 ```typescript
 const ShowDetails: Component<{ user: User }> = (signal, { user }) => {
@@ -432,19 +436,44 @@ const App: Component = (signal) => {
   const userState = funState({ email: "alice@example.com", joinDate: "2024" });
 
   const toggleBtn = h("button", { textContent: "Toggle Details" });
-  on(toggleBtn, "click", () => {
+  enhance(toggleBtn, on("click", () => {
     showDetailsState.mod(show => !show);
-  }, signal);
+  }, signal));
 
   // Details component mounts/unmounts based on showDetailsState
-  const detailsEl = renderWhen(
-    showDetailsState,
-    ShowDetails,
-    { user: userState.get() },
+  const detailsEl = renderWhen({
+    state: showDetailsState,
+    component: ShowDetails,
+    props: { user: userState.get() },
     signal
-  );
+  });
 
   return h("div", {}, [toggleBtn, detailsEl]);
+};
+```
+
+**Example with predicate:**
+
+```typescript
+enum Status { Loading, Success, Error }
+
+const SuccessMessage: Component<{ message: string }> = (signal, { message }) => {
+  return h("div", { className: "success" }, message);
+};
+
+const App: Component = (signal) => {
+  const statusState = funState(Status.Loading);
+
+  // Only render SuccessMessage when status is Success
+  const successEl = renderWhen({
+    state: statusState,
+    predicate: (status) => status === Status.Success,
+    component: SuccessMessage,
+    props: { message: "Operation completed!" },
+    signal
+  });
+
+  return h("div", {}, [successEl]);
 };
 ```
 
