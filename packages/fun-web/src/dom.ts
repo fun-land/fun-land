@@ -313,32 +313,52 @@ export function keyedChildren<T extends Keyed>(
 }
 
 /**
- * Conditionally render a component based on a boolean FunState.
- * Returns a container element that mounts/unmounts the component as the state changes.
+ * Conditionally render a component based on state and an optional predicate.
+ * Returns a container element that mounts/unmounts the component as the condition changes.
  *
  * @example
- * const showDetails = state(false);
- * const detailsEl = renderWhen(showDetails, DetailsComponent, {id: 123}, signal);
+ * // With boolean state
+ * const showDetails = funState(false);
+ * const detailsEl = renderWhen({
+ *   state: showDetails,
+ *   component: DetailsComponent,
+ *   props: {id: 123},
+ *   signal
+ * });
  * parent.appendChild(detailsEl);
+ *
+ * @example
+ * // With predicate
+ * const rollType = funState(RollType.action);
+ * const actionEl = renderWhen({
+ *   state: rollType,
+ *   predicate: (type) => type === RollType.action,
+ *   component: ActionForm,
+ *   props: {roll, uid},
+ *   signal
+ * });
  */
-export function renderWhen<Props>(
-  state: FunState<boolean>,
-  comp: (signal: AbortSignal, props: Props) => Element,
-  props: Props,
+export function renderWhen<State, Props>(options: {
+  state: FunState<State>
+  predicate?: (value: State) => boolean
+  component: (signal: AbortSignal, props: Props) => Element
+  props: Props
   signal: AbortSignal
-): Element {
+}): Element {
+  const { state, predicate = (x) => x as unknown as boolean, component, props, signal } = options;
+
   const container = document.createElement("span");
   container.style.display = "contents";
   let childCtrl: AbortController | null = null;
   let childEl: Element | null = null;
 
   const reconcile = () => {
-    const shouldRender = state.get();
+    const shouldRender = predicate(state.get());
 
     if (shouldRender && !childEl) {
       // Mount the component
       childCtrl = new AbortController();
-      childEl = comp(childCtrl.signal, props);
+      childEl = component(childCtrl.signal, props);
       container.appendChild(childEl);
     } else if (!shouldRender && childEl) {
       // Unmount the component

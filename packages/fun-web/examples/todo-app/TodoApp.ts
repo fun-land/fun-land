@@ -51,7 +51,12 @@ const TodoApp: Component = (signal) => {
     allDoneState.set(checks.length > 0 && checks.every(Boolean));
   });
 
-  const allDoneEl = renderWhen(allDoneState, AllDoneComponent, {}, signal);
+  const allDoneEl = renderWhen({
+    state: allDoneState,
+    component: AllDoneComponent,
+    props: {},
+    signal
+  });
 
   return h("div", { className: "todo-app" }, [
     h("h1", { textContent: "Todo Example" }),
