@@ -28,17 +28,9 @@
   function comp(...accs) {
     return accs.reduce(_comp);
   }
-  var viewed = (toView, fromView) => ({
-    query: (s) => [toView(s)],
-    mod: (f) => (s) => fromView(f(toView(s)))
-  });
   var all = () => ({
     query: (xs) => xs,
     mod: (transform) => (xs) => xs.map(transform)
-  });
-  var filter = (pred) => ({
-    query: (xs) => xs.filter(pred),
-    mod: (transform) => (s) => s.map((x) => pred(x) ? transform(x) : x)
   });
   var set = (acc) => flow(K, acc.mod);
   var get = (acc) => (s) => {
@@ -187,7 +179,29 @@
   };
   var onTo = (type, handler, signal) => (el) => on(el, type, handler, signal);
   var enhance = (x, ...fns) => fns.reduce((acc, fn) => fn(acc), x);
-  function keyedChildren(parent, signal, list, renderRow) {
+  var keyOf = (keyAcc, item) => {
+    const k = keyAcc.query(item)[0];
+    if (k == null)
+      throw new Error("bindListChildren: key accessor returned no value");
+    return k;
+  };
+  var byKey = (keyAcc, key) => ({
+    query: (xs) => {
+      const hit = xs.find((t) => keyOf(keyAcc, t) === key);
+      return hit ? [hit] : [];
+    },
+    mod: (f) => (xs) => {
+      let found = false;
+      return xs.map((t) => {
+        if (keyOf(keyAcc, t) !== key) return t;
+        if (found) throw new Error(`bindListChildren: duplicate key "${key}"`);
+        found = true;
+        return f(t);
+      });
+    }
+  });
+  var bindListChildren = (options) => (parent) => {
+    const { signal, state: list, key: keyAcc, row: renderRow } = options;
     const rows = /* @__PURE__ */ new Map();
     const dispose = () => {
       for (const row of rows.values()) {
@@ -201,8 +215,9 @@
       const nextKeys = [];
       const seen = /* @__PURE__ */ new Set();
       for (const it of items) {
-        const k = it.key;
-        if (seen.has(k)) throw new Error(`keyedChildren: duplicate key "${k}"`);
+        const k = keyOf(keyAcc, it);
+        if (seen.has(k))
+          throw new Error(`bindListChildren: duplicate key "${k}"`);
         seen.add(k);
         nextKeys.push(k);
       }
@@ -216,13 +231,13 @@
       for (const k of nextKeys) {
         if (!rows.has(k)) {
           const ctrl = new AbortController();
-          const itemState = list.focus(filter((t) => t.key === k));
+          const itemState = list.focus(byKey(keyAcc, k));
           const el = renderRow({
             signal: ctrl.signal,
             state: itemState,
-            remove: () => list.mod((list2) => list2.filter((t) => t.key !== k))
+            remove: () => list.mod((xs) => xs.filter((t) => keyOf(keyAcc, t) !== k))
           });
-          rows.set(k, { key: k, el, ctrl });
+          rows.set(k, { el, ctrl });
         }
       }
       const children = parent.children;
@@ -230,17 +245,51 @@
         const k = nextKeys[i];
         const row = rows.get(k);
         const currentAtI = children[i];
-        if (currentAtI !== row.el) {
+        if (currentAtI !== row.el)
           parent.insertBefore(row.el, currentAtI ?? null);
-        }
       }
     };
     list.watch(signal, reconcile);
     signal.addEventListener("abort", dispose, { once: true });
     reconcile();
-    return { reconcile, dispose };
+    return parent;
+  };
+  function renderWhen(options) {
+    const {
+      state,
+      predicate = (x) => x,
+      component,
+      props,
+      signal
+    } = options;
+    const container = document.createElement("span");
+    container.style.display = "contents";
+    let childCtrl = null;
+    let childEl = null;
+    const reconcile = () => {
+      const shouldRender = predicate(state.get());
+      if (shouldRender && !childEl) {
+        childCtrl = new AbortController();
+        childEl = component(childCtrl.signal, props);
+        container.appendChild(childEl);
+      } else if (!shouldRender && childEl) {
+        childCtrl?.abort();
+        childEl.remove();
+        childEl = null;
+        childCtrl = null;
+      }
+    };
+    state.watch(signal, reconcile);
+    signal.addEventListener(
+      "abort",
+      () => {
+        childCtrl?.abort();
+      },
+      { once: true }
+    );
+    reconcile();
+    return container;
   }
-  var $ = (selector) => document.querySelector(selector) ?? void 0;
 
   // src/mount.ts
   var mount = (component, props, container) => {
@@ -260,8 +309,8 @@
   var init_TodoAppState = () => ({
     value: "",
     items: [
-      { checked: false, label: "Learn fun-web", priority: 0, key: "asdf" },
-      { checked: true, label: "Build something cool", priority: 1, key: "fdas" }
+      { checked: false, label: "Learn fun-web", key: "asdf" },
+      { checked: true, label: "Build something cool", key: "fdas" }
     ]
   });
   var stateAcc = Acc();
@@ -272,27 +321,13 @@
     prepend({
       checked: false,
       label: state.value,
-      priority: 1,
       key: crypto.randomUUID()
     })
   )(state);
 
-  // examples/todo-app/TodoState.ts
-  var stateAcc2 = Acc();
-  var priorityAsString = stateAcc2.prop("priority").focus(viewed(String, Number));
-
   // examples/todo-app/Todo.ts
   var Todo = (signal, { state, removeItem, onDragStart, onDragEnd, onDragOver }) => {
     const todoData = state.get();
-    const priorityState = state.focus(priorityAsString);
-    const prioritySelect = enhance(
-      h("select", {}, [
-        h("option", { value: "0" }, "High"),
-        h("option", { value: "1" }, "Low")
-      ]),
-      bindPropertyTo("value", priorityState, signal),
-      onTo("change", (e) => priorityState.set(e.currentTarget.value), signal)
-    );
     const checkedState = state.prop("checked");
     const checkbox = enhance(
       h("input", { type: "checkbox" }),
@@ -319,7 +354,6 @@
     const li = h("li", { className: "todo-item", "data-key": todoData.key }, [
       dragHandle,
       checkbox,
-      prioritySelect,
       labelInput,
       deleteBtn
     ]);
@@ -372,7 +406,7 @@
 
   // examples/todo-app/DraggableTodoList.ts
   var ANIMATION_DURATION = 300;
-  var getElementByKey = (key) => $(`[data-key="${key}"]`);
+  var getElementByKey = (key) => document.querySelector(`[data-key="${key}"]`);
   var DraggableTodoList = (signal, { items }) => {
     let draggedKey = null;
     let lastTargetKey = null;
@@ -382,12 +416,12 @@
       if (currentCount > previousItemCount) {
         const positions = /* @__PURE__ */ new Map();
         currentItems.forEach((item) => {
-          const el = $(`[data-key="${item.key}"]`);
+          const el = getElementByKey(item.key);
           if (el) positions.set(item.key, el.getBoundingClientRect());
         });
         requestAnimationFrame(() => {
           positions.forEach((first, key) => {
-            const el = $(`[data-key="${key}"]`);
+            const el = getElementByKey(key);
             if (!el) return;
             const last = el.getBoundingClientRect();
             const deltaY = first.top - last.top;
@@ -459,19 +493,19 @@
       lastTargetKey = null;
     };
     const todoList = h("ul", { className: "todo-list" });
-    keyedChildren(
-      todoList,
+    bindListChildren({
+      key: prop()("key"),
       signal,
-      items,
-      (row) => Todo(row.signal, {
+      state: items,
+      row: (row) => Todo(row.signal, {
         removeItem: () => {
-          const element = $(`[data-key="${row.state.get().key}"]`);
+          const element = getElementByKey(row.state.get().key);
           if (element) {
             element.classList.add("todo-item-exit");
             setTimeout(() => {
               const positions = /* @__PURE__ */ new Map();
               items.get().forEach((item) => {
-                const el = $(`[data-key="${item.key}"]`);
+                const el = getElementByKey(item.key);
                 if (el) positions.set(item.key, el.getBoundingClientRect());
               });
               row.remove();
@@ -505,7 +539,7 @@
         onDragEnd: handleDragEnd,
         onDragOver: handleDragOver
       })
-    );
+    })(todoList);
     return todoList;
   };
 
@@ -564,17 +598,26 @@
         signal
       )
     );
-    const allDoneText = h("span", {
-      textContent: "",
-      className: "all-done-text"
-    });
+    const AllDoneComponent = () => {
+      return h("span", {
+        textContent: "\u{1F389} All Done!",
+        className: "all-done-text"
+      });
+    };
+    const allDoneState = funState(false);
     state.focus(allCheckedAcc).watchAll(signal, (checks) => {
-      allDoneText.textContent = checks.length > 0 && checks.every(Boolean) ? "\u{1F389} All Done!" : "";
+      allDoneState.set(checks.length > 0 && checks.every(Boolean));
+    });
+    const allDoneEl = renderWhen({
+      state: allDoneState,
+      component: AllDoneComponent,
+      props: {},
+      signal
     });
     return h("div", { className: "todo-app" }, [
       h("h1", { textContent: "Todo Example" }),
       AddTodoForm(signal, { state }),
-      h("div", { className: "controls" }, [markAllBtn, allDoneText]),
+      h("div", { className: "controls" }, [markAllBtn, allDoneEl]),
       DraggableTodoList(signal, { items: state.prop("items") })
     ]);
   };

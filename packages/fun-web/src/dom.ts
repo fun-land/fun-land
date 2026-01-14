@@ -1,7 +1,7 @@
 /** DOM utilities for functional element creation and manipulation */
 import { type FunState } from "@fun-land/fun-state";
-import type { ElementChild } from "./types";
-import { filter } from "@fun-land/accessor";
+import type { Component, ElementChild } from "./types";
+import { Accessor } from "@fun-land/accessor";
 
 export type Enhancer<El extends Element> = (element: El) => El;
 
@@ -48,7 +48,7 @@ export const h = <Tag extends keyof HTMLElementTagNameMap>(
 
   // Append children
   if (children != null) {
-    appendChildren(element, children);
+    appendChildren(children)(element);
   }
 
   return element;
@@ -56,41 +56,44 @@ export const h = <Tag extends keyof HTMLElementTagNameMap>(
 
 /**
  * Append children to an element, flattening arrays and converting primitives to text nodes
+ * @returns {Enhancer}
  */
-const appendChildren = (
-  parent: Element,
-  children: ElementChild | ElementChild[]
-): void => {
-  if (Array.isArray(children)) {
-    children.forEach((child) => appendChildren(parent, child));
-  } else if (children != null) {
-    if (typeof children === "string" || typeof children === "number") {
-      parent.appendChild(document.createTextNode(String(children)));
-    } else {
-      parent.appendChild(children);
+const appendChildren =
+  (children: ElementChild | ElementChild[]) =>
+  <E extends HTMLElement>(parent: E): E => {
+    if (Array.isArray(children)) {
+      children.forEach((child) => appendChildren(child)(parent));
+    } else if (children != null) {
+      if (typeof children === "string" || typeof children === "number") {
+        parent.appendChild(document.createTextNode(String(children)));
+      } else {
+        parent.appendChild(children);
+      }
     }
-  }
-};
+    return parent;
+  };
 
 /**
  * Set text content of an element (returns element for chaining)
+ * @returns {Enhancer}
  */
 export const text =
   (content: string | number) =>
   <El extends Element>(el: El): El => {
     el.textContent = String(content);
     return el;
-  };;
+  };
 
 /**
  * Set an attribute on an element (returns element for chaining)
+ * @returns {Enhancer}
  */
 export const attr =
   (name: string, value: string) =>
   <El extends Element>(el: El): El => {
     el.setAttribute(name, value);
     return el;
-  };;
+  };
 
 /**
  * Set multiple attributes on an element (returns element for chaining)
@@ -102,55 +105,54 @@ export const attrs =
       el.setAttribute(name, value);
     });
     return el;
-  };;
+  };
 
-export function bindProperty<E extends Element, K extends keyof E>(
-  el: E,
-  key: K,
-  fs: FunState<E[K]>,
-  signal: AbortSignal
-): E {
-  // initial sync
-  el[key] = fs.get();
-
-  // reactive sync
-  fs.watch(signal, (v: E[K]) => {
-    el[key] = v;
-  });
-  return el;
-}
-
-export const bindPropertyTo =
+/**
+ * update property `key` of element when state updates
+ * @returns {Enhancer}
+ */
+export const bindProperty =
   <E extends Element, K extends keyof E & string>(
     key: K,
     state: FunState<E[K]>,
     signal: AbortSignal
   ) =>
-  (el: E): E =>
-    bindProperty(el, key, state, signal);
+  (el: E): E => {
+    // initial sync
+    el[key] = state.get();
+
+    // reactive sync
+    state.watch(signal, (v: E[K]) => {
+      el[key] = v;
+    });
+    return el;
+  };
 
 /**
  * Add CSS classes to an element (returns element for chaining)
+ * @returns {Enhancer}
  */
 export const addClass =
   (...classes: string[]) =>
   <El extends Element>(el: El): El => {
     el.classList.add(...classes);
     return el;
-  };;
+  };
 
 /**
  * Remove CSS classes from an element (returns element for chaining)
+ * @returns {Enhancer}
  */
 export const removeClass =
   (...classes: string[]) =>
   <El extends Element>(el: El): El => {
     el.classList.remove(...classes);
     return el;
-  };;
+  };
 
 /**
  * Toggle a CSS class on an element (returns element for chaining)
+ * @returns {Enhancer}
  */
 export const toggleClass =
   (className: string, force?: boolean) =>
@@ -168,31 +170,23 @@ export const append =
   <El extends Element>(el: El): El => {
     children.forEach((child) => el.appendChild(child));
     return el;
-  };;
+  };
 
 /**
  * Add event listener with required AbortSignal (returns element for chaining)
  * Signal is required to prevent forgetting cleanup
+ * @returns {Enhancer}
  */
-export const on = <E extends Element, K extends keyof HTMLElementEventMap>(
-  el: E,
-  type: K,
-  handler: (ev: HTMLElementEventMap[K] & { currentTarget: E }) => void,
-  signal: AbortSignal
-) => {
-  el.addEventListener(type, handler as EventListener, { signal });
-  return el;
-};
-
-/** Enhancer version of `on()` */
-export const onTo =
+export const on =
   <E extends Element, K extends keyof HTMLElementEventMap>(
     type: K,
     handler: (ev: HTMLElementEventMap[K] & { currentTarget: E }) => void,
     signal: AbortSignal
   ) =>
-  (el: E): E =>
-    on(el, type, handler, signal);
+  (el: E): E => {
+    el.addEventListener(type, handler as EventListener, { signal });
+    return el;
+  };
 
 /**
  * Apply enhancers to an HTMLElement.
@@ -202,18 +196,6 @@ export const enhance = <El extends Element>(
   ...fns: Array<Enhancer<El>>
 ) => fns.reduce((acc, fn) => fn(acc), x);
 
-/**
- *
- */
-
-type Keyed = { key: string };
-
-type MountedRow = {
-  key: string;
-  el: Element;
-  ctrl: AbortController;
-};
-
 export type KeyedChildren = {
   /** Reconcile DOM children to match current list state */
   reconcile: () => void;
@@ -221,96 +203,115 @@ export type KeyedChildren = {
   dispose: () => void;
 };
 
+const keyOf = <T>(keyAcc: Accessor<T, string>, item: T): string => {
+  const k = keyAcc.query(item)[0];
+  if (k == null)
+    throw new Error("bindListChildren: key accessor returned no value");
+  return k;
+};
+
+const byKey = <T>(
+  keyAcc: Accessor<T, string>,
+  key: string
+): Accessor<T[], T> => ({
+  query: (xs) => {
+    const hit = xs.find((t) => keyOf(keyAcc, t) === key);
+    return hit ? [hit] : [];
+  },
+  mod: (f) => (xs) => {
+    let found = false;
+    return xs.map((t) => {
+      if (keyOf(keyAcc, t) !== key) return t;
+      if (found) throw new Error(`bindListChildren: duplicate key "${key}"`);
+      found = true;
+      return f(t);
+    });
+  },
+});
+
+type MountedRow = { el: Element; ctrl: AbortController };
+
 /**
- * Keep a DOM container's children in sync with a FunState<Array<T>> using stable `t.key`.
- *
- * - No VDOM
- * - Preserves existing row elements across updates
- * - Creates one AbortController per row (cleaned up on removal or parent abort)
- * - Reorders by DOM moves (appendChild)
- * - Only remounts if order changes
+ * Keep an element's children in sync with a FunState<T[]> by stable identity.
+ * Cleanup is driven by `signal` abort (no handle returned).
  */
-export function keyedChildren<T extends Keyed>(
-  parent: Element,
-  signal: AbortSignal,
-  list: FunState<T[]>,
-  renderRow: (row: {
+export const bindListChildren =
+  <T>(options: {
     signal: AbortSignal;
-    state: FunState<T>;
-    remove: () => void;
-  }) => Element
-): KeyedChildren {
-  const rows = new Map<string, MountedRow>();
+    state: FunState<T[]>;
+    key: Accessor<T, string>;
+    row: (args: {
+      signal: AbortSignal;
+      state: FunState<T>;
+      remove: () => void;
+    }) => Element;
+  }) =>
+  <El extends Element>(parent: El): El => {
+    const { signal, state: list, key: keyAcc, row: renderRow } = options;
+    const rows = new Map<string, MountedRow>();
 
-  const dispose = (): void => {
-    for (const row of rows.values()) {
-      // Abort first so listeners/subscriptions clean up
-      row.ctrl.abort();
-      // Remove from DOM (safe even if already removed)
-      row.el.remove();
-    }
-    rows.clear();
-  };
-
-  const reconcile = (): void => {
-    const items = list.get();
-
-    const nextKeys: string[] = [];
-    const seen = new Set<string>();
-    for (const it of items) {
-      const k = it.key;
-      if (seen.has(k)) throw new Error(`keyedChildren: duplicate key "${k}"`);
-      seen.add(k);
-      nextKeys.push(k);
-    }
-
-    // Remove missing
-    for (const [k, row] of rows) {
-      if (!seen.has(k)) {
+    const dispose = (): void => {
+      for (const row of rows.values()) {
         row.ctrl.abort();
         row.el.remove();
-        rows.delete(k);
       }
-    }
+      rows.clear();
+    };
 
-    // Ensure present
-    for (const k of nextKeys) {
-      if (!rows.has(k)) {
-        const ctrl = new AbortController();
-        const itemState = list.focus(filter<T>((t) => t.key === k));
-        const el = renderRow({
-          signal: ctrl.signal,
-          state: itemState,
-          remove: () =>
-            list.mod((list: T[]) => list.filter((t) => t.key !== k)),
-        });
-        rows.set(k, { key: k, el, ctrl });
-      }
-    }
+    const reconcile = (): void => {
+      const items = list.get();
 
-    // Reorder with minimal DOM movement (prevents focus loss)
-    const children = parent.children; // live
-    for (let i = 0; i < nextKeys.length; i++) {
-      const k = nextKeys[i];
-      const row = rows.get(k)!;
-      const currentAtI = children[i];
-      if (currentAtI !== row.el) {
-        parent.insertBefore(row.el, currentAtI ?? null);
+      const nextKeys: string[] = [];
+      const seen = new Set<string>();
+      for (const it of items) {
+        const k = keyOf(keyAcc, it);
+        if (seen.has(k))
+          throw new Error(`bindListChildren: duplicate key "${k}"`);
+        seen.add(k);
+        nextKeys.push(k);
       }
-    }
+
+      // remove missing
+      for (const [k, row] of rows) {
+        if (!seen.has(k)) {
+          row.ctrl.abort();
+          row.el.remove();
+          rows.delete(k);
+        }
+      }
+
+      // ensure present
+      for (const k of nextKeys) {
+        if (!rows.has(k)) {
+          const ctrl = new AbortController();
+          const itemState = list.focus(byKey(keyAcc, k));
+          const el = renderRow({
+            signal: ctrl.signal,
+            state: itemState,
+            remove: () =>
+              list.mod((xs) => xs.filter((t) => keyOf(keyAcc, t) !== k)),
+          });
+          rows.set(k, { el, ctrl });
+        }
+      }
+
+      // reorder with minimal DOM moves
+      const children = parent.children; // live
+      for (let i = 0; i < nextKeys.length; i++) {
+        const k = nextKeys[i];
+        const row = rows.get(k)!;
+        const currentAtI = children[i];
+        if (currentAtI !== row.el)
+          parent.insertBefore(row.el, currentAtI ?? null);
+      }
+    };
+
+    list.watch(signal, reconcile);
+    signal.addEventListener("abort", dispose, { once: true });
+    reconcile();
+
+    return parent;
   };
-
-  // Reconcile whenever the list changes; `subscribe` will unsubscribe on abort (per your fix).
-  list.watch(signal, reconcile);
-
-  // Ensure all children clean up when parent aborts
-  signal.addEventListener("abort", dispose, { once: true });
-
-  // Initial mount
-  reconcile();
-
-  return { reconcile, dispose };
-}
 
 /**
  * Conditionally render a component based on state and an optional predicate.
@@ -339,13 +340,19 @@ export function keyedChildren<T extends Keyed>(
  * });
  */
 export function renderWhen<State, Props>(options: {
-  state: FunState<State>
-  predicate?: (value: State) => boolean
-  component: (signal: AbortSignal, props: Props) => Element
-  props: Props
-  signal: AbortSignal
+  state: FunState<State>;
+  predicate?: (value: State) => boolean;
+  component: Component<Props>;
+  props: Props;
+  signal: AbortSignal;
 }): Element {
-  const { state, predicate = (x) => x as unknown as boolean, component, props, signal } = options;
+  const {
+    state,
+    predicate = (x) => x as unknown as boolean,
+    component,
+    props,
+    signal,
+  } = options;
 
   const container = document.createElement("span");
   container.style.display = "contents";
@@ -373,9 +380,13 @@ export function renderWhen<State, Props>(options: {
   state.watch(signal, reconcile);
 
   // Clean up when parent aborts
-  signal.addEventListener("abort", () => {
-    childCtrl?.abort();
-  }, { once: true });
+  signal.addEventListener(
+    "abort",
+    () => {
+      childCtrl?.abort();
+    },
+    { once: true }
+  );
 
   // Initial render
   reconcile();

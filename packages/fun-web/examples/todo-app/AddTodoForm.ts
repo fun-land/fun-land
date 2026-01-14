@@ -1,6 +1,6 @@
 import { flow } from "@fun-land/accessor";
 import { FunState } from "@fun-land/fun-state";
-import { Component, enhance, h, bindPropertyTo, onTo } from "../../src";
+import { Component, enhance, h, bindProperty, on } from "../../src";
 import { TodoAppState, clearValue, addItem } from "./TodoAppState";
 
 export const AddTodoForm: Component<{ state: FunState<TodoAppState> }> = (
@@ -13,8 +13,8 @@ export const AddTodoForm: Component<{ state: FunState<TodoAppState> }> = (
       placeholder: "Add a todo...",
       className: "todo-input",
     }),
-    bindPropertyTo("value", state.prop("value"), signal),
-    onTo(
+    bindProperty("value", state.prop("value"), signal),
+    on(
       "input",
       (e) => {
         state.prop("value").set(e.currentTarget.value);
@@ -32,7 +32,7 @@ export const AddTodoForm: Component<{ state: FunState<TodoAppState> }> = (
         className: "add-btn",
       }),
     ]),
-    onTo(
+    on(
       "submit",
       (e) => {
         e.preventDefault();

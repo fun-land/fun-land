@@ -341,43 +341,25 @@ const div = h("div", { id: "app" }, [
 - Everything else → property assignment
 
 #### bindProperty
-```ts
-<E extends Element, K extends keyof E>(
-  el: E,
-  key: K,
-  fs: FunState<E[K]>,
-  signal: AbortSignal
-): E
-```
 
-Bind element property to state. Returns element for chaining.
+Bind element property to state. Returns `Enhancer`.
 
 ```typescript
-const input: HTMLInputElement = h("input");
-bindProperty(input, "value", state.prop("name"), signal);
+enhance(h("input"), bindProperty(input, "value", state.prop("name"), signal));
 // input.value syncs with state.name
 ```
 
 #### on
-```ts
-<E extends Element, K extends keyof HTMLElementEventMap>(
-  el: E,
-  type: K,
-  handler: (ev: HTMLElementEventMap[K] & { currentTarget: E }) => void,
-  signal: AbortSignal
-): E
-```
 
-Add type-safe event listener. Returns element for chaining.
+Add type-safe event listener. Returns `Enhancer`.
 
 ```typescript
-on(h("button"), "click", (e) => {
-  // e.currentTarget is typed as HTMLButtonElement
+enhance(h("button"), on("click", (e) => {
   e.currentTarget.disabled = true;
-}, signal);
+}, signal));
 ```
 
-#### keyedChildren
+#### keyedChildren TODO replace this with bindListChildren
 ```ts
 <T extends { key: string }>(
   parent: Element,

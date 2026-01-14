@@ -2,17 +2,12 @@ import {
   h,
   funState,
   mount,
-  onTo,
+  on,
   type Component,
   enhance,
   renderWhen,
 } from "../../src/index";
-import {
-  type TodoAppState,
-  markAllDone,
-  allCheckedAcc,
-  init_TodoAppState,
-} from "./TodoAppState";
+import { markAllDone, allCheckedAcc, init_TodoAppState } from "./TodoAppState";
 import { DraggableTodoList } from "./DraggableTodoList";
 import { AddTodoForm } from "./AddTodoForm";
 
@@ -28,7 +23,7 @@ const TodoApp: Component = (signal) => {
       textContent: "Mark All Done",
       className: "mark-all-btn",
     }),
-    onTo(
+    on(
       "click",
       () => {
         state.mod(markAllDone);
@@ -55,7 +50,7 @@ const TodoApp: Component = (signal) => {
     state: allDoneState,
     component: AllDoneComponent,
     props: {},
-    signal
+    signal,
   });
 
   return h("div", { className: "todo-app" }, [

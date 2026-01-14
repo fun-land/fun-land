@@ -3,8 +3,8 @@ import {
   type Component,
   type FunState,
   enhance,
-  bindPropertyTo,
-  onTo,
+  bindProperty,
+  on,
 } from "../../src/index";
 import { TodoState } from "./TodoState";
 
@@ -27,8 +27,8 @@ export const Todo: Component<TodoProps> = (
   const checkedState = state.prop("checked");
   const checkbox = enhance(
     h("input", { type: "checkbox" }),
-    bindPropertyTo("checked", checkedState, signal),
-    onTo("change", (e) => checkedState.set(e.currentTarget.checked), signal)
+    bindProperty("checked", checkedState, signal),
+    on("change", (e) => checkedState.set(e.currentTarget.checked), signal)
   );
 
   const labelState = state.prop("label");
@@ -36,8 +36,8 @@ export const Todo: Component<TodoProps> = (
     h("input", {
       type: "text",
     }),
-    bindPropertyTo("value", labelState, signal),
-    onTo("input", (e) => labelState.set(e.currentTarget.value), signal)
+    bindProperty("value", labelState, signal),
+    on("input", (e) => labelState.set(e.currentTarget.value), signal)
   );
 
   const dragHandle = h("span", {
@@ -48,7 +48,7 @@ export const Todo: Component<TodoProps> = (
 
   const deleteBtn = enhance(
     h("button", { className: "delete-btn", textContent: "×" }),
-    onTo("click", removeItem, signal)
+    on("click", removeItem, signal)
   );
 
   const li = h("li", { className: "todo-item", "data-key": todoData.key }, [

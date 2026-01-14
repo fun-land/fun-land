@@ -1,4 +1,5 @@
-import { h, keyedChildren, type Component } from "../../src/index";
+import { prop } from "@fun-land/accessor";
+import { h, bindListChildren, type Component } from "../../src/index";
 import type { FunState } from "../../src/state";
 import { Todo } from "./Todo";
 import { type TodoState } from "./TodoState";
@@ -120,54 +121,58 @@ export const DraggableTodoList: Component<DraggableTodoListProps> = (
 
   const todoList = h("ul", { className: "todo-list" });
 
-  keyedChildren(todoList, signal, items, (row) =>
-    Todo(row.signal, {
-      removeItem: () => {
-        const element = getElementByKey(row.state.get().key);
-        if (element) {
-          element.classList.add("todo-item-exit");
-          setTimeout(() => {
-            // Capture positions before removal
-            const positions = new Map<string, DOMRect>();
-            items.get().forEach((item) => {
-              const el = getElementByKey(item.key);
-              if (el) positions.set(item.key, el.getBoundingClientRect());
-            });
-
-            row.remove();
-
-            // Animate remaining items
-            requestAnimationFrame(() => {
-              positions.forEach((first, key) => {
-                const el = getElementByKey(key);
-                if (!el) return;
-                const last = el.getBoundingClientRect();
-                const deltaY = first.top - last.top;
-                if (deltaY) {
-                  el.animate(
-                    [
-                      { transform: `translateY(${deltaY}px)` },
-                      { transform: "translateY(0)" },
-                    ],
-                    {
-                      duration: ANIMATION_DURATION,
-                      easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-                    }
-                  );
-                }
+  bindListChildren({
+    key: prop<TodoState>()("key"),
+    signal,
+    state: items,
+    row: (row) =>
+      Todo(row.signal, {
+        removeItem: () => {
+          const element = getElementByKey(row.state.get().key);
+          if (element) {
+            element.classList.add("todo-item-exit");
+            setTimeout(() => {
+              // Capture positions before removal
+              const positions = new Map<string, DOMRect>();
+              items.get().forEach((item) => {
+                const el = getElementByKey(item.key);
+                if (el) positions.set(item.key, el.getBoundingClientRect());
               });
-            });
-          }, ANIMATION_DURATION);
-        } else {
-          row.remove();
-        }
-      },
-      state: row.state,
-      onDragStart: handleDragStart,
-      onDragEnd: handleDragEnd,
-      onDragOver: handleDragOver,
-    })
-  );
+
+              row.remove();
+
+              // Animate remaining items
+              requestAnimationFrame(() => {
+                positions.forEach((first, key) => {
+                  const el = getElementByKey(key);
+                  if (!el) return;
+                  const last = el.getBoundingClientRect();
+                  const deltaY = first.top - last.top;
+                  if (deltaY) {
+                    el.animate(
+                      [
+                        { transform: `translateY(${deltaY}px)` },
+                        { transform: "translateY(0)" },
+                      ],
+                      {
+                        duration: ANIMATION_DURATION,
+                        easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+                      }
+                    );
+                  }
+                });
+              });
+            }, ANIMATION_DURATION);
+          } else {
+            row.remove();
+          }
+        },
+        state: row.state,
+        onDragStart: handleDragStart,
+        onDragEnd: handleDragEnd,
+        onDragOver: handleDragOver,
+      }),
+  })(todoList);
 
   return todoList;
 };
