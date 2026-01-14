@@ -178,9 +178,11 @@ export const append =
  * @returns {Enhancer}
  */
 export const on =
-  <E extends Element, K extends keyof HTMLElementEventMap>(
+  <E extends Element, K extends keyof GlobalEventHandlersEventMap>(
     type: K,
-    handler: (ev: HTMLElementEventMap[K] & { currentTarget: E }) => void,
+    handler: (
+      ev: GlobalEventHandlersEventMap[K] & { currentTarget: E }
+    ) => void,
     signal: AbortSignal
   ) =>
   (el: E): E => {

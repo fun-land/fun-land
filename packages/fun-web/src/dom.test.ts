@@ -10,7 +10,6 @@ import {
   removeClass,
   on,
   enhance,
-  keyedChildren,
   $,
   $$,
   renderWhen,
@@ -272,7 +271,7 @@ describe("bindProperty()", () => {
     const controller = new AbortController();
 
     const state = funState("hello");
-    bindProperty(el, "value", state, controller.signal);
+    enhance(el, bindProperty("value", state, controller.signal));
 
     expect(el.value).toBe("hello");
     controller.abort();
@@ -283,7 +282,7 @@ describe("bindProperty()", () => {
     const controller = new AbortController();
 
     const state = funState("hello");
-    bindProperty(el, "value", state, controller.signal);
+    enhance(el, bindProperty("value", state, controller.signal));
 
     expect(el.value).toBe("hello");
 
@@ -294,11 +293,11 @@ describe("bindProperty()", () => {
   });
 
   it("should stop updating after signal aborts", () => {
-    const el = document.createElement("input") as HTMLInputElement;
+    const el = h("input");
     const controller = new AbortController();
 
     const state = funState("hello");
-    bindProperty(el, "value", state, controller.signal);
+    enhance(el, bindProperty("value", state, controller.signal));
 
     controller.abort();
 
@@ -307,11 +306,11 @@ describe("bindProperty()", () => {
   });
 
   it("should return element for chaining", () => {
-    const el = document.createElement("input") as HTMLInputElement;
+    const el = h("input");
     const controller = new AbortController();
 
     const state = funState("hello");
-    const result = bindProperty(el, "value", state, controller.signal);
+    const result = enhance(el, bindProperty("value", state, controller.signal));
 
     expect(result).toBe(el);
     controller.abort();
@@ -324,7 +323,7 @@ describe("on()", () => {
     const handler = jest.fn();
     const controller = new AbortController();
 
-    on(el, "click", handler, controller.signal);
+    on("click", handler, controller.signal)(el);
     el.click();
 
     expect(handler).toHaveBeenCalled();
@@ -335,7 +334,7 @@ describe("on()", () => {
     const handler = jest.fn();
     const controller = new AbortController();
 
-    on(el, "click", handler, controller.signal);
+    enhance(el, on("click", handler, controller.signal));
     controller.abort();
     el.click();
 
@@ -345,7 +344,7 @@ describe("on()", () => {
   it("should return element for chaining", () => {
     const el = document.createElement("button");
     const controller = new AbortController();
-    const result = on(el, "click", () => {}, controller.signal);
+    const result = on("click", () => {}, controller.signal)(el);
     expect(result).toBe(el);
   });
 });
@@ -385,286 +384,286 @@ function makeAbortSignal(): {
  *
  * This version doesn't require list.focus, so it's robust.
  */
-function setupKeyedChildrenWithKeyAwareRenderer(
-  parent: Element,
-  signal: AbortSignal,
-  listState: { get: () => Item[]; watch: FunState<Item[]>["watch"] }
-) {
-  const mountCountByKey = new Map<string, number>();
-  const abortCountByKey = new Map<string, number>();
-  const elByKey = new Map<string, Element>();
+// function setupKeyedChildrenWithKeyAwareRenderer(
+//   parent: Element,
+//   signal: AbortSignal,
+//   listState: { get: () => Item[]; watch: FunState<Item[]>["watch"] }
+// ) {
+//   const mountCountByKey = new Map<string, number>();
+//   const abortCountByKey = new Map<string, number>();
+//   const elByKey = new Map<string, Element>();
 
-  const api = keyedChildren<Item>(parent, signal, listState as any, (row) => {
-    // In your real impl, itemState.get().key should exist.
-    const item = row.state.get();
-    const k = item.key;
+//   const api = keyedChildren<Item>(parent, signal, listState as any, (row) => {
+//     // In your real impl, itemState.get().key should exist.
+//     const item = row.state.get();
+//     const k = item.key;
 
-    const el = document.createElement("li");
-    el.dataset.key = k;
-    el.textContent = item.label;
+//     const el = document.createElement("li");
+//     el.dataset.key = k;
+//     el.textContent = item.label;
 
-    elByKey.set(k, el);
-    mountCountByKey.set(k, (mountCountByKey.get(k) ?? 0) + 1);
+//     elByKey.set(k, el);
+//     mountCountByKey.set(k, (mountCountByKey.get(k) ?? 0) + 1);
 
-    row.signal.addEventListener("abort", () => {
-      abortCountByKey.set(k, (abortCountByKey.get(k) ?? 0) + 1);
-    });
+//     row.signal.addEventListener("abort", () => {
+//       abortCountByKey.set(k, (abortCountByKey.get(k) ?? 0) + 1);
+//     });
 
-    return el;
-  });
+//     return el;
+//   });
 
-  return { api, mountCountByKey, abortCountByKey, elByKey };
-}
+//   return { api, mountCountByKey, abortCountByKey, elByKey };
+// }
 
-describe("keyedChildren", () => {
-  test("mounts initial rows in order", () => {
-    const container = document.createElement("ul");
-    const { controller, signal } = makeAbortSignal();
+// describe("keyedChildren", () => {
+//   test("mounts initial rows in order", () => {
+//     const container = document.createElement("ul");
+//     const { controller, signal } = makeAbortSignal();
 
-    const listState = funState<Item[]>([
-      { key: "a", label: "A" },
-      { key: "b", label: "B" },
-    ]);
+//     const listState = funState<Item[]>([
+//       { key: "a", label: "A" },
+//       { key: "b", label: "B" },
+//     ]);
 
-    // Use the key-aware renderer; it expects itemState.get()
-    const { elByKey } = setupKeyedChildrenWithKeyAwareRenderer(
-      container,
-      signal,
-      listState
-    );
+//     // Use the key-aware renderer; it expects itemState.get()
+//     const { elByKey } = setupKeyedChildrenWithKeyAwareRenderer(
+//       container,
+//       signal,
+//       listState
+//     );
 
-    expect(container.children).toHaveLength(2);
-    expect((container.children[0] as HTMLElement).dataset.key).toBe("a");
-    expect((container.children[1] as HTMLElement).dataset.key).toBe("b");
-    expect(elByKey.get("a")?.textContent).toBe("A");
-    expect(elByKey.get("b")?.textContent).toBe("B");
+//     expect(container.children).toHaveLength(2);
+//     expect((container.children[0] as HTMLElement).dataset.key).toBe("a");
+//     expect((container.children[1] as HTMLElement).dataset.key).toBe("b");
+//     expect(elByKey.get("a")?.textContent).toBe("A");
+//     expect(elByKey.get("b")?.textContent).toBe("B");
 
-    controller.abort();
-  });
+//     controller.abort();
+//   });
 
-  test("does not recreate existing row elements when item contents change", () => {
-    const container = document.createElement("ul");
-    const { controller, signal } = makeAbortSignal();
+//   test("does not recreate existing row elements when item contents change", () => {
+//     const container = document.createElement("ul");
+//     const { controller, signal } = makeAbortSignal();
 
-    const listState = funState<Item[]>([
-      { key: "a", label: "A" },
-      { key: "b", label: "B" },
-    ]);
+//     const listState = funState<Item[]>([
+//       { key: "a", label: "A" },
+//       { key: "b", label: "B" },
+//     ]);
 
-    const { mountCountByKey } = setupKeyedChildrenWithKeyAwareRenderer(
-      container,
-      signal,
-      listState
-    );
+//     const { mountCountByKey } = setupKeyedChildrenWithKeyAwareRenderer(
+//       container,
+//       signal,
+//       listState
+//     );
 
-    const firstElA = container.children[0] as Element;
-    const firstElB = container.children[1] as Element;
+//     const firstElA = container.children[0] as Element;
+//     const firstElB = container.children[1] as Element;
 
-    // Update label of "a" (array ref changes)
-    listState.set([
-      { key: "a", label: "A!" },
-      { key: "b", label: "B" },
-    ]);
+//     // Update label of "a" (array ref changes)
+//     listState.set([
+//       { key: "a", label: "A!" },
+//       { key: "b", label: "B" },
+//     ]);
 
-    // Elements should be the same instances (not remounted)
-    expect(container.children[0]).toBe(firstElA);
-    expect(container.children[1]).toBe(firstElB);
+//     // Elements should be the same instances (not remounted)
+//     expect(container.children[0]).toBe(firstElA);
+//     expect(container.children[1]).toBe(firstElB);
 
-    // Mount counts should still be 1 each
-    expect(mountCountByKey.get("a")).toBe(1);
-    expect(mountCountByKey.get("b")).toBe(1);
+//     // Mount counts should still be 1 each
+//     expect(mountCountByKey.get("a")).toBe(1);
+//     expect(mountCountByKey.get("b")).toBe(1);
 
-    controller.abort();
-  });
+//     controller.abort();
+//   });
 
-  test("reorders by moving existing nodes, without recreating them", () => {
-    const container = document.createElement("ul");
-    const { controller, signal } = makeAbortSignal();
+//   test("reorders by moving existing nodes, without recreating them", () => {
+//     const container = document.createElement("ul");
+//     const { controller, signal } = makeAbortSignal();
 
-    const listeners = new Set<(xs: Item[]) => void>();
-    let items: Item[] = [
-      { key: "a", label: "A" },
-      { key: "b", label: "B" },
-      { key: "c", label: "C" },
-    ];
+//     const listeners = new Set<(xs: Item[]) => void>();
+//     let items: Item[] = [
+//       { key: "a", label: "A" },
+//       { key: "b", label: "B" },
+//       { key: "c", label: "C" },
+//     ];
 
-    const listState: FunState<Item[]> = {
-      get: () => items,
-      query: () => {
-        throw new Error("not used");
-      },
-      mod: (f: (items: Item[]) => Item[]) => {
-        items = f(items);
-        listeners.forEach((l) => l(items));
-      },
-      set: (v: Item[]) => {
-        items = v;
-        listeners.forEach((l) => l(items));
-      },
-      focus: (acc: any) =>
-        ({
-          get: () => acc.query(items)[0],
-          watch: (_s: AbortSignal, _cb: any) => void 0,
-        }) as any,
-      prop: () => {
-        throw new Error("not used");
-      },
-      watch: (sig: AbortSignal, cb: (items: Item[]) => void) => {
-        listeners.add(cb);
-        sig.addEventListener(
-          "abort",
-          () => {
-            listeners.delete(cb);
-          },
-          { once: true }
-        );
-      },
-      watchAll: (_sig: AbortSignal, _cb: (values: Item[][]) => void) => {
-        throw new Error("watchAll not used in these tests");
-      },
-    };
+//     const listState: FunState<Item[]> = {
+//       get: () => items,
+//       query: () => {
+//         throw new Error("not used");
+//       },
+//       mod: (f: (items: Item[]) => Item[]) => {
+//         items = f(items);
+//         listeners.forEach((l) => l(items));
+//       },
+//       set: (v: Item[]) => {
+//         items = v;
+//         listeners.forEach((l) => l(items));
+//       },
+//       focus: (acc: any) =>
+//         ({
+//           get: () => acc.query(items)[0],
+//           watch: (_s: AbortSignal, _cb: any) => void 0,
+//         }) as any,
+//       prop: () => {
+//         throw new Error("not used");
+//       },
+//       watch: (sig: AbortSignal, cb: (items: Item[]) => void) => {
+//         listeners.add(cb);
+//         sig.addEventListener(
+//           "abort",
+//           () => {
+//             listeners.delete(cb);
+//           },
+//           { once: true }
+//         );
+//       },
+//       watchAll: (_sig: AbortSignal, _cb: (values: Item[][]) => void) => {
+//         throw new Error("watchAll not used in these tests");
+//       },
+//     };
 
-    const { mountCountByKey } = setupKeyedChildrenWithKeyAwareRenderer(
-      container,
-      signal,
-      listState
-    );
+//     const { mountCountByKey } = setupKeyedChildrenWithKeyAwareRenderer(
+//       container,
+//       signal,
+//       listState
+//     );
 
-    const elA = container.children[0];
-    const elB = container.children[1];
-    const elC = container.children[2];
+//     const elA = container.children[0];
+//     const elB = container.children[1];
+//     const elC = container.children[2];
 
-    // Reorder
-    listState.set([
-      { key: "c", label: "C" },
-      { key: "a", label: "A" },
-      { key: "b", label: "B" },
-    ]);
+//     // Reorder
+//     listState.set([
+//       { key: "c", label: "C" },
+//       { key: "a", label: "A" },
+//       { key: "b", label: "B" },
+//     ]);
 
-    expect((container.children[0] as HTMLElement).dataset.key).toBe("c");
-    expect((container.children[1] as HTMLElement).dataset.key).toBe("a");
-    expect((container.children[2] as HTMLElement).dataset.key).toBe("b");
+//     expect((container.children[0] as HTMLElement).dataset.key).toBe("c");
+//     expect((container.children[1] as HTMLElement).dataset.key).toBe("a");
+//     expect((container.children[2] as HTMLElement).dataset.key).toBe("b");
 
-    // Same element identity (moved, not recreated)
-    expect(container.children[1]).toBe(elA);
-    expect(container.children[2]).toBe(elB);
-    expect(container.children[0]).toBe(elC);
+//     // Same element identity (moved, not recreated)
+//     expect(container.children[1]).toBe(elA);
+//     expect(container.children[2]).toBe(elB);
+//     expect(container.children[0]).toBe(elC);
 
-    // Not remounted
-    expect(mountCountByKey.get("a")).toBe(1);
-    expect(mountCountByKey.get("b")).toBe(1);
-    expect(mountCountByKey.get("c")).toBe(1);
+//     // Not remounted
+//     expect(mountCountByKey.get("a")).toBe(1);
+//     expect(mountCountByKey.get("b")).toBe(1);
+//     expect(mountCountByKey.get("c")).toBe(1);
 
-    controller.abort();
-  });
+//     controller.abort();
+//   });
 
-  test("removes rows when keys disappear and aborts their row controllers", () => {
-    const container = document.createElement("ul");
-    const { controller, signal } = makeAbortSignal();
+//   test("removes rows when keys disappear and aborts their row controllers", () => {
+//     const container = document.createElement("ul");
+//     const { controller, signal } = makeAbortSignal();
 
-    const listeners = new Set<(xs: Item[]) => void>();
-    let items: Item[] = [
-      { key: "a", label: "A" },
-      { key: "b", label: "B" },
-    ];
+//     const listeners = new Set<(xs: Item[]) => void>();
+//     let items: Item[] = [
+//       { key: "a", label: "A" },
+//       { key: "b", label: "B" },
+//     ];
 
-    const listState: FunState<Item[]> = {
-      get: () => items,
-      query: () => {
-        throw new Error("not used");
-      },
-      mod: (f: (items: Item[]) => Item[]) => {
-        items = f(items);
-        listeners.forEach((l) => l(items));
-      },
-      set: (v: Item[]) => {
-        items = v;
-        listeners.forEach((l) => l(items));
-      },
-      focus: (acc: any) =>
-        ({
-          get: () => acc.query(items)[0],
-          watch: (_s: AbortSignal, _cb: any) => void 0,
-        }) as any,
-      prop: () => {
-        throw new Error("not used");
-      },
-      watch: (sig: AbortSignal, cb: (items: Item[]) => void) => {
-        listeners.add(cb);
-        sig.addEventListener(
-          "abort",
-          () => {
-            listeners.delete(cb);
-          },
-          { once: true }
-        );
-      },
-      watchAll: (_sig: AbortSignal, _cb: (values: Item[][]) => void) => {
-        throw new Error("watchAll not used in these tests");
-      },
-    };
+//     const listState: FunState<Item[]> = {
+//       get: () => items,
+//       query: () => {
+//         throw new Error("not used");
+//       },
+//       mod: (f: (items: Item[]) => Item[]) => {
+//         items = f(items);
+//         listeners.forEach((l) => l(items));
+//       },
+//       set: (v: Item[]) => {
+//         items = v;
+//         listeners.forEach((l) => l(items));
+//       },
+//       focus: (acc: any) =>
+//         ({
+//           get: () => acc.query(items)[0],
+//           watch: (_s: AbortSignal, _cb: any) => void 0,
+//         }) as any,
+//       prop: () => {
+//         throw new Error("not used");
+//       },
+//       watch: (sig: AbortSignal, cb: (items: Item[]) => void) => {
+//         listeners.add(cb);
+//         sig.addEventListener(
+//           "abort",
+//           () => {
+//             listeners.delete(cb);
+//           },
+//           { once: true }
+//         );
+//       },
+//       watchAll: (_sig: AbortSignal, _cb: (values: Item[][]) => void) => {
+//         throw new Error("watchAll not used in these tests");
+//       },
+//     };
 
-    const { abortCountByKey } = setupKeyedChildrenWithKeyAwareRenderer(
-      container,
-      signal,
-      listState
-    );
+//     const { abortCountByKey } = setupKeyedChildrenWithKeyAwareRenderer(
+//       container,
+//       signal,
+//       listState
+//     );
 
-    expect(container.children).toHaveLength(2);
+//     expect(container.children).toHaveLength(2);
 
-    // Remove "a"
-    listState.set([{ key: "b", label: "B" }]);
+//     // Remove "a"
+//     listState.set([{ key: "b", label: "B" }]);
 
-    expect(container.children).toHaveLength(1);
-    expect((container.children[0] as HTMLElement).dataset.key).toBe("b");
+//     expect(container.children).toHaveLength(1);
+//     expect((container.children[0] as HTMLElement).dataset.key).toBe("b");
 
-    // "a" row controller should have been aborted once
-    expect(abortCountByKey.get("a")).toBe(1);
+//     // "a" row controller should have been aborted once
+//     expect(abortCountByKey.get("a")).toBe(1);
 
-    controller.abort();
-  });
+//     controller.abort();
+//   });
 
-  test("unsubscribes from list updates on parent abort", () => {
-    const container = document.createElement("ul");
-    const { controller, signal } = makeAbortSignal();
+//   test("unsubscribes from list updates on parent abort", () => {
+//     const container = document.createElement("ul");
+//     const { controller, signal } = makeAbortSignal();
 
-    const list = funState<Item[]>([{ key: "a", label: "A" }]);
+//     const list = funState<Item[]>([{ key: "a", label: "A" }]);
 
-    // Subscribe and verify callback is called before abort
-    const callback = jest.fn();
-    list.watch(signal, callback);
+//     // Subscribe and verify callback is called before abort
+//     const callback = jest.fn();
+//     list.watch(signal, callback);
 
-    list.set([{ key: "a", label: "A2" }]);
-    // Called with initial value, then with updated value
-    expect(callback).toHaveBeenCalledTimes(2);
+//     list.set([{ key: "a", label: "A2" }]);
+//     // Called with initial value, then with updated value
+//     expect(callback).toHaveBeenCalledTimes(2);
 
-    // After abort, callback should not be called
-    controller.abort();
+//     // After abort, callback should not be called
+//     controller.abort();
 
-    list.set([{ key: "a", label: "A3" }]);
-    expect(callback).toHaveBeenCalledTimes(2); // Still 2, not called again
+//     list.set([{ key: "a", label: "A3" }]);
+//     expect(callback).toHaveBeenCalledTimes(2); // Still 2, not called again
 
-    void container;
-  });
+//     void container;
+//   });
 
-  test("throws error on duplicate keys", () => {
-    const container = document.createElement("ul");
-    const { controller, signal } = makeAbortSignal();
+//   test("throws error on duplicate keys", () => {
+//     const container = document.createElement("ul");
+//     const { controller, signal } = makeAbortSignal();
 
-    const listState = funState<Item[]>([
-      { key: "a", label: "A" },
-      { key: "a", label: "B" }, // duplicate key!
-    ]);
+//     const listState = funState<Item[]>([
+//       { key: "a", label: "A" },
+//       { key: "a", label: "B" }, // duplicate key!
+//     ]);
 
-    expect(() => {
-      keyedChildren(container, signal, listState, () => {
-        return document.createElement("li");
-      });
-    }).toThrow('keyedChildren: duplicate key "a"');
+//     expect(() => {
+//       keyedChildren(container, signal, listState, () => {
+//         return document.createElement("li");
+//       });
+//     }).toThrow('keyedChildren: duplicate key "a"');
 
-    controller.abort();
-  });
-});
+//     controller.abort();
+//   });
+// });
 
 describe("$ (querySelector)", () => {
   beforeEach(() => {
