@@ -6,6 +6,14 @@ import { Accessor } from "@fun-land/accessor";
 export type Enhancer<El extends Element> = (element: El) => El;
 
 /**
+ * Type-preserving Object.entries helper for objects with known keys
+ * @internal
+ */
+const entries = <T extends Record<string, unknown>>(
+  obj: T
+): Array<[keyof T, T[keyof T]]> => Object.entries(obj) as Array<[keyof T, T[keyof T]]>;
+
+/**
  * Create an HTML element with attributes and children
  *
  * Convention:
@@ -53,6 +61,124 @@ export const h = <Tag extends keyof HTMLElementTagNameMap>(
 
   return element;
 };
+
+// Helper type to extract only writable properties
+type WritableKeys<T> = {
+  [K in keyof T]-?: (<F>() => F extends { [Q in K]: T[K] } ? 1 : 2) extends <
+    F,
+  >() => F extends { -readonly [Q in K]: T[K] } ? 1 : 2
+    ? K
+    : never;
+}[keyof T];
+
+type HxProps<El extends Element> = Partial<{
+  [K in WritableKeys<El> & string]: El[K] | null | undefined;
+}>;
+
+type HxHandlers<El extends Element> = Partial<{
+  [K in keyof GlobalEventHandlersEventMap]: (
+    ev: GlobalEventHandlersEventMap[K] & { currentTarget: El }
+  ) => void;
+}>;
+
+type HxBindings<El extends Element> = Partial<{
+  [K in WritableKeys<El> & string]: FunState<El[K]>;
+}>;
+
+type HxOptionsBase<El extends Element> = {
+  props?: HxProps<El>;
+  attrs?: Record<string, string | number | boolean | null | undefined>;
+};
+
+type HxOptions<El extends Element> = HxOptionsBase<El> & {
+  signal: AbortSignal;
+  on?: HxHandlers<El>;
+  bind?: HxBindings<El>;
+};
+
+/**
+ * Create an element with structured props, attrs, event handlers, and bindings.
+ *
+ * @example
+ * hx("input", {
+ *   signal,
+ *   props: { type: "text" },
+ *   attrs: { "data-test": "name" },
+ *   bind: { value: nameState },
+ *   on: { input: (e) => nameState.set(e.currentTarget.value) },
+ * });
+ */
+export function hx<Tag extends keyof HTMLElementTagNameMap>(
+  tag: Tag,
+  options: HxOptions<HTMLElementTagNameMap[Tag]>,
+  children?: ElementChild | ElementChild[]
+): HTMLElementTagNameMap[Tag];
+// eslint-disable-next-line complexity
+export function hx<Tag extends keyof HTMLElementTagNameMap>(
+  tag: Tag,
+  options: HxOptions<HTMLElementTagNameMap[Tag]>,
+  children?: ElementChild | ElementChild[]
+): HTMLElementTagNameMap[Tag] {
+  if (!options?.signal) {
+    throw new Error("hx: signal is required");
+  }
+
+  const { signal, props, attrs: attrMap, on: onMap, bind } = options;
+  const element = document.createElement(tag);
+
+  if (props) {
+    for (const [key, value] of entries(props)) {
+      if (value == null) continue;
+      element[key] = value;
+    }
+  }
+
+  if (attrMap) {
+    for (const [key, value] of Object.entries(attrMap)) {
+      if (value == null) continue;
+      element.setAttribute(key, String(value));
+    }
+  }
+
+  if (children != null) {
+    appendChildren(children)(element);
+  }
+
+  if (bind) {
+    const bindElementProperty = <K extends WritableKeys<HTMLElementTagNameMap[Tag]> & string>(
+      key: K,
+      state: FunState<HTMLElementTagNameMap[Tag][K]>
+    ): void => {
+      bindProperty<HTMLElementTagNameMap[Tag], K>(
+        key,
+        state,
+        signal
+      )(element);
+    };
+
+    for (const key of Object.keys(bind) as Array<
+      WritableKeys<HTMLElementTagNameMap[Tag]> & string
+    >) {
+      const state = bind[key];
+      if (!state) continue;
+      bindElementProperty(
+        key,
+        state
+      );
+    }
+  }
+
+  if (onMap) {
+    for (const [event, handler] of Object.entries(onMap)) {
+      if (!handler) continue;
+      element.addEventListener(event, handler as EventListener, {
+        signal,
+      });
+    }
+  }
+
+  return element;
+}
 
 /**
  * Append children to an element, flattening arrays and converting primitives to text nodes
@@ -404,8 +530,5 @@ export const bindClass =
     return el;
   };
 
-export const $ = <T extends Element>(selector: string): T | undefined =>
-  document.querySelector<T>(selector) ?? undefined;
-
-export const $$ = <T extends Element>(selector: string): T[] =>
+export const querySelectorAll = <T extends Element>(selector: string): T[] =>
   Array.from(document.querySelectorAll(selector));

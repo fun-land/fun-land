@@ -31,12 +31,9 @@ pnpm add @fun-land/fun-web @fun-land/accessor
 
 ```typescript
 import {
-  h,
+  hx,
   funState,
   mount,
-  bindProperty,
-  on,
-  enhance,
   type Component,
   type FunState,
 } from "@fun-land/fun-web";
@@ -44,15 +41,13 @@ import {
 
 const Counter: Component<{state: FunState<number>}> = (signal, {state}) => {
   // Component runs once - no re-rendering on state changes
-  const button = h("button", {}, `Count: ${state.get()}`);
-
-  // bindProperty subscribes to the state and updates named property
-  enhance(button, bindProperty("textContent", state, signal));
-
-  // Event handlers never go stale (component doesn't re-run)
-  enhance(button, on("click", () => state.mod((n) => n + 1), signal));
-
-  return button;
+  return hx("button", {
+    signal,
+    // bind syncs the button text with state
+    bind: { textContent: state },
+    // Event handlers never go stale (component doesn't re-run)
+    on: { click: () => state.mod((n) => n + 1) },
+  });
 };
 
 // Create reactive state and mount 
@@ -69,12 +64,16 @@ const mounted = mount(Counter, { state: funState(0) }, document.body);
 const Counter: Component<{ count: FunState<number> }> = (signal, props) => {
   console.log("Component runs once");
 
-  const display = h("div");
-  const button = h("button", {}, "Increment");
+  const display = hx("div", {
+    signal,
+    bind: { textContent: props.count },
+  });
 
-  // This subscription handles updates, not re-rendering
-  enhance(display, bindProperty("textContent", props.count, signal));
-  enhance(button, on("click", () => props.count.mod(n => n + 1), signal));
+  const button = hx("button", {
+    signal,
+    props: { textContent: "Increment" },
+    on: { click: () => props.count.mod(n => n + 1) },
+  });
 
   return h("div", {}, [display, button]);
   // Component function exits, but subscriptions keep working
@@ -117,12 +116,17 @@ function ReactCounter() {
 const FunWebCounter: Component<{ count: FunState<number> }> = (signal, props) => {
   console.log("Mounting!"); // Logs once, never again
 
-  const display = h("div");
-  const button = h("button", {}, "+");
+  const display = hx("div", {
+    signal,
+    bind: { textContent: props.count },
+  });
 
-  // No useCallback needed - this closure never goes stale
-  enhance(button, on("click", () => props.count.mod(n => n + 1), signal));
-  enhance(display, bindProperty("textContent", props.count, signal));
+  const button = hx("button", {
+    signal,
+    props: { textContent: "+" },
+    // No useCallback needed - this closure never goes stale
+    on: { click: () => props.count.mod(n => n + 1) },
+  });
 
   return h("div", {}, [display, button]);
 };
@@ -186,33 +190,42 @@ const Dashboard: Component<{
 
 ### Reactivity Patterns
 
-**Use `bindProperty` for simple one-way bindings:**
+**One-way binding with `hx`:**
 
 ```typescript
-const nameEl = h("div");
 const nameState: FunState<string> = state.prop("user").prop("name");
 
-enhance(nameEl, bindProperty("textContent", nameState, signal));
+const nameEl = hx("div", {
+  signal,
+  bind: { textContent: nameState },
+});
 // nameEl.textContent stays in sync with nameState
 ```
 
-**Use `on` for events:**
+**Two-way binding with `hx`:**
 
 ```typescript
-const button = h("button", {}, "Click me");
-enhance(button, on("click", (e: MouseEvent & { currentTarget: HTMLButtonElement }) => {
-  console.log(e.currentTarget.textContent);
-}, signal));
+const input = hx("input", {
+  signal,
+  props: { type: "text" },
+  bind: { value: state.prop("name") },
+  on: { input: (e) => state.prop("name").set(e.currentTarget.value) },
+});
 ```
 
-**Chain for two-way bindings:**
+**Event handlers with `hx`:**
 
 ```typescript
-const input = enhance(
-  h("input", { type: "text" }),
-  bindProperty("value", state.prop("name"), signal),
-  on("input", (e) => state.prop("name").set(e.currentTarget.value), signal)
-);
+const button = hx("button", {
+  signal,
+  props: { textContent: "Click me" },
+  on: {
+    click: (e) => {
+      console.log(e.currentTarget.textContent);
+      e.currentTarget.disabled = true; // type-safe!
+    }
+  },
+});
 ```
 
 **Use `.watch()` for complex logic:**
@@ -223,6 +236,17 @@ state.watch(signal, (s) => {
   element.className = s.count > 100 ? "maxed" : "normal";
   element.setAttribute("aria-label", `Count: ${s.count}`);
 });
+```
+
+**Using enhancers (alternative to `hx`):**
+
+```typescript
+// If you prefer functional composition
+const input = enhance(
+  h("input", { type: "text" }),
+  bindProperty("value", state.prop("name"), signal),
+  on("input", (e) => state.prop("name").set(e.currentTarget.value), signal)
+);
 ```
 
 ### Cleanup with AbortSignal
@@ -253,7 +277,7 @@ For the most part you won't have to worry about the abort signal if you use the 
 **Don't have one big app state**
 This isn't redux. There's little reason to create giant state objects. Create state near the leaves and hoist it when you need to. That said
 
-**You can have more that one state**
+**You can have more than one state**
 It's just a value. If having one state manage multiple properties works then great but if you want to have several that's fine too.
 
 **Deep chains of .prop() are a smell**
@@ -266,37 +290,49 @@ const bazFromState = Acc<MyState>().prop('foo').prop('bar').prop('baz')
 const baz = state.focus(bazFromState).get()
 ```
 
-**Prefer helpers over manual subscriptions:**
+**Using .get() in component scope is a smell**
+State is for when you want components to respond to state changes as such you should be using it with bindProperty or state.watch or inside event handlers. There are many cases for .get() but if it's the first thing you reach for you're probably gonna be confused that the UI isn't updating. 
+
+**Prefer `hx` for reactive elements:**
 
 ```typescript
-// ✅ Good
-enhance(element, bindProperty("textContent", state.prop("count"), signal));
+// ✅ Good - declarative and type-safe
+const input = hx("input", {
+  signal,
+  props: { type: "text" },
+  bind: { value: state.prop("name") },
+  on: { input: (e) => state.prop("name").set(e.currentTarget.value) },
+});
 
-// ❌ Avoid (when bindProperty works)
-state.prop("count").watch(signal, (count) => {
-  element.textContent = String(count);
+// ✅ Also good - functional composition with enhancers
+const input = enhance(
+  h("input", { type: "text" }),
+  bindProperty("value", state.prop("name"), signal),
+  on("input", (e) => state.prop("name").set(e.currentTarget.value), signal)
+);
+
+// ❌ Avoid manual subscriptions when `bind` works
+const input = h("input", { type: "text" });
+state.prop("name").watch(signal, (name) => {
+  input.value = name; // Just use bind!
 });
 ```
 
-**Use `on()` for type safety:**
+**Don't bind events in `h()` props:**
 
 ```typescript
-// ✅ Good - types inferred
-enhance(button, on("click", (e) => {
-  e.currentTarget.disabled = true; // TypeScript knows it's HTMLButtonElement
-}, signal));
+// ✅ Good - uses hx with type-safe events
+const button = hx("button", {
+  signal,
+  on: { click: (e) => e.currentTarget.disabled = true },
+});
 
-// ❌ Avoid - loses type information
-button.addEventListener("click", (e) => {
-  (e.currentTarget as HTMLButtonElement).disabled = true;
-}); // ❌ Forgot {signal} !
-
-// ❌ Avoid binding events in props
-h('button', {onclick: (e) => {
-  // ❌ type info lost!
-  (e.currentTarget as HTMLButtonElement).disabled = true;
-  // ❌ event handler not cleaned up!
-}})
+// ❌ Avoid - h() event props aren't cleaned up and lose types
+const button = h("button", {
+  onclick: (e) => {
+    (e.currentTarget as HTMLButtonElement).disabled = true; // needs cast
+  }, // ❌ event handler not cleaned up!
+});
 ```
 
 **Manual subscriptions for complex updates:**
@@ -319,9 +355,30 @@ state.watch(signal, (s) => {
 
 ### DOM Utilities
 
+#### `hx` (recommended)
+
+Create elements with structured props, attrs, event handlers, and reactive bindings. More complex but provides better type safety and ergonomics than `h` + enhancers.
+
+```typescript
+const input = hx("input", {
+  signal,
+  props: { type: "text", placeholder: "Enter name" },
+  attrs: { "data-test": "name-input" },
+  bind: { value: nameState },
+  on: { input: (e) => nameState.set(e.currentTarget.value) },
+});
+```
+
+**Parameters:**
+- `props` - Element properties (typed per element, writable properties only)
+- `attrs` - HTML attributes (data-*, aria-*, etc.)
+- `on` - Event handlers (type-safe, with inferred `currentTarget`)
+- `bind` - Reactive bindings (properties sync with FunState)
+- `signal` - **Required** AbortSignal for cleanup
+
 #### `h`
 
-Declaratively create an HTML Element with properties and children.
+Create HTML elements declaratively. Consider using `hx` if you want to add event handlers or respond to state changes.
 
 ```typescript
 const div = h("div", { id: "app" }, [
@@ -332,12 +389,12 @@ const div = h("div", { id: "app" }, [
 
 **Attribute conventions:**
 - Dashed properties (`data-*`, `aria-*`) → `setAttribute()`
-- Don't event bind with properties, use `on()`
+- Properties starting with `on` → event listeners (⚠️ not cleaned up, use `hx` or `on()` enhancer)
 - Everything else → property assignment
 
 #### bindProperty
 
-Bind element property to state. Returns `Enhancer`.
+Bind element property to state. Returns `Enhancer`. Consider using `hx` with `bind` for better ergonomics.
 
 ```typescript
 const input = enhance(
@@ -345,11 +402,17 @@ const input = enhance(
   bindProperty("value", state.prop("name"), signal)
 );
 // input.value syncs with state.name
+
+// Equivalent with hx:
+const input = hx("input", {
+  signal,
+  bind: { value: state.prop("name") },
+});
 ```
 
 #### on
 
-Add type-safe event listener. Returns `Enhancer`.
+Add type-safe event listener. Returns `Enhancer`. Consider using `hx` with `on` for better ergonomics.
 
 ```typescript
 const button = enhance(
@@ -358,11 +421,21 @@ const button = enhance(
     e.currentTarget.disabled = true;
   }, signal)
 );
+
+// Equivalent with hx:
+const button = hx("button", {
+  signal,
+  on: {
+    click: (e) => {
+      e.currentTarget.disabled = true;
+    }
+  },
+});
 ```
 
 #### bindListChildren
 
-Render and reconcile keyed lists efficiently. Each row gets its own AbortSignal for cleanup and a focused state. Returns `Enhancer`.
+Render a list of items from a state array. Each row gets its own AbortSignal for cleanup and a focused state. Returns `Enhancer`.
 
 ```typescript
 import { Acc } from "@fun-land/accessor";
@@ -382,7 +455,7 @@ const list = enhance(
   bindListChildren({
     signal,
     state: todos,
-    key: Acc<Todo>().prop("id"),
+    key: prop<Todo>()("id"), // key is an accessor that targets the unique string value in your array items
     row: ({ signal, state, remove }) => {
       const li = h("li");
 
@@ -435,10 +508,11 @@ const App: Component = (signal) => {
   const showDetailsState = funState(false);
   const userState = funState({ email: "alice@example.com", joinDate: "2024" });
 
-  const toggleBtn = h("button", { textContent: "Toggle Details" });
-  enhance(toggleBtn, on("click", () => {
-    showDetailsState.mod(show => !show);
-  }, signal));
+  const toggleBtn = hx("button", {
+    signal,
+    props: { textContent: "Toggle Details" },
+    on: { click: () => showDetailsState.mod(show => !show) },
+  });
 
   // Details component mounts/unmounts based on showDetailsState
   const detailsEl = renderWhen({
@@ -495,38 +569,30 @@ showState.watch(signal, (show) => {
 });
 ```
 
-#### $ and $$ - DOM Query Utilities
-
-Convenient shortcuts for `querySelector` and `querySelectorAll` with better TypeScript support.
-
-**`$<T extends Element>(selector: string): T | undefined`**
-
-Query a single element. Returns `undefined` instead of `null` if not found.
-
-```typescript
-const button = $<HTMLButtonElement>("#submit-btn");
-if (button) {
-  button.disabled = true;
-}
-
-const input = $<HTMLInputElement>(".name-input");
-```
-
-**`$$<T extends Element>(selector: string): T[]`**
+#### querySelectorAll
 
 Query multiple elements. Returns a real Array (not NodeList) for better ergonomics.
 
 ```typescript
-const items = $$<HTMLDivElement>(".item");
-items.forEach(item => item.classList.add("active"));
+const items = querySelectorAll<HTMLDivElement>(".item").map(addClass("active"));
+```
 
-// Array methods work directly
-const texts = $$(".label").map(el => el.textContent);
+#### enhance
+
+Apply multiple enhancers to an element. Useful with `h()` and the enhancer utilities below.
+
+```typescript
+const input = enhance(
+  h("input", { type: "text" }),
+  addClass("form-control"),
+  bindProperty("value", nameState, signal),
+  on("input", (e) => nameState.set(e.currentTarget.value), signal)
+);
 ```
 
 #### Other utilities
 
-All return the element for chaining:
+All return the element for chaining (used with `enhance`):
 
 ```typescript
 text: (content: string | number) => (el: Element) => Element
@@ -536,8 +602,6 @@ addClass: (...classes: string[]) => (el: Element) => Element
 removeClass: (...classes: string[]) => (el: Element) => Element
 toggleClass: (className: string, force?: boolean) => (el: Element) => Element
 append: (...children: Element[]) => (el: Element) => Element
-// pipe a value through a series of endomorphisms
-pipeAll: <T>(x: T, ...fns: Array<(x: T) => T>) => T
 ```
 
 ### Mounting
@@ -573,6 +637,7 @@ interface MountedComponent {
 Components compose by calling other components and passing focused state via props:
 
 ```typescript
+import { h } from "@fun-land/fun-web";
 import { prop } from "@fun-land/accessor";
 import { UserProfile, UserData } from "./UserProfile";
 import { SettingsPanel, Settings } from "./Settings";

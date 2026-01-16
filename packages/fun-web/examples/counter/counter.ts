@@ -1,14 +1,9 @@
 /**
  * Example: Simple counter component demonstrating fun-web basics
  */
-import {
-  h,
-  funState,
-  mount,
-  type Component,
-  type FunState,
-} from "../../src/index";
+import { h, mount, type Component } from "../../src/index";
 import { prop } from "@fun-land/accessor";
+import { funState, type FunState } from "@fun-land/fun-state";
 
 // Component state (dynamic data)
 interface CounterState {

@@ -1,12 +1,11 @@
 import {
   h,
-  funState,
   mount,
-  on,
   type Component,
-  enhance,
   renderWhen,
+  hx,
 } from "../../src/index";
+import { funState } from "@fun-land/fun-state";
 import { markAllDone, allCheckedAcc, init_TodoAppState } from "./TodoAppState";
 import { DraggableTodoList } from "./DraggableTodoList";
 import { AddTodoForm } from "./AddTodoForm";
@@ -18,19 +17,11 @@ const TodoApp: Component = (signal) => {
 
   // ===== Form Components =====
 
-  const markAllBtn = enhance(
-    h("button", {
-      textContent: "Mark All Done",
-      className: "mark-all-btn",
-    }),
-    on(
-      "click",
-      () => {
-        state.mod(markAllDone);
-      },
-      signal
-    )
-  );
+  const markAllBtn = hx("button", {
+    signal,
+    props: { textContent: "Mark All Done", className: "mark-all-btn" },
+    on: { click: () => state.mod(markAllDone) },
+  });
 
   // "All Done" indicator using renderWhen
   const AllDoneComponent: Component = () => {

@@ -6,6 +6,7 @@ A collection of practical functional libraries for reactive typescript programmi
 
 - [@fun-land/fun-state](packages/fun-state) - A framework-agnostic library enabling fractal, compositional state in a way that is type-safe, testable, and easy to refactor.
 - [@fun-land/accessor](packages/accessor) - A library for doing immutable updates and querying on nested data structures in a way that is composable and powerful.
+- [@fun-land/fun-web](packages/fun-web) - Lightweight functional DOM utilities for building reactive web apps with fun-state, featuring signal-based lifecycle management and declarative element creation.
 - [@fun-land/use-fun-state](packages/use-fun-state) - A React.js hook enabling fractal, compositional state in a way that is type-safe, testable, and easy to refactor.
 - [@fun-land/validation](packages/validation) - A micro-library for validating deep application state using accessors.
 - [@fun-land/react-validation](packages/react-validation) - ReactJS helpers for using @fun-land/validation.

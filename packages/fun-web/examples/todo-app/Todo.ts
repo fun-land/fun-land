@@ -1,11 +1,5 @@
-import {
-  h,
-  type Component,
-  type FunState,
-  enhance,
-  bindProperty,
-  on,
-} from "../../src/index";
+import { h, type Component, hx } from "../../src/index";
+import { type FunState } from "@fun-land/fun-state";
 import { TodoState } from "./TodoState";
 
 export interface TodoProps {
@@ -25,20 +19,20 @@ export const Todo: Component<TodoProps> = (
   const todoData = state.get();
 
   const checkedState = state.prop("checked");
-  const checkbox = enhance(
-    h("input", { type: "checkbox" }),
-    bindProperty("checked", checkedState, signal),
-    on("change", (e) => checkedState.set(e.currentTarget.checked), signal)
-  );
+  const checkbox = hx("input", {
+    signal,
+    props: { type: "checkbox" },
+    bind: { checked: checkedState },
+    on: { change: (e) => checkedState.set(e.currentTarget.checked) },
+  });
 
   const labelState = state.prop("label");
-  const labelInput = enhance(
-    h("input", {
-      type: "text",
-    }),
-    bindProperty("value", labelState, signal),
-    on("input", (e) => labelState.set(e.currentTarget.value), signal)
-  );
+  const labelInput = hx("input", {
+    signal,
+    props: { type: "text" },
+    bind: { value: labelState },
+    on: { input: (e) => labelState.set(e.currentTarget.value) },
+  });
 
   const dragHandle = h("span", {
     className: "drag-handle",
@@ -46,17 +40,21 @@ export const Todo: Component<TodoProps> = (
     draggable: true,
   });
 
-  const deleteBtn = enhance(
-    h("button", { className: "delete-btn", textContent: "×" }),
-    on("click", removeItem, signal)
-  );
+  const deleteBtn = hx("button", {
+    signal,
+    props: { className: "delete-btn", textContent: "×" },
+    on: { click: removeItem },
+  });
 
-  const li = h("li", { className: "todo-item", "data-key": todoData.key }, [
-    dragHandle,
-    checkbox,
-    labelInput,
-    deleteBtn,
-  ]);
+  const li = hx(
+    "li",
+    {
+      signal,
+      props: { className: "todo-item" },
+      attrs: { "data-key": todoData.key },
+    },
+    [dragHandle, checkbox, labelInput, deleteBtn]
+  );
 
   // HTML5 drag and drop
   if (onDragStart) {
