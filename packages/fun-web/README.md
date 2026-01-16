@@ -24,20 +24,14 @@ Perfect for embedding interactive components in static sites, building lightweig
 ## Installation
 
 ```bash
-pnpm add @fun-land/fun-web @fun-land/accessor
+pnpm add @fun-land/fun-web @fun-land/fun-state @fun-land/accessor
 ```
 
 ## Quick Start
 
 ```typescript
-import {
-  hx,
-  funState,
-  mount,
-  type Component,
-  type FunState,
-  type FunRead,
-} from "@fun-land/fun-web";
+import { hx, mount, type Component } from "@fun-land/fun-web";
+import { funState, type FunState, type FunRead } from "@fun-land/fun-state";
 
 
 const Counter: Component<{state: FunState<number>}> = (signal, {state}) => {
