@@ -36,6 +36,7 @@ import {
   mount,
   type Component,
   type FunState,
+  type FunRead,
 } from "@fun-land/fun-web";
 
 
@@ -150,6 +151,27 @@ userState.prop("age").set(31);
 // Subscribe to changes (cleaned up when signal aborts)
 userState.prop("name").watch(signal, (name) => {
   element.textContent = name; // runs when name changes
+});
+```
+
+**FunRead** - Read-only reactive values returned by `mapRead` and `derive`:
+
+```typescript
+import { mapRead, derive } from "@fun-land/fun-state";
+
+// Transform single value
+const count = funState(5);
+const doubled = mapRead(count, n => n * 2);
+
+// Combine multiple values
+const firstName = funState("Alice");
+const lastName = funState("Smith");
+const fullName = derive(firstName, lastName, (f, l) => `${f} ${l}`);
+
+// Use with bindings (accepts FunRead)
+const display = hx("div", {
+  signal,
+  bind: { textContent: fullName },
 });
 ```
 
@@ -394,7 +416,7 @@ const div = h("div", { id: "app" }, [
 
 #### bindProperty
 
-Bind element property to state. Returns `Enhancer`. Consider using `hx` with `bind` for better ergonomics.
+Bind element property to state. Accepts `FunRead` (including `FunState`, `map`, `derive` results). Returns `Enhancer`. Consider using `hx` with `bind` for better ergonomics.
 
 ```typescript
 const input = enhance(
@@ -402,6 +424,13 @@ const input = enhance(
   bindProperty("value", state.prop("name"), signal)
 );
 // input.value syncs with state.name
+
+// Works with derived values
+const formatted = mapRead(state.prop("price"), p => `$${p.toFixed(2)}`);
+const display = enhance(
+  h("div"),
+  bindProperty("textContent", formatted, signal)
+);
 
 // Equivalent with hx:
 const input = hx("input", {
@@ -476,7 +505,7 @@ const list = enhance(
 #### renderWhen
 ```ts
 function renderWhen<State, Props>(options: {
-  state: FunState<State>;
+  state: FunRead<State>;
   predicate?: (value: State) => boolean;
   component: Component<Props>;
   props: Props;
@@ -484,7 +513,7 @@ function renderWhen<State, Props>(options: {
 }): Element
 ```
 
-Conditionally render a component based on state and an optional predicate. Returns a container element that mounts/unmounts the component as the condition changes.
+Conditionally render a component based on state and an optional predicate. Accepts `FunRead` (including `FunState`, `map`, `derive` results). Returns a container element that mounts/unmounts the component as the condition changes.
 
 **Key features:**
 - Component is mounted when condition is `true`, unmounted when `false`

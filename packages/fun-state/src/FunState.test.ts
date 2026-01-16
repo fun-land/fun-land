@@ -1,4 +1,4 @@
-import {pureState, standaloneEngine, funState, merge, extractArray, derive} from './FunState'
+import {pureState, standaloneEngine, funState, merge, extractArray, derive, mapRead} from './FunState'
 import {comp, all, prop, prepend, set} from '@fun-land/accessor'
 
 describe('standaloneEngine', () => {
@@ -429,23 +429,107 @@ describe('funState', () => {
 
       const sum$ = derive(a$, b$, (a, b) => a + b)
 
-      expect(() => sum$.set(999)).toThrow(/derive/i)
-      expect(() => sum$.mod((x) => x + 1)).toThrow(/derive/i)
+      expect(() => (sum$ as any).set(999)).toThrow(/derive/i)
+      expect(() => (sum$ as any).mod((x: number) => x + 1)).toThrow(/derive/i)
     })
 
-    test('focus/prop work like normal FunState (because it is a real FunState)', () => {
+    test('focus/prop work on FunRead', () => {
       const a$ = funState(1)
       const b$ = funState(2)
 
       const obj$ = derive(a$, b$, (a, b) => ({a, b}))
 
-      // prop is part of FunState
+      // prop is part of FunRead
       expect(obj$.prop('a').get()).toBe(1)
       expect(obj$.prop('b').get()).toBe(2)
 
       a$.set(5)
       expect(obj$.prop('a').get()).toBe(5)
       expect(obj$.get()).toEqual({a: 5, b: 2})
+    })
+  })
+
+  describe('mapRead', () => {
+    test('maps values', () => {
+      const state = funState(5)
+      const doubled = mapRead(state, (n) => n * 2)
+      expect(doubled.get()).toBe(10)
+    })
+
+    test('reacts to changes', () => {
+      const state = funState(5)
+      const doubled = mapRead(state, (n) => n * 2)
+      const ctrl = new AbortController()
+      const calls: number[] = []
+      doubled.watch(ctrl.signal, (n) => calls.push(n))
+
+      state.set(10)
+      state.set(3)
+      ctrl.abort()
+
+      expect(calls).toEqual([10, 20, 6])
+    })
+
+    test('throws on mod', () => {
+      const state = funState(5)
+      const doubled = mapRead(state, (n) => n * 2)
+      expect(() => (doubled as any).mod((n: number) => n + 1)).toThrow(/mapRead.*cannot modify/i)
+    })
+
+    test('throws on set', () => {
+      const state = funState(5)
+      const doubled = mapRead(state, (n) => n * 2)
+      expect(() => (doubled as any).set(10)).toThrow(/mapRead.*cannot modify/i)
+    })
+
+    test('composes with mapRead', () => {
+      const state = funState(5)
+      const doubled = mapRead(state, (n) => n * 2)
+      const formatted = mapRead(doubled, (n) => `$${n}`)
+      expect(formatted.get()).toBe('$10')
+
+      state.set(7)
+      expect(formatted.get()).toBe('$14')
+    })
+
+    test('works with complex types', () => {
+      interface User {
+        name: string
+        email: string
+      }
+      const user = funState<User>({name: 'John', email: 'john@example.com'})
+      const nameLength = mapRead(user, (u) => u.name.length)
+
+      expect(nameLength.get()).toBe(4)
+      user.set({name: 'Jane', email: 'jane@example.com'})
+      expect(nameLength.get()).toBe(4)
+      user.set({name: 'Alexander', email: 'alex@example.com'})
+      expect(nameLength.get()).toBe(9)
+    })
+
+    test('can be used with derive output', () => {
+      const a$ = funState(1)
+      const b$ = funState(2)
+      const sum$ = derive(a$, b$, (a, b) => a + b)
+      const doubled$ = mapRead(sum$, (n) => n * 2)
+
+      expect(doubled$.get()).toBe(6)
+      a$.set(5)
+      expect(doubled$.get()).toBe(14)
+    })
+
+    test('watchAll works correctly', () => {
+      const state = funState([1, 2, 3])
+      const lengths = mapRead(state, (arr) => arr.length)
+      const ctrl = new AbortController()
+      const calls: number[][] = []
+
+      lengths.watchAll(ctrl.signal, (vals) => calls.push(vals))
+      state.set([1, 2, 3, 4])
+      state.set([1])
+      ctrl.abort()
+
+      expect(calls).toEqual([[3], [4], [1]])
     })
   })
 })

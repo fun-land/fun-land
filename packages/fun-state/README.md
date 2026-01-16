@@ -10,34 +10,51 @@ See [@fun-land/use-fun-state](../use-fun-state) to get started using react hooks
 
 # API
 
-## FunState
+## FunRead
 
 ```ts
-export interface FunState<State> {
+export interface FunRead<State> {
   /** Extract the enclosed immutable State */
   get: () => State
 
   /** Query the state using an accessor */
   query: <A>(acc: Accessor<State, A>) => A[]
 
+  /** Create a new FunRead focused at the passed accessor */
+  focus: <SubState>(acc: Accessor<State, SubState>) => FunRead<SubState>
+
+  /** Focus state at passed property key (sugar for `focus(prop(k))`) */
+  prop: <K extends keyof State>(key: K) => FunRead<State[K]>
+
+  /** watch state changes. Unsubscribes when AbortSignal is triggered */
+  watch: (signal: AbortSignal, callback: (state: State) => void) => void
+
+  /** watch all focused values (for multi-value accessors) */
+  watchAll: (signal: AbortSignal, callback: (values: State[]) => void) => void
+}
+```
+
+Read-only interface for reactive state. Supports reading, watching, and focusing, but not modification. Used for derived/computed state.
+
+## FunState
+
+```ts
+export interface FunState<State> extends FunRead<State> {
   /** Transform the state with the passed function */
   mod: Updater<State>
 
   /** Replace the state */
   set: (val: State) => void
 
-  /** Create a new FunState focused at the passed accessor */
+  /** Create a new FunState focused at the passed accessor (returns writable) */
   focus: <SubState>(acc: Accessor<State, SubState>) => FunState<SubState>
 
-  /** Focus state at passed property key (sugar for `focus(prop(k))`) */
+  /** Focus state at passed property key (returns writable) */
   prop: <K extends keyof State>(key: K) => FunState<State[K]>
-
-  /** watch state changes. Unsubscribes when AbortSignal is triggered */
-  watch: (signal: AbortSignal, callback: (state: State) => void) => void
 }
 ```
 
-Data structure that holds the state along with stateful methods that interact with it.
+Writable reactive state. Extends `FunRead` with modification methods (`mod`, `set`).
 
 ## funState
 
@@ -95,7 +112,56 @@ Mutably merge a partial state into a FunState
 <A>(state: FunState<A[]>): Array<FunState<A>> =>
 ```
 
-Transform a FunState holding an array of items into an array of FunState of the item. Usefull when you want to pass FunState instances to child components.
+Transform a FunState holding an array of items into an array of FunState of the item. Useful when you want to pass FunState instances to child components.
+
+## mapRead
+
+```ts
+<A, B>(source: FunRead<A>, fn: (a: A) => B): FunRead<B>
+```
+
+Transform a reactive value by applying a function to it. Returns a read-only `FunRead` that updates whenever the source changes.
+
+```ts
+const count = funState(5);
+const doubled = mapRead(count, n => n * 2);
+
+doubled.get(); // 10
+count.set(7);
+doubled.get(); // 14
+
+// Compose transformations
+const formatted = mapRead(doubled, n => `Count: ${n}`);
+formatted.get(); // "Count: 14"
+```
+
+Use cases:
+- Formatting values for display
+- Computing derived values from single source
+- Transforming state without mutating
+
+## derive
+
+```ts
+<States, Out>(...states: States[], mergeFn: (...values) => Out): FunRead<Out>
+```
+
+Combine multiple reactive values into a single derived read-only value. Updates when any input changes.
+
+```ts
+const firstName = funState("Alice");
+const lastName = funState("Smith");
+const fullName = derive(firstName, lastName, (f, l) => `${f} ${l}`);
+
+fullName.get(); // "Alice Smith"
+firstName.set("Bob");
+fullName.get(); // "Bob Smith"
+```
+
+Use cases:
+- Combining multiple state values
+- Computing totals, aggregates
+- Creating reactive computed properties
 
 
 ### watch

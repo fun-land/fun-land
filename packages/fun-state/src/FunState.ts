@@ -18,29 +18,44 @@ export const merge =
 export const extractArray = <A>(state: FunState<A[]>): Array<FunState<A>> =>
   state.query(all<A>()).map((__, i) => state.focus(index(i)))
 
+/** Map a function over a reactive value, preserving reactivity */
+export const mapRead = <A, B>(
+  source: FunRead<A>,
+  fn: (a: A) => B
+): FunRead<B> => {
+  const engine: StateEngine<B> = {
+    getState: () => fn(source.get()),
+    modState: () => {
+      throw new Error('mapRead: cannot modify mapped state')
+    },
+    subscribe: (listener: Listener<B>): Unsubscribe => {
+      const ctrl = new AbortController()
+      source.watch(ctrl.signal, (a) => listener(fn(a)))
+      return () => ctrl.abort()
+    }
+  }
+  return pureState(engine) as FunRead<B>
+}
+
 export interface StateEngine<State> {
   getState: () => State
   modState: Updater<State>
   subscribe: (listener: Listener<State>) => Unsubscribe
 }
 
-export interface FunState<State> {
+export interface FunRead<State> {
   /**
    * Extract the value stored as the state.
    * @note This may return undefined if the Accessor would return no results.
-   * In those cases it's safer to us .query()
+   * In those cases it's safer to use .query()
    **/
   get: () => State
   /** Query the state using an accessor */
   query: <A>(acc: Accessor<State, A>) => A[]
-  /** Transform the state with the passed function */
-  mod: Updater<State>
-  /** Replace the state */
-  set: (val: State) => void
-  /** Create a new FunState focused at the passed accessor */
-  focus: <SubState>(acc: Accessor<State, SubState>) => FunState<SubState>
+  /** Create a new FunRead focused at the passed accessor */
+  focus: <SubState>(acc: Accessor<State, SubState>) => FunRead<SubState>
   /** focus state at passed key (sugar over `focus(prop(k))`) */
-  prop: <K extends keyof State>(key: K) => FunState<State[K]>
+  prop: <K extends keyof State>(key: K) => FunRead<State[K]>
   /** Watch the focused value.
    * @note Like .get(), the callback may receive `undefined` if the Accessor yields no values.
    * Use .watchAll() for the safe, complete view.
@@ -50,6 +65,17 @@ export interface FunState<State> {
    * Emits the full result of the Accessor (mirrors .query()).
    */
   watchAll: (signal: AbortSignal, callback: (values: State[]) => void) => void
+}
+
+export interface FunState<State> extends FunRead<State> {
+  /** Transform the state with the passed function */
+  mod: Updater<State>
+  /** Replace the state */
+  set: (val: State) => void
+  /** Create a new FunState focused at the passed accessor (override returns writable) */
+  focus: <SubState>(acc: Accessor<State, SubState>) => FunState<SubState>
+  /** focus state at passed key (sugar over `focus(prop(k))`) (override returns writable) */
+  prop: <K extends keyof State>(key: K) => FunState<State[K]>
 }
 
 /**
@@ -156,16 +182,18 @@ export const standaloneEngine = <State>(initialState: State): StateEngine<State>
 export const funState = <State>(initialState: State): FunState<State> =>
   pureState(standaloneEngine<State>(initialState))
 
+type Unwrap<S> = S extends {get(): infer T} ? T : never
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type UnwrapTuple<T extends readonly {get(): any}[]> = {[I in keyof T]: Unwrap<T[I]>}
 
-type Unwrap<S> = S extends FunState<infer T> ? T : never
-type UnwrapTuple<T extends readonly FunState<any>[]> = {[I in keyof T]: Unwrap<T[I]>}
-
-function deriveFromTuple<States extends readonly FunState<any>[], Out>(
-  states: readonly [...States],
-  mergeFn: (...values: UnwrapTuple<States>) => Out
-): FunState<Out> {
+function deriveFromTuple<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  States extends readonly {get(): any; watch(signal: AbortSignal, callback: (v: any) => void): void}[],
+  Out
+>(states: readonly [...States], mergeFn: (...values: UnwrapTuple<States>) => Out): FunRead<Out> {
   const engine: StateEngine<Out> = {
     getState: () => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       const values = states.map((s) => s.get()) as unknown as UnwrapTuple<States>
       return mergeFn(...values)
     },
@@ -201,12 +229,19 @@ function deriveFromTuple<States extends readonly FunState<any>[], Out>(
     }
   }
 
-  return pureState(engine)
+  return pureState(engine) as FunRead<Out>
 }
 
+// Overload for FunState inputs (most common case)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function derive<States extends readonly FunState<any>[], Out>(
   ...args: [...states: States, mergeFn: (...values: UnwrapTuple<States>) => Out]
-): FunState<Out> {
+): FunRead<Out>
+export function derive<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  States extends readonly {get(): any; watch(signal: AbortSignal, callback: (v: any) => void): void}[],
+  Out
+>(...args: [...states: States, mergeFn: (...values: UnwrapTuple<States>) => Out]): FunRead<Out> {
   const mergeFn = args[args.length - 1] as (...values: UnwrapTuple<States>) => Out
   const states = args.slice(0, -1) as unknown as readonly [...States]
   return deriveFromTuple(states, mergeFn)

@@ -1,5 +1,5 @@
 /** DOM utilities for functional element creation and manipulation */
-import { type FunState } from "@fun-land/fun-state";
+import { type FunState, type FunRead } from "@fun-land/fun-state";
 import type { Component, ElementChild } from "./types";
 import { Accessor } from "@fun-land/accessor";
 
@@ -11,7 +11,8 @@ export type Enhancer<El extends Element> = (element: El) => El;
  */
 const entries = <T extends Record<string, unknown>>(
   obj: T
-): Array<[keyof T, T[keyof T]]> => Object.entries(obj) as Array<[keyof T, T[keyof T]]>;
+): Array<[keyof T, T[keyof T]]> =>
+  Object.entries(obj) as Array<[keyof T, T[keyof T]]>;
 
 /**
  * Create an HTML element with attributes and children
@@ -30,6 +31,7 @@ export const h = <Tag extends keyof HTMLElementTagNameMap>(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   attrs?: Record<string, any> | null,
   children?: ElementChild | ElementChild[]
+  // eslint-disable-next-line complexity
 ): HTMLElementTagNameMap[Tag] => {
   const element = document.createElement(tag);
 
@@ -82,7 +84,7 @@ type HxHandlers<El extends Element> = Partial<{
 }>;
 
 type HxBindings<El extends Element> = Partial<{
-  [K in WritableKeys<El> & string]: FunState<El[K]>;
+  [K in WritableKeys<El> & string]: FunRead<El[K]>;
 }>;
 
 type HxOptionsBase<El extends Element> = {
@@ -145,15 +147,13 @@ export function hx<Tag extends keyof HTMLElementTagNameMap>(
   }
 
   if (bind) {
-    const bindElementProperty = <K extends WritableKeys<HTMLElementTagNameMap[Tag]> & string>(
+    const bindElementProperty = <
+      K extends WritableKeys<HTMLElementTagNameMap[Tag]> & string,
+    >(
       key: K,
-      state: FunState<HTMLElementTagNameMap[Tag][K]>
+      state: FunRead<HTMLElementTagNameMap[Tag][K]>
     ): void => {
-      bindProperty<HTMLElementTagNameMap[Tag], K>(
-        key,
-        state,
-        signal
-      )(element);
+      bindProperty<HTMLElementTagNameMap[Tag], K>(key, state, signal)(element);
     };
 
     for (const key of Object.keys(bind) as Array<
@@ -161,10 +161,7 @@ export function hx<Tag extends keyof HTMLElementTagNameMap>(
     >) {
       const state = bind[key];
       if (!state) continue;
-      bindElementProperty(
-        key,
-        state
-      );
+      bindElementProperty(key, state);
     }
   }
 
@@ -240,7 +237,7 @@ export const attrs =
 export const bindProperty =
   <E extends Element, K extends keyof E & string>(
     key: K,
-    state: FunState<E[K]>,
+    state: FunRead<E[K]>,
     signal: AbortSignal
   ) =>
   (el: E): E => {
@@ -386,6 +383,7 @@ export const bindListChildren =
       rows.clear();
     };
 
+    // eslint-disable-next-line complexity
     const reconcile = (): void => {
       const items = list.get();
 
@@ -468,7 +466,7 @@ export const bindListChildren =
  * });
  */
 export function renderWhen<State, Props>(options: {
-  state: FunState<State>;
+  state: FunRead<State>;
   predicate?: (value: State) => boolean;
   component: Component<Props>;
   props: Props;
@@ -487,6 +485,7 @@ export function renderWhen<State, Props>(options: {
   let childCtrl: AbortController | null = null;
   let childEl: Element | null = null;
 
+  // eslint-disable-next-line complexity
   const reconcile = () => {
     const shouldRender = predicate(state.get());
 
@@ -524,7 +523,7 @@ export function renderWhen<State, Props>(options: {
 
 /** add passed class (idempotent) to element when state returns true */
 export const bindClass =
-  (className: string, state: FunState<boolean>, signal: AbortSignal) =>
+  (className: string, state: FunRead<boolean>, signal: AbortSignal) =>
   <E extends Element>(el: E): E => {
     state.watch(signal, (active) => el.classList.toggle(className, active));
     return el;

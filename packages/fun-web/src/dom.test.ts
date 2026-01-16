@@ -14,7 +14,7 @@ import {
   querySelectorAll,
   renderWhen,
 } from "./dom";
-import { funState } from "@fun-land/fun-state";
+import { funState, mapRead, derive } from "@fun-land/fun-state";
 
 describe("h()", () => {
   it("should create an element", () => {
@@ -170,6 +170,44 @@ describe("hx()", () => {
     expect(() => (hx as unknown as (tag: string) => Element)("div")).toThrow(
       "hx: signal is required"
     );
+  });
+
+  it("should accept FunRead from mapRead in bind", () => {
+    const controller = new AbortController();
+    const num = funState(5);
+    const doubled = mapRead(num, (n) => String(n * 2));
+
+    const el = hx("div", {
+      signal: controller.signal,
+      bind: { textContent: doubled },
+    });
+
+    expect(el.textContent).toBe("10");
+
+    num.set(3);
+    expect(el.textContent).toBe("6");
+
+    controller.abort();
+  });
+
+  it("should accept FunRead from derive in bind", () => {
+    const controller = new AbortController();
+    const a = funState(2);
+    const b = funState(3);
+    const sum = derive(a, b, (x, y) => x + y);
+
+    const el = hx("input", {
+      signal: controller.signal,
+      props: { type: "number" },
+      bind: { valueAsNumber: sum },
+    });
+
+    expect(el.valueAsNumber).toBe(5);
+
+    a.set(10);
+    expect(el.valueAsNumber).toBe(13);
+
+    controller.abort();
   });
 });
 
@@ -370,6 +408,60 @@ describe("bindProperty()", () => {
     const result = enhance(el, bindProperty("value", state, controller.signal));
 
     expect(result).toBe(el);
+    controller.abort();
+  });
+
+  it("should bind FunRead from mapRead", () => {
+    const el = h("div");
+    const controller = new AbortController();
+
+    const num = funState(5);
+    const doubled = mapRead(num, (n) => String(n * 2));
+    enhance(el, bindProperty("textContent", doubled, controller.signal));
+
+    expect(el.textContent).toBe("10");
+
+    num.set(7);
+    expect(el.textContent).toBe("14");
+
+    controller.abort();
+  });
+
+  it("should bind FunRead from derive", () => {
+    const el = h("div");
+    const controller = new AbortController();
+
+    const first = funState("John");
+    const last = funState("Doe");
+    const full = derive(first, last, (f, l) => `${f} ${l}`);
+    enhance(el, bindProperty("textContent", full, controller.signal));
+
+    expect(el.textContent).toBe("John Doe");
+
+    first.set("Jane");
+    expect(el.textContent).toBe("Jane Doe");
+
+    last.set("Smith");
+    expect(el.textContent).toBe("Jane Smith");
+
+    controller.abort();
+  });
+
+  it("should compose mapRead over derive", () => {
+    const el = h("span");
+    const controller = new AbortController();
+
+    const price = funState(42);
+    const quantity = funState(3);
+    const total = derive(price, quantity, (p, q) => p * q);
+    const formatted = mapRead(total, (n) => `$${n.toFixed(2)}`);
+    enhance(el, bindProperty("textContent", formatted, controller.signal));
+
+    expect(el.textContent).toBe("$126.00");
+
+    price.set(50);
+    expect(el.textContent).toBe("$150.00");
+
     controller.abort();
   });
 });

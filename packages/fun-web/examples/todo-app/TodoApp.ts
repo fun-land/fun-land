@@ -5,7 +5,7 @@ import {
   renderWhen,
   hx,
 } from "../../src/index";
-import { funState } from "@fun-land/fun-state";
+import { funState, mapRead } from "@fun-land/fun-state";
 import { markAllDone, allCheckedAcc, init_TodoAppState } from "./TodoAppState";
 import { DraggableTodoList } from "./DraggableTodoList";
 import { AddTodoForm } from "./AddTodoForm";
@@ -32,10 +32,9 @@ const TodoApp: Component = (signal) => {
   };
 
   // Derive a boolean state for whether all todos are done
-  const allDoneState = funState(false);
-  state.focus(allCheckedAcc).watchAll(signal, (checks) => {
-    allDoneState.set(checks.length > 0 && checks.every(Boolean));
-  });
+  const allDoneState = mapRead(state, (s) =>
+    allCheckedAcc.query(s).every(Boolean)
+  );
 
   const allDoneEl = renderWhen({
     state: allDoneState,
