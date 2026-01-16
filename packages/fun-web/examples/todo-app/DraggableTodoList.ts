@@ -1,6 +1,6 @@
 import { prop } from "@fun-land/accessor";
+import { type FunState } from "@fun-land/fun-state";
 import { h, bindListChildren, type Component } from "../../src/index";
-import type { FunState } from "../../src/state";
 import { Todo } from "./Todo";
 import { type TodoState } from "./TodoState";
 

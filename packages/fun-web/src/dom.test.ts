@@ -1,5 +1,6 @@
 import {
   h,
+  hx,
   text,
   attr,
   attrs,
@@ -10,11 +11,10 @@ import {
   removeClass,
   on,
   enhance,
-  $,
-  $$,
+  querySelectorAll,
   renderWhen,
 } from "./dom";
-import { FunState, funState } from "./state";
+import { funState } from "@fun-land/fun-state";
 
 describe("h()", () => {
   it("should create an element", () => {
@@ -113,6 +113,63 @@ describe("h()", () => {
     expect(el.className).toBe("valid");
     expect(el.getAttribute("data-foo")).toBeNull();
     expect(el.getAttribute("data-bar")).toBeNull();
+  });
+});
+
+describe("hx()", () => {
+  it("should apply props and attrs", () => {
+    const controller = new AbortController();
+    const el = hx("div", {
+      signal: controller.signal,
+      props: { id: "test", className: "foo" },
+      attrs: { "data-test": "value", role: "button" },
+    });
+
+    expect(el.id).toBe("test");
+    expect(el.className).toBe("foo");
+    expect(el.getAttribute("data-test")).toBe("value");
+    expect(el.getAttribute("role")).toBe("button");
+  });
+
+  it("should append children", () => {
+    const child = h("span", null, "child");
+    const controller = new AbortController();
+    const el = hx("div", { signal: controller.signal }, child);
+
+    expect(el.children.length).toBe(1);
+    expect(el.textContent).toBe("child");
+  });
+
+  it("should bind properties and events with signal", () => {
+    const controller = new AbortController();
+    const state = funState("hello");
+    const handler = jest.fn();
+
+    const el = hx("input", {
+      signal: controller.signal,
+      bind: { value: state },
+      on: { input: handler },
+    });
+
+    expect(el.value).toBe("hello");
+
+    state.set("world");
+    expect(el.value).toBe("world");
+
+    el.dispatchEvent(new Event("input"));
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    controller.abort();
+    state.set("after");
+    el.dispatchEvent(new Event("input"));
+    expect(el.value).toBe("world");
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("should require signal", () => {
+    expect(() => (hx as unknown as (tag: string) => Element)("div")).toThrow(
+      "hx: signal is required"
+    );
   });
 });
 
@@ -367,353 +424,7 @@ describe("pipeEndo()", () => {
   });
 });
 
-type Keyed = { key: string };
-type Item = Keyed & { label: string };
-
-function makeAbortSignal(): {
-  controller: AbortController;
-  signal: AbortSignal;
-} {
-  const controller = new AbortController();
-  return { controller, signal: controller.signal };
-}
-
-/**
- * Because the renderRow above can't reliably read the key from itemState in this harness,
- * we’ll make a dedicated renderRow for tests that receives the key by closure from the list.
- *
- * This version doesn't require list.focus, so it's robust.
- */
-// function setupKeyedChildrenWithKeyAwareRenderer(
-//   parent: Element,
-//   signal: AbortSignal,
-//   listState: { get: () => Item[]; watch: FunState<Item[]>["watch"] }
-// ) {
-//   const mountCountByKey = new Map<string, number>();
-//   const abortCountByKey = new Map<string, number>();
-//   const elByKey = new Map<string, Element>();
-
-//   const api = keyedChildren<Item>(parent, signal, listState as any, (row) => {
-//     // In your real impl, itemState.get().key should exist.
-//     const item = row.state.get();
-//     const k = item.key;
-
-//     const el = document.createElement("li");
-//     el.dataset.key = k;
-//     el.textContent = item.label;
-
-//     elByKey.set(k, el);
-//     mountCountByKey.set(k, (mountCountByKey.get(k) ?? 0) + 1);
-
-//     row.signal.addEventListener("abort", () => {
-//       abortCountByKey.set(k, (abortCountByKey.get(k) ?? 0) + 1);
-//     });
-
-//     return el;
-//   });
-
-//   return { api, mountCountByKey, abortCountByKey, elByKey };
-// }
-
-// describe("keyedChildren", () => {
-//   test("mounts initial rows in order", () => {
-//     const container = document.createElement("ul");
-//     const { controller, signal } = makeAbortSignal();
-
-//     const listState = funState<Item[]>([
-//       { key: "a", label: "A" },
-//       { key: "b", label: "B" },
-//     ]);
-
-//     // Use the key-aware renderer; it expects itemState.get()
-//     const { elByKey } = setupKeyedChildrenWithKeyAwareRenderer(
-//       container,
-//       signal,
-//       listState
-//     );
-
-//     expect(container.children).toHaveLength(2);
-//     expect((container.children[0] as HTMLElement).dataset.key).toBe("a");
-//     expect((container.children[1] as HTMLElement).dataset.key).toBe("b");
-//     expect(elByKey.get("a")?.textContent).toBe("A");
-//     expect(elByKey.get("b")?.textContent).toBe("B");
-
-//     controller.abort();
-//   });
-
-//   test("does not recreate existing row elements when item contents change", () => {
-//     const container = document.createElement("ul");
-//     const { controller, signal } = makeAbortSignal();
-
-//     const listState = funState<Item[]>([
-//       { key: "a", label: "A" },
-//       { key: "b", label: "B" },
-//     ]);
-
-//     const { mountCountByKey } = setupKeyedChildrenWithKeyAwareRenderer(
-//       container,
-//       signal,
-//       listState
-//     );
-
-//     const firstElA = container.children[0] as Element;
-//     const firstElB = container.children[1] as Element;
-
-//     // Update label of "a" (array ref changes)
-//     listState.set([
-//       { key: "a", label: "A!" },
-//       { key: "b", label: "B" },
-//     ]);
-
-//     // Elements should be the same instances (not remounted)
-//     expect(container.children[0]).toBe(firstElA);
-//     expect(container.children[1]).toBe(firstElB);
-
-//     // Mount counts should still be 1 each
-//     expect(mountCountByKey.get("a")).toBe(1);
-//     expect(mountCountByKey.get("b")).toBe(1);
-
-//     controller.abort();
-//   });
-
-//   test("reorders by moving existing nodes, without recreating them", () => {
-//     const container = document.createElement("ul");
-//     const { controller, signal } = makeAbortSignal();
-
-//     const listeners = new Set<(xs: Item[]) => void>();
-//     let items: Item[] = [
-//       { key: "a", label: "A" },
-//       { key: "b", label: "B" },
-//       { key: "c", label: "C" },
-//     ];
-
-//     const listState: FunState<Item[]> = {
-//       get: () => items,
-//       query: () => {
-//         throw new Error("not used");
-//       },
-//       mod: (f: (items: Item[]) => Item[]) => {
-//         items = f(items);
-//         listeners.forEach((l) => l(items));
-//       },
-//       set: (v: Item[]) => {
-//         items = v;
-//         listeners.forEach((l) => l(items));
-//       },
-//       focus: (acc: any) =>
-//         ({
-//           get: () => acc.query(items)[0],
-//           watch: (_s: AbortSignal, _cb: any) => void 0,
-//         }) as any,
-//       prop: () => {
-//         throw new Error("not used");
-//       },
-//       watch: (sig: AbortSignal, cb: (items: Item[]) => void) => {
-//         listeners.add(cb);
-//         sig.addEventListener(
-//           "abort",
-//           () => {
-//             listeners.delete(cb);
-//           },
-//           { once: true }
-//         );
-//       },
-//       watchAll: (_sig: AbortSignal, _cb: (values: Item[][]) => void) => {
-//         throw new Error("watchAll not used in these tests");
-//       },
-//     };
-
-//     const { mountCountByKey } = setupKeyedChildrenWithKeyAwareRenderer(
-//       container,
-//       signal,
-//       listState
-//     );
-
-//     const elA = container.children[0];
-//     const elB = container.children[1];
-//     const elC = container.children[2];
-
-//     // Reorder
-//     listState.set([
-//       { key: "c", label: "C" },
-//       { key: "a", label: "A" },
-//       { key: "b", label: "B" },
-//     ]);
-
-//     expect((container.children[0] as HTMLElement).dataset.key).toBe("c");
-//     expect((container.children[1] as HTMLElement).dataset.key).toBe("a");
-//     expect((container.children[2] as HTMLElement).dataset.key).toBe("b");
-
-//     // Same element identity (moved, not recreated)
-//     expect(container.children[1]).toBe(elA);
-//     expect(container.children[2]).toBe(elB);
-//     expect(container.children[0]).toBe(elC);
-
-//     // Not remounted
-//     expect(mountCountByKey.get("a")).toBe(1);
-//     expect(mountCountByKey.get("b")).toBe(1);
-//     expect(mountCountByKey.get("c")).toBe(1);
-
-//     controller.abort();
-//   });
-
-//   test("removes rows when keys disappear and aborts their row controllers", () => {
-//     const container = document.createElement("ul");
-//     const { controller, signal } = makeAbortSignal();
-
-//     const listeners = new Set<(xs: Item[]) => void>();
-//     let items: Item[] = [
-//       { key: "a", label: "A" },
-//       { key: "b", label: "B" },
-//     ];
-
-//     const listState: FunState<Item[]> = {
-//       get: () => items,
-//       query: () => {
-//         throw new Error("not used");
-//       },
-//       mod: (f: (items: Item[]) => Item[]) => {
-//         items = f(items);
-//         listeners.forEach((l) => l(items));
-//       },
-//       set: (v: Item[]) => {
-//         items = v;
-//         listeners.forEach((l) => l(items));
-//       },
-//       focus: (acc: any) =>
-//         ({
-//           get: () => acc.query(items)[0],
-//           watch: (_s: AbortSignal, _cb: any) => void 0,
-//         }) as any,
-//       prop: () => {
-//         throw new Error("not used");
-//       },
-//       watch: (sig: AbortSignal, cb: (items: Item[]) => void) => {
-//         listeners.add(cb);
-//         sig.addEventListener(
-//           "abort",
-//           () => {
-//             listeners.delete(cb);
-//           },
-//           { once: true }
-//         );
-//       },
-//       watchAll: (_sig: AbortSignal, _cb: (values: Item[][]) => void) => {
-//         throw new Error("watchAll not used in these tests");
-//       },
-//     };
-
-//     const { abortCountByKey } = setupKeyedChildrenWithKeyAwareRenderer(
-//       container,
-//       signal,
-//       listState
-//     );
-
-//     expect(container.children).toHaveLength(2);
-
-//     // Remove "a"
-//     listState.set([{ key: "b", label: "B" }]);
-
-//     expect(container.children).toHaveLength(1);
-//     expect((container.children[0] as HTMLElement).dataset.key).toBe("b");
-
-//     // "a" row controller should have been aborted once
-//     expect(abortCountByKey.get("a")).toBe(1);
-
-//     controller.abort();
-//   });
-
-//   test("unsubscribes from list updates on parent abort", () => {
-//     const container = document.createElement("ul");
-//     const { controller, signal } = makeAbortSignal();
-
-//     const list = funState<Item[]>([{ key: "a", label: "A" }]);
-
-//     // Subscribe and verify callback is called before abort
-//     const callback = jest.fn();
-//     list.watch(signal, callback);
-
-//     list.set([{ key: "a", label: "A2" }]);
-//     // Called with initial value, then with updated value
-//     expect(callback).toHaveBeenCalledTimes(2);
-
-//     // After abort, callback should not be called
-//     controller.abort();
-
-//     list.set([{ key: "a", label: "A3" }]);
-//     expect(callback).toHaveBeenCalledTimes(2); // Still 2, not called again
-
-//     void container;
-//   });
-
-//   test("throws error on duplicate keys", () => {
-//     const container = document.createElement("ul");
-//     const { controller, signal } = makeAbortSignal();
-
-//     const listState = funState<Item[]>([
-//       { key: "a", label: "A" },
-//       { key: "a", label: "B" }, // duplicate key!
-//     ]);
-
-//     expect(() => {
-//       keyedChildren(container, signal, listState, () => {
-//         return document.createElement("li");
-//       });
-//     }).toThrow('keyedChildren: duplicate key "a"');
-
-//     controller.abort();
-//   });
-// });
-
-describe("$ (querySelector)", () => {
-  beforeEach(() => {
-    document.body.innerHTML = "";
-  });
-
-  test("should return element if found", () => {
-    const div = h("div", { id: "test", className: "my-class" });
-    document.body.appendChild(div);
-
-    const result = $<HTMLDivElement>("#test");
-    expect(result).toBe(div);
-    expect(result?.id).toBe("test");
-  });
-
-  test("should return undefined if not found", () => {
-    const result = $("#nonexistent");
-    expect(result).toBeUndefined();
-  });
-
-  test("should work with class selectors", () => {
-    const div = h("div", { className: "test-class" });
-    document.body.appendChild(div);
-
-    const result = $(".test-class");
-    expect(result).toBe(div);
-  });
-
-  test("should return first matching element", () => {
-    const div1 = h("div", { className: "item" });
-    const div2 = h("div", { className: "item" });
-    document.body.appendChild(div1);
-    document.body.appendChild(div2);
-
-    const result = $(".item");
-    expect(result).toBe(div1);
-  });
-
-  test("should infer element type", () => {
-    const input = h("input", { type: "text", id: "myinput" });
-    document.body.appendChild(input);
-
-    const result = $<HTMLInputElement>("#myinput");
-    expect(result).toBe(input);
-    // TypeScript should know this is HTMLInputElement
-    expect(result!.value).toBeDefined();
-  });
-});
-
-describe("$$ (querySelectorAll)", () => {
+describe("querySelectorAll()", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
   });
@@ -726,7 +437,7 @@ describe("$$ (querySelectorAll)", () => {
     document.body.appendChild(div2);
     document.body.appendChild(div3);
 
-    const results = $$(".item");
+    const results = querySelectorAll(".item");
     expect(results).toHaveLength(3);
     expect(results[0]).toBe(div1);
     expect(results[1]).toBe(div2);
@@ -734,7 +445,7 @@ describe("$$ (querySelectorAll)", () => {
   });
 
   test("should return empty array if no matches", () => {
-    const results = $$(".nonexistent");
+    const results = querySelectorAll(".nonexistent");
     expect(results).toEqual([]);
     expect(Array.isArray(results)).toBe(true);
   });
@@ -747,7 +458,7 @@ describe("$$ (querySelectorAll)", () => {
     container.appendChild(item2);
     document.body.appendChild(container);
 
-    const results = $$<HTMLSpanElement>("#container .item");
+    const results = querySelectorAll<HTMLSpanElement>("#container .item");
     expect(results).toHaveLength(2);
     expect(results[0]).toBe(item1);
     expect(results[1]).toBe(item2);
@@ -757,7 +468,7 @@ describe("$$ (querySelectorAll)", () => {
     const div1 = h("div", { className: "item" });
     document.body.appendChild(div1);
 
-    const results = $$(".item");
+    const results = querySelectorAll(".item");
     expect(Array.isArray(results)).toBe(true);
     // Should have array methods
     expect(typeof results.map).toBe("function");
