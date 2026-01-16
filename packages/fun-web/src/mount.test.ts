@@ -1,7 +1,7 @@
 import { mount } from "./mount";
 import { h } from "./dom";
-import { funState } from "./state";
-import type { Component, FunState } from "./index";
+import type { Component } from "./index";
+import { funState, type FunState } from "@fun-land/fun-state";
 
 describe("mount()", () => {
   let container: HTMLDivElement;
