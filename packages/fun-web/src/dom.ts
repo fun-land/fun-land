@@ -396,6 +396,14 @@ export function renderWhen<State, Props>(options: {
   return container;
 }
 
+/** add passed class (idempotent) to element when state returns true */
+export const bindClass =
+  (className: string, state: FunState<boolean>, signal: AbortSignal) =>
+  <E extends Element>(el: E): E => {
+    state.watch(signal, (active) => el.classList.toggle(className, active));
+    return el;
+  };
+
 export const $ = <T extends Element>(selector: string): T | undefined =>
   document.querySelector<T>(selector) ?? undefined;
 

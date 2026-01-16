@@ -1,4 +1,4 @@
-import {pureState, standaloneEngine, funState, merge, extractArray} from './FunState'
+import {pureState, standaloneEngine, funState, merge, extractArray, derive} from './FunState'
 import {comp, all, prop, prepend, set} from '@fun-land/accessor'
 
 describe('standaloneEngine', () => {
@@ -367,6 +367,85 @@ describe('funState', () => {
 
       items[0].set({id: 10})
       expect(fs.get()).toEqual([{id: 10}, {id: 2}])
+    })
+  })
+
+  describe('derive', () => {
+    test('computes initial value (rest-args form)', () => {
+      const a$ = funState(2)
+      const b$ = funState(3)
+
+      const sum$ = derive(a$, b$, (a, b) => a + b)
+
+      expect(sum$.get()).toBe(5)
+    })
+
+    test('emits on changes from any input (watch)', () => {
+      const a$ = funState(1)
+      const b$ = funState(10)
+
+      const out$ = derive(a$, b$, (a, b) => ({a, b, sum: a + b}))
+
+      const ctrl = new AbortController()
+      const seen: Array<{a: number; b: number; sum: number}> = []
+
+      out$.watch(ctrl.signal, (v) => seen.push(v))
+
+      // FunState.watch calls immediately
+      expect(seen).toEqual([{a: 1, b: 10, sum: 11}])
+
+      a$.set(2)
+      expect(seen[seen.length - 1]).toEqual({a: 2, b: 10, sum: 12})
+
+      b$.set(20)
+      expect(seen[seen.length - 1]).toEqual({a: 2, b: 20, sum: 22})
+
+      // abort stops further emissions
+      ctrl.abort()
+      a$.set(3)
+      expect(seen[seen.length - 1]).toEqual({a: 2, b: 20, sum: 22})
+    })
+
+    test('does not double-emit on initial subscribe', () => {
+      const a$ = funState(1)
+      const b$ = funState(2)
+
+      const sum$ = derive(a$, b$, (a, b) => a + b)
+
+      const ctrl = new AbortController()
+      const seen: number[] = []
+
+      sum$.watch(ctrl.signal, (v) => seen.push(v))
+
+      // If derive's engine.subscribe wrongly emits immediately, you'd see [3, 3] here.
+      expect(seen).toEqual([3])
+
+      ctrl.abort()
+    })
+
+    test('is read-only (set/mod throw)', () => {
+      const a$ = funState(1)
+      const b$ = funState(2)
+
+      const sum$ = derive(a$, b$, (a, b) => a + b)
+
+      expect(() => sum$.set(999)).toThrow(/derive/i)
+      expect(() => sum$.mod((x) => x + 1)).toThrow(/derive/i)
+    })
+
+    test('focus/prop work like normal FunState (because it is a real FunState)', () => {
+      const a$ = funState(1)
+      const b$ = funState(2)
+
+      const obj$ = derive(a$, b$, (a, b) => ({a, b}))
+
+      // prop is part of FunState
+      expect(obj$.prop('a').get()).toBe(1)
+      expect(obj$.prop('b').get()).toBe(2)
+
+      a$.set(5)
+      expect(obj$.prop('a').get()).toBe(5)
+      expect(obj$.get()).toEqual({a: 5, b: 2})
     })
   })
 })

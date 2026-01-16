@@ -18,6 +18,7 @@ export {
   on,
   bindProperty,
   bindListChildren,
+  bindClass,
   renderWhen,
   enhance,
   $,
