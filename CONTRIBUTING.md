@@ -15,7 +15,7 @@ pnpm changeset
 
 **2. Version packages (when ready to release):**
 ```bash
-pnpm version
+pnpm run version
 git add -A
 git commit -m "Version packages"
 git push
