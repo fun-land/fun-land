@@ -1,6 +1,6 @@
 {
   "name": "@fun-land/react-validation",
-  "version": "3.0.3",
+  "version": "4.0.0",
   "description": "Helpers for using @fun-land/validation with ReactJS",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
@@ -25,7 +25,7 @@
   },
   "sideEffects": false,
   "peerDependencies": {
-    "@fun-land/fun-state": "^9.0.0",
+    "@fun-land/fun-state": "^9.2.0",
     "@fun-land/validation": "^3.0.0",
     "react": ">=16.8"
   },
