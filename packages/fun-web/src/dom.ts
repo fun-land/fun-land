@@ -252,6 +252,38 @@ export const bindProperty =
   };
 
 /**
+ * Render a single slot from state and abort previous render on updates.
+ * Useful when render creates subscriptions, timers, or event handlers.
+ * Defaults to a "div" container when no tagName is provided.
+ */
+export const bindView = <
+  Tag extends keyof HTMLElementTagNameMap = "div",
+  T = unknown,
+>(
+  signal: AbortSignal,
+  state: FunRead<T>,
+  render: (regionSignal: AbortSignal, data: T) => Element,
+  options?: { tagName?: Tag }
+): HTMLElementTagNameMap[Tag] => {
+  const tagName = (options?.tagName ?? "div") as Tag;
+  const element = document.createElement(tagName);
+  let childCtrl: AbortController | null = null;
+  state.watch(signal, (data) => {
+    childCtrl?.abort();
+    childCtrl = new AbortController();
+    element.replaceChildren(render(childCtrl.signal, data));
+  });
+  signal.addEventListener(
+    "abort",
+    () => {
+      childCtrl?.abort();
+    },
+    { once: true }
+  );
+  return element;
+};
+
+/**
  * Add CSS classes to an element (returns element for chaining)
  * @returns {Enhancer}
  */

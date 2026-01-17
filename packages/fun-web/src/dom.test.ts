@@ -6,6 +6,7 @@ import {
   attrs,
   append,
   bindProperty,
+  bindView,
   addClass,
   toggleClass,
   removeClass,
@@ -498,6 +499,76 @@ describe("on()", () => {
   });
 });
 
+describe("bindView()", () => {
+  it("should default to a div container", () => {
+    const controller = new AbortController();
+    const state = funState(0);
+
+    const container = bindView(controller.signal, state, (_signal, value) =>
+      h("div", null, String(value))
+    ) as HTMLElement;
+
+    state.set(1);
+
+    expect(container.tagName).toBe("DIV");
+    expect(container.textContent).toBe("1");
+
+    controller.abort();
+  });
+
+  it("should render into the provided container tag", () => {
+    const controller = new AbortController();
+    const state = funState(0);
+
+    const container = bindView(
+      controller.signal,
+      state,
+      (_signal, value) => h("div", null, String(value)),
+      { tagName: "section" }
+    ) as HTMLElement;
+
+    state.set(1);
+
+    expect(container.tagName).toBe("SECTION");
+    expect(container.children.length).toBe(1);
+    expect(container.textContent).toBe("1");
+
+    controller.abort();
+  });
+
+  it("should abort previous render on state changes", () => {
+    const controller = new AbortController();
+    const state = funState(0);
+    let abortCount = 0;
+    let renderCount = 0;
+
+    const container = bindView(
+      controller.signal,
+      state,
+      (signal, value) => {
+        renderCount += 1;
+        signal.addEventListener("abort", () => {
+          abortCount += 1;
+        });
+        return h("div", null, String(value));
+      },
+      { tagName: "div" }
+    );
+
+    state.set(1);
+    expect(renderCount).toBe(1);
+    expect(abortCount).toBe(0);
+
+    state.set(2);
+    expect(renderCount).toBe(2);
+    expect(abortCount).toBe(1);
+    expect(container.textContent).toBe("2");
+
+    controller.abort();
+    expect(abortCount).toBe(2);
+  });
+});
+
 describe("pipeEndo()", () => {
   it("should apply functions in order", () => {
     const el = document.createElement("div");
@@ -585,7 +656,7 @@ describe("renderWhen", () => {
       state: showState,
       component: TestComponent,
       props: { text: "Hello" },
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     expect(container.children.length).toBe(1);
@@ -605,7 +676,7 @@ describe("renderWhen", () => {
       state: showState,
       component: TestComponent,
       props: { text: "Hello" },
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     expect(container.children.length).toBe(0);
@@ -621,7 +692,7 @@ describe("renderWhen", () => {
       state: showState,
       component: TestComponent,
       props: { text: "Hello" },
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     expect(container.children.length).toBe(0);
@@ -642,7 +713,7 @@ describe("renderWhen", () => {
       state: showState,
       component: TestComponent,
       props: { text: "Hello" },
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     const child = container.children[0] as HTMLElement;
@@ -673,7 +744,7 @@ describe("renderWhen", () => {
       state: showState,
       component: ComponentWithAbortListener,
       props: { text: "Hello" },
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     expect(abortCallback).not.toHaveBeenCalled();
@@ -702,7 +773,7 @@ describe("renderWhen", () => {
       state: showState,
       component: ComponentWithAbortListener,
       props: { text: "Hello" },
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     expect(abortCallback).not.toHaveBeenCalled();
@@ -720,7 +791,7 @@ describe("renderWhen", () => {
       state: showState,
       component: TestComponent,
       props: { text: "Hello" },
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     expect(container.children.length).toBe(0);
@@ -748,7 +819,7 @@ describe("renderWhen", () => {
       state: showState,
       component: TestComponent,
       props: { text: "Hello" },
-      signal: controller.signal
+      signal: controller.signal,
     }) as HTMLElement;
 
     expect(container.style.display).toBe("contents");
@@ -764,7 +835,7 @@ describe("renderWhen", () => {
       state: showState,
       component: TestComponent,
       props: { text: "Hello" },
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     expect(container.children.length).toBe(1);
@@ -784,18 +855,14 @@ describe("renderWhen", () => {
       _signal: AbortSignal,
       props: { text: string; count: number }
     ) => {
-      return h(
-        "div",
-        null,
-        `${props.text}: ${props.count}`
-      );
+      return h("div", null, `${props.text}: ${props.count}`);
     };
 
     const container = renderWhen({
       state: showState,
       component: PropsComponent,
       props: { text: "Count", count: 42 },
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     expect(container.children[0].textContent).toBe("Count: 42");
@@ -805,7 +872,11 @@ describe("renderWhen", () => {
 
   test("should work with predicate function", () => {
     const controller = new AbortController();
-    enum Status { Loading, Success, Error }
+    enum Status {
+      Loading,
+      Success,
+      Error,
+    }
     const statusState = funState(Status.Loading);
 
     const container = renderWhen({
@@ -813,7 +884,7 @@ describe("renderWhen", () => {
       predicate: (status) => status === Status.Success,
       component: TestComponent,
       props: { text: "Success!" },
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     // Should not render initially

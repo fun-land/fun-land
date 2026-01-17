@@ -496,6 +496,39 @@ const list = enhance(
 );
 ```
 
+#### bindView
+```ts
+<Tag extends keyof HTMLElementTagNameMap = "div", T = unknown>(
+  signal: AbortSignal,
+  state: FunRead<T>,
+  render: (regionSignal: AbortSignal, data: T) => Element,
+  options?: { tagName?: Tag }
+): HTMLElementTagNameMap[Tag]
+```
+
+Render a single "slot" from state. Each re-render aborts the previous render's signal so subscriptions and event handlers clean up automatically. You'll want to use this instead of element.replaceChildren to prevent leaks.
+
+**Example:**
+
+```typescript
+const status = funState<"idle" | "loading" | "done">("idle");
+
+const view = bindView(
+  signal,
+  status,
+  (regionSignal, value) => {
+    if (value === "loading") {
+      return h("span", { textContent: "Loading..." });
+    }
+    return hx("button", {
+      signal: regionSignal,
+      props: { textContent: "Retry" },
+      on: { click: () => status.set("loading") },
+    });
+  }
+);
+```
+
 #### renderWhen
 ```ts
 function renderWhen<State, Props>(options: {
