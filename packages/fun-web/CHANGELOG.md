@@ -1,5 +1,11 @@
 # @fun-land/fun-web
 
+## 1.1.0
+
+### Minor Changes
+
+- 65d34fd: added bindView for reactive regions
+
 ## 1.0.0
 
 ### Minor Changes
