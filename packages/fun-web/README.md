@@ -347,7 +347,7 @@ const button = hx("button", {
 const button = h("button", {
   onclick: (e) => {
     (e.currentTarget as HTMLButtonElement).disabled = true; // needs cast
-  }, // ❌ event handler not cleaned up!
+  }, // ❌ Throws error: Setting event handlers on dom elements without abort signal leads to memory leaks. Use `hx` or `on` instead.
 });
 ```
 

@@ -34,6 +34,7 @@
     "lint": "pnpm -r lint",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "publish": "echo 'You mean to run `pnpm release`'"
   }
 }

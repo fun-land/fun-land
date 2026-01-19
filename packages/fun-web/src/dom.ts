@@ -6,20 +6,10 @@ import { Accessor } from "@fun-land/accessor";
 export type Enhancer<El extends Element> = (element: El) => El;
 
 /**
- * Type-preserving Object.entries helper for objects with known keys
- * @internal
- */
-const entries = <T extends Record<string, unknown>>(
-  obj: T
-): Array<[keyof T, T[keyof T]]> =>
-  Object.entries(obj) as Array<[keyof T, T[keyof T]]>;
-
-/**
  * Create an HTML element with attributes and children
  *
  * Convention:
  * - Properties with dashes (data-*, aria-*) become attributes
- * - Properties starting with 'on' become event listeners
  * - Everything else becomes element properties
  *
  * @example
@@ -41,10 +31,9 @@ export const h = <Tag extends keyof HTMLElementTagNameMap>(
       if (value == null) continue;
 
       if (key.startsWith("on") && typeof value === "function") {
-        // Event listener: onclick, onchange, etc.
-        const eventName = key.slice(2).toLowerCase();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        element.addEventListener(eventName, value);
+        throw new Error(
+          "Setting event handlers on dom elements without abort signal leads to memory leaks. Use `hx` or `on` instead."
+        );
       } else if (key.includes("-") || key === "role") {
         // Attribute: data-*, aria-*, role, etc.
         element.setAttribute(key, String(value));
@@ -75,7 +64,8 @@ type WritableKeys<T> = {
 
 type HxProps<El extends Element> = Partial<{
   [K in WritableKeys<El> & string]: El[K] | null | undefined;
-}>;
+}> &
+  Record<string, unknown>;
 
 type HxHandlers<El extends Element> = Partial<{
   [K in keyof GlobalEventHandlersEventMap]: (
@@ -83,9 +73,12 @@ type HxHandlers<El extends Element> = Partial<{
   ) => void;
 }>;
 
-type HxBindings<El extends Element> = Partial<{
-  [K in WritableKeys<El> & string]: FunRead<El[K]>;
-}>;
+type BindableRead = {
+  get: () => unknown;
+  watch: (signal: AbortSignal, callback: (value: unknown) => void) => void;
+};
+
+type HxBindings = Record<string, BindableRead>;
 
 type HxOptionsBase<El extends Element> = {
   props?: HxProps<El>;
@@ -95,7 +88,7 @@ type HxOptionsBase<El extends Element> = {
 type HxOptions<El extends Element> = HxOptionsBase<El> & {
   signal: AbortSignal;
   on?: HxHandlers<El>;
-  bind?: HxBindings<El>;
+  bind?: HxBindings;
 };
 
 /**
@@ -129,9 +122,9 @@ export function hx<Tag extends keyof HTMLElementTagNameMap>(
   const element = document.createElement(tag);
 
   if (props) {
-    for (const [key, value] of entries(props)) {
+    for (const [key, value] of Object.entries(props)) {
       if (value == null) continue;
-      element[key] = value;
+      (element as Record<string, unknown>)[key] = value;
     }
   }
 
@@ -147,21 +140,12 @@ export function hx<Tag extends keyof HTMLElementTagNameMap>(
   }
 
   if (bind) {
-    const bindElementProperty = <
-      K extends WritableKeys<HTMLElementTagNameMap[Tag]> & string,
-    >(
-      key: K,
-      state: FunRead<HTMLElementTagNameMap[Tag][K]>
-    ): void => {
-      bindProperty<HTMLElementTagNameMap[Tag], K>(key, state, signal)(element);
-    };
-
-    for (const key of Object.keys(bind) as Array<
-      WritableKeys<HTMLElementTagNameMap[Tag]> & string
-    >) {
-      const state = bind[key];
+    for (const [key, state] of Object.entries(bind)) {
       if (!state) continue;
-      bindElementProperty(key, state);
+      (element as Record<string, unknown>)[key] = state.get();
+      state.watch(signal, (value) => {
+        (element as Record<string, unknown>)[key] = value;
+      });
     }
   }
 

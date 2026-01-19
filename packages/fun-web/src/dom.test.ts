@@ -81,26 +81,24 @@ describe("h()", () => {
     expect(el.children.length).toBe(2);
   });
 
-  it("should attach event listeners", () => {
+  it("should reject event listeners", () => {
     const handler = jest.fn();
-    const el = h("button", { onclick: handler });
-    el.click();
-    expect(handler).toHaveBeenCalled();
+    expect(() => h("button", { onclick: handler })).toThrow(
+      "Setting event handlers on dom elements without abort signal leads to memory leaks. Use `hx` or `on` instead."
+    );
   });
 
-  it("should handle multiple event types", () => {
+  it("should reject multiple event types", () => {
     const clickHandler = jest.fn();
     const mouseoverHandler = jest.fn();
-    const el = h("button", {
-      onclick: clickHandler,
-      onmouseover: mouseoverHandler,
-    });
-
-    el.click();
-    expect(clickHandler).toHaveBeenCalled();
-
-    el.dispatchEvent(new MouseEvent("mouseover"));
-    expect(mouseoverHandler).toHaveBeenCalled();
+    expect(() =>
+      h("button", {
+        onclick: clickHandler,
+        onmouseover: mouseoverHandler,
+      })
+    ).toThrow(
+      "Setting event handlers on dom elements without abort signal leads to memory leaks. Use `hx` or `on` instead."
+    );
   });
 
   it("should skip null and undefined attributes", () => {
@@ -555,17 +553,21 @@ describe("bindView()", () => {
       { tagName: "div" }
     );
 
-    state.set(1);
     expect(renderCount).toBe(1);
     expect(abortCount).toBe(0);
 
-    state.set(2);
+    state.set(1);
     expect(renderCount).toBe(2);
     expect(abortCount).toBe(1);
+    expect(container.textContent).toBe("1");
+
+    state.set(2);
+    expect(renderCount).toBe(3);
+    expect(abortCount).toBe(2);
     expect(container.textContent).toBe("2");
 
     controller.abort();
-    expect(abortCount).toBe(2);
+    expect(abortCount).toBe(3);
   });
 });
 
