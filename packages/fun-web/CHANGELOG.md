@@ -1,5 +1,11 @@
 # @fun-land/fun-web
 
+## 2.0.0
+
+### Major Changes
+
+- f9fd104: Prohibit event handlers on h
+
 ## 1.1.0
 
 ### Minor Changes
