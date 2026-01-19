@@ -1,0 +1,21 @@
+{
+  "name": "fun-web-benchmark",
+  "version": "1.0.0",
+  "description": "fun-web js-framework-benchmark implementation",
+  "js-framework-benchmark": {
+    "frameworkVersionFromPackage": "@fun-land/fun-web",
+    "frameworkHomeURL": "https://github.com/fun-land/fun-land/tree/main/packages/fun-web"
+  },
+  "scripts": {
+    "build-dev": "esbuild src/index.ts --bundle --outfile=dist/main.js --format=iife --sourcemap",
+    "build-prod": "esbuild src/index.ts --bundle --outfile=dist/main.js --format=iife --minify"
+  },
+  "dependencies": {
+    "@fun-land/accessor": "workspace:*",
+    "@fun-land/fun-state": "workspace:*",
+    "@fun-land/fun-web": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.2"
+  }
+}
