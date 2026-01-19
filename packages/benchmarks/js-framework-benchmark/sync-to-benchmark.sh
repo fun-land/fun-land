@@ -12,16 +12,34 @@ if [ ! -d "$BENCHMARK_REPO" ]; then
 fi
 
 echo "Building ($BUILD_MODE)..."
-if [ "$BUILD_MODE" = "dev" ]; then
-  pnpm run build-dev || exit 1
-else
-  pnpm run build-prod || exit 1
-fi
+case "$BUILD_MODE" in
+  dev)
+    pnpm run build-dev || exit 1
+    SRC_FILE="src/index.ts"
+    ;;
+  prod)
+    pnpm run build-prod || exit 1
+    SRC_FILE="src/index.ts"
+    ;;
+  optimized-dev)
+    pnpm run build-optimized-dev || exit 1
+    SRC_FILE="src/index-optimized.ts"
+    ;;
+  optimized-prod)
+    pnpm run build-optimized-prod || exit 1
+    SRC_FILE="src/index-optimized.ts"
+    ;;
+  *)
+    echo "Unknown build mode: $BUILD_MODE"
+    echo "Use: dev | prod | optimized-dev | optimized-prod"
+    exit 1
+    ;;
+esac
 
 echo "Copying files to $TARGET..."
 mkdir -p "$TARGET/src" "$TARGET/dist"
 
-cp src/index.ts "$TARGET/src/"
+cp "$SRC_FILE" "$TARGET/src/index.ts"
 cp dist/main.js "$TARGET/dist/"
 if [ -f dist/main.js.map ]; then
   cp dist/main.js.map "$TARGET/dist/"
@@ -31,7 +49,7 @@ cp package.json.standalone "$TARGET/package.json"
 cp .gitignore "$TARGET/" 2>/dev/null || true
 
 echo "✓ Synced to $TARGET"
-if [ "$BUILD_MODE" = "dev" ]; then
+if [ "$BUILD_MODE" = "dev" ] || [ "$BUILD_MODE" = "optimized-dev" ]; then
   echo "Now run: cd $TARGET && npm install"
   echo "Open http://localhost:8080/frameworks/keyed/fun-web/ for debugging"
 else

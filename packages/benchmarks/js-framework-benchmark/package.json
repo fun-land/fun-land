@@ -8,7 +8,9 @@
   },
   "scripts": {
     "build-dev": "esbuild src/index.ts --bundle --outfile=dist/main.js --format=iife --sourcemap",
-    "build-prod": "esbuild src/index.ts --bundle --outfile=dist/main.js --format=iife --minify"
+    "build-prod": "esbuild src/index.ts --bundle --outfile=dist/main.js --format=iife --minify",
+    "build-optimized-dev": "esbuild src/index-optimized.ts --bundle --outfile=dist/main.js --format=iife --sourcemap",
+    "build-optimized-prod": "esbuild src/index-optimized.ts --bundle --outfile=dist/main.js --format=iife --minify"
   },
   "dependencies": {
     "@fun-land/accessor": "workspace:*",

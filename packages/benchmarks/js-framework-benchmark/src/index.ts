@@ -1,27 +1,32 @@
 /**
- * js-framework-benchmark implementation for fun-web
- *
- * Required actions:
- * - runlots: Create 10,000 rows
- * - add: Add 1000 rows
- * - update: Update every 10th row
- * - clear: Remove all rows
- * - swaprows: Swap rows 1 and 999
- * - remove: Remove first row
+ * Optimized js-framework-benchmark implementation for fun-web
+ * 
+ * Optimizations for 10k rows:
+ * 1. Single selection subscription: Instead of N subscriptions (one per row via mapRead),
+ *    uses one subscription that updates all row elements directly via classList manipulation.
+ *    Reduces subscription overhead from O(n) to O(1) for selection state.
+ * 
+ * 2. Direct DOM updates: Selection state changes update row elements directly rather than
+ *    re-deriving state through reactive chains.
+ * 
+ * 3. Simplified row rendering: Removed bindClass enhancer which adds subscription overhead.
+ * 
+ * To use this version:
+ *   pnpm run build-optimized-prod
+ * 
+ * To compare with standard version:
+ *   pnpm run build-prod
  */
 import {
   h,
   hx,
   mount,
   bindListChildren,
-  bindClass,
   type Component,
-  enhance,
 } from "@fun-land/fun-web";
 import {
   funState,
   type FunState,
-  mapRead,
 } from "@fun-land/fun-state";
 import { type Accessor } from "@fun-land/accessor";
 
@@ -100,7 +105,6 @@ const nouns = [
 const randomName = () =>
   `${adjectives[random(adjectives.length)]} ${colours[random(colours.length)]} ${nouns[random(nouns.length)]}`;
 
-// Generate unique IDs - use timestamp + random to avoid duplicates
 let idCounter = 1;
 const randomId = () => idCounter++;
 
@@ -112,74 +116,80 @@ const buildData = (count: number): Row[] => {
   return data;
 };
 
-// Accessor to get id as string for keying
 const rowIdKey: Accessor<Row, string> = {
   query: (row: Row) => [String(row.id)],
   mod: (f) => (row: Row) => ({ ...row, id: Number(f(String(row.id))) }),
 };
 
+// Optimized row component - no per-row selection subscription
 const RowComponent: Component<{
   state: FunState<Row>;
-  selected: FunState<number | undefined>;
+  selectedId: number | undefined;
+  onSelect: (id: number) => void;
   onRemove: () => void;
-}> = (signal, { state, selected, onRemove }) => {
-  const rowId = state.get().id;
+}> = (signal, { state, selectedId, onSelect, onRemove }) => {
+  const row = state.get();
+  const rowId = row.id;
   const idStr = rowId.toString();
+  const isSelected = selectedId === rowId;
 
-  // Derive whether this row is selected
-  const isSelected = mapRead(
-    selected,
-    (selectedId) => selectedId === rowId
-  );
+  // Create row element once, update properties directly
+  const tr = h("tr", {});
+  if (isSelected) {
+    tr.classList.add("danger");
+  } else {
+    tr.classList.remove("danger");
+  }
 
-  const removeCell = h(
-    "td",
-    { className: "col-md-1" },
-    [
-      hx(
-        "a",
-        {
-          signal,
-          on: {
-            click: (e) => {
-              e.preventDefault();
-              onRemove();
-            },
-          },
+  // ID cell - static, set once
+  const idCell = h("td", { className: "col-md-1" }, idStr);
+
+  // Label cell with binding
+  const labelCell = h("td", { className: "col-md-4" });
+  const labelLink = hx("a", {
+    signal,
+    on: {
+      click: (e) => {
+        e.preventDefault();
+        onSelect(rowId);
+      },
+    },
+    bind: { textContent: state.prop("label") },
+  });
+  labelCell.appendChild(labelLink);
+
+  // Remove cell
+  const removeCell = h("td", { className: "col-md-1" });
+  const removeLink = hx(
+    "a",
+    {
+      signal,
+      on: {
+        click: (e) => {
+          e.preventDefault();
+          onRemove();
         },
-        [
-          hx("span", {
-            signal,
-            props: { className: "glyphicon glyphicon-remove" },
-            attrs: { "aria-hidden": "true" },
-          }),
-        ]
-      ),
+      },
+    },
+    [
+      hx("span", {
+        signal,
+        props: { className: "glyphicon glyphicon-remove" },
+        attrs: { "aria-hidden": "true" },
+      }),
     ]
   );
+  removeCell.appendChild(removeLink);
 
-  return enhance(
-    h("tr", {}, [
-      h("td", { className: "col-md-1" }, idStr),
-      h(
-        "td",
-        { className: "col-md-4" },
-        hx("a", {
-          signal,
-          on: {
-            click: (e) => {
-              e.preventDefault();
-              selected.set(rowId);
-            },
-          },
-          bind: { textContent: state.prop("label") },
-        })
-      ),
-      removeCell,
-      h("td", { className: "col-md-6" })
-    ]),
-    bindClass("danger", isSelected, signal)
-  );
+  // Empty cell
+  const emptyCell = h("td", { className: "col-md-6" });
+
+  tr.appendChild(idCell);
+  tr.appendChild(labelCell);
+  tr.appendChild(removeCell);
+  tr.appendChild(emptyCell);
+
+  return tr;
 };
 
 const App: Component = (signal) => {
@@ -293,20 +303,50 @@ const App: Component = (signal) => {
     "Swap Rows"
   );
 
-  // Table with keyed list
+  // Table with optimized list binding
   const tbody = h("tbody", { id: "tbody" });
 
-  // Use bindListChildren for efficient keyed list rendering
+  // Track row elements for efficient selection updates
+  const rowElements = new Map<number, HTMLElement>();
+
+  // Single subscription for selection changes - update all rows at once
+  state.prop("selected").watch(signal, (selectedId) => {
+    // Update all row elements' selection state
+    for (const [rowId, tr] of rowElements) {
+      const shouldBeSelected = selectedId === rowId;
+      if (shouldBeSelected) {
+        tr.classList.add("danger");
+      } else {
+        tr.classList.remove("danger");
+      }
+    }
+  });
+
+  // Use bindListChildren with optimized row rendering
   bindListChildren({
     signal,
     state: state.prop("rows"),
     key: rowIdKey,
-    row: ({ signal: rowSignal, state: rowState, remove: removeRow }) =>
-      RowComponent(rowSignal, {
+    row: ({ signal: rowSignal, state: rowState, remove: removeRow }) => {
+      const row = rowState.get();
+      const rowId = row.id;
+      const selectedId = state.prop("selected").get();
+
+      const tr = RowComponent(rowSignal, {
         state: rowState,
-        selected: state.prop("selected"),
+        selectedId,
+        onSelect: (id) => state.prop("selected").set(id),
         onRemove: removeRow,
-      }),
+      }) as HTMLElement;
+
+      // Track for efficient selection updates
+      rowElements.set(rowId, tr);
+      rowSignal.addEventListener("abort", () => {
+        rowElements.delete(rowId);
+      }, { once: true });
+
+      return tr;
+    },
   })(tbody);
 
   const table = h(

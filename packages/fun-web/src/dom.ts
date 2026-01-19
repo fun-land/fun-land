@@ -351,11 +351,38 @@ const keyOf = <T>(keyAcc: Accessor<T, string>, item: T): string => {
   return k;
 };
 
-const byKey = <T>(
+// Legacy: kept for reference but replaced by byCachedItem optimization
+const _byKey = <T>(
   keyAcc: Accessor<T, string>,
   key: string
 ): Accessor<T[], T> => ({
   query: (xs) => {
+    const hit = xs.find((t) => keyOf(keyAcc, t) === key);
+    return hit ? [hit] : [];
+  },
+  mod: (f) => (xs) => {
+    let found = false;
+    return xs.map((t) => {
+      if (keyOf(keyAcc, t) !== key) return t;
+      if (found) throw new Error(`bindListChildren: duplicate key "${key}"`);
+      found = true;
+      return f(t);
+    });
+  },
+});
+
+// Optimized: accessor that checks cached item first, falls back to find by key
+const byCachedItem = <T>(
+  item: T,
+  keyAcc: Accessor<T, string>,
+  key: string
+): Accessor<T[], T> => ({
+  query: (xs) => {
+    // Fast path: if cached item is still in array (same reference), use it
+    if (xs.includes(item)) {
+      return [item];
+    }
+    // Slow path: item ref changed (update created new object), find by key
     const hit = xs.find((t) => keyOf(keyAcc, t) === key);
     return hit ? [hit] : [];
   },
@@ -403,6 +430,8 @@ export const bindListChildren =
     const reconcile = (): void => {
       const items = list.get();
 
+      // Build key→item map in one pass (avoids repeated byKey.find scans)
+      const keyToItem = new Map<string, T>();
       const nextKeys: string[] = [];
       const seen = new Set<string>();
       for (const it of items) {
@@ -410,6 +439,7 @@ export const bindListChildren =
         if (seen.has(k))
           throw new Error(`bindListChildren: duplicate key "${k}"`);
         seen.add(k);
+        keyToItem.set(k, it);
         nextKeys.push(k);
       }
 
@@ -422,14 +452,26 @@ export const bindListChildren =
         }
       }
 
-      // ensure present
+      // ensure present - use cached item to avoid byKey.find scan
       for (const k of nextKeys) {
         if (!rows.has(k)) {
           const ctrl = new AbortController();
-          const itemState = list.focus(byKey(keyAcc, k));
+          const cachedItem = keyToItem.get(k)!;
+
+          // Lazy state: only creates focused state when accessed
+          let itemState: FunState<T> | null = null;
+          const getItemState = (): FunState<T> => {
+            if (!itemState) {
+              itemState = list.focus(byCachedItem(cachedItem, keyAcc, k));
+            }
+            return itemState;
+          };
+
           const el = renderRow({
             signal: ctrl.signal,
-            state: itemState,
+            get state() {
+              return getItemState();
+            },
             remove: () =>
               list.mod((xs) => xs.filter((t) => keyOf(keyAcc, t) !== k)),
           });
