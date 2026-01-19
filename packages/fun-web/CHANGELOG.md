@@ -1,5 +1,11 @@
 # @fun-land/fun-web
 
+## 2.0.1
+
+### Patch Changes
+
+- 0ba1773: Optimize performance of bindListChildren
+
 ## 2.0.0
 
 ### Major Changes

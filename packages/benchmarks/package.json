@@ -1,6 +1,6 @@
 {
   "name": "@fun-land/benchmarks",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Performance benchmarks for fun-land packages",
   "private": true,
   "scripts": {
