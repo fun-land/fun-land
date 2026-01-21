@@ -427,9 +427,7 @@ export const bindListChildren =
     };
 
     // eslint-disable-next-line complexity
-    const reconcile = (): void => {
-      const items = list.get();
-
+    const reconcile = (items: T[]): void => {
       // Build key→item map in one pass (avoids repeated byKey.find scans)
       const keyToItem = new Map<string, T>();
       const nextKeys: string[] = [];
@@ -492,7 +490,7 @@ export const bindListChildren =
 
     list.watch(signal, reconcile);
     signal.addEventListener("abort", dispose, { once: true });
-    reconcile();
+    reconcile(list.get());
 
     return parent;
   };

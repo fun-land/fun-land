@@ -79,6 +79,23 @@ npm start
 npm run bench -- --framework keyed/fun-web
 ```
 
+6. View results:
+
+After running benchmarks, regenerate the results and view them:
+
+# Ensure the server is still running (from step 4)
+# If not, start it: npm start
+
+# Regenerate results.ts (this queries the server to discover frameworks)
+npm run results
+# Or: cd webdriver-ts && npm run results
+
+# View results in the interactive report
+cd webdriver-ts-results
+npm run dev
+# Open http://localhost:5173 (or the port shown) in your browser
+
+
 ### Implementation Notes
 
 - Uses `bindListChildren` for efficient keyed list reconciliation

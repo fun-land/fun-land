@@ -6,7 +6,7 @@ A lightweight web component library for building reactive UIs with native DOM an
 
 Build web UIs without a framework using:
 - **Run-once components** that never re-render (sidesteps stale closures, memoization, render cycles)
-- **Reactive state** following the FunState compositional pattern
+- **Compositional state** via `FunState.focus` (fractal, refactor-friendly state slices)
 - **Native DOM** elements (no virtual DOM)
 - **TypeScript-first** APIs with full type inference
 - **AbortSignal** for automatic cleanup
@@ -20,6 +20,14 @@ Perfect for embedding interactive components in static sites, building lightweig
 - **Type-safe utilities** - Element types and events inferred automatically
 - **Memory-safe by default** - AbortSignal prevents leaks
 - **Framework-agnostic** - Just functions and elements
+
+## Brief comparisons
+
+- **Solid**: components run once too, but reactivity is implicit (signals/JSX); fun-web is explicit subscriptions and `AbortSignal` cleanup
+- **Cycle.js**: stream-first MVI; fun-web is state+DOM wiring without observables
+- **React/Vue/Angular**: virtual DOM + re-renders; fun-web does direct DOM updates via subscriptions
+- **Svelte**: compile-time reactivity; fun-web is runtime-only with explicit bindings
+- **jQuery**: manual DOM mutation; fun-web adds typed, reactive state and cleanup
 
 ## Installation
 
@@ -79,19 +87,18 @@ When `count` changes, the component **doesn't re-run**. Instead, the `bindProper
 
 **Problems this sidesteps:**
 
-| Framework components | fun-web components |
-|---------------------|-------------------|
-| Re-execute on every state change | Execute once, subscriptions handle updates |
+| Framework components                    | fun-web components                         |
+|-----------------------------------------|--------------------------------------------|
+| Re-execute on every state change        | Execute once, subscriptions handle updates |
 | Need memoization (`useMemo`, `useCallback`) | No re-execution = no stale closures to worry about |
-| Virtual DOM diffing overhead | Direct DOM updates via subscriptions |
-| Rules about when you can update state | Update state whenever you want |
-| "Render cycles" and batching complexity | No render cycles, updates are just function calls |
+| Virtual DOM diffing overhead            | Direct DOM updates via subscriptions       |
+| Rules about when you can update state   | Update state whenever you want             |
+| "Render cycles" and batching complexity | Updates are reactive bindings or function calls |
 
 **What this means:**
-- Component functions are just **constructors** - they build UI once and set up reactive bindings
+- Component are just functions that return DOM elements - they build UI once and set up reactive bindings
 - State changes trigger **targeted DOM updates**, not full re-renders
 - No "rendering" concept - just imperative DOM manipulation driven by reactive state
-- Simpler mental model: "When X changes, update this specific DOM property"
 
 **Concrete example:**
 
@@ -730,6 +737,42 @@ pnpm run build:examples
 open examples/counter/index.html
 open examples/todo-app/todo.html
 ```
+
+## Performance Benchmarks
+
+Results from [js-framework-benchmark](https://github.com/krausest/js-framework-benchmark) comparing fun-web v1.1.0 against popular frameworks.
+
+### Performance Summary
+
+#### Strengths
+- **Select row**: 8.5ms - Excellent performance, faster than React, Svelte, Vue, Preact, and Mithril
+- **Create rows**: 49.5ms - Competitive, faster than React (93.8ms), Svelte (83.6ms), Solid (83.5ms), and Vue (93.3ms)
+- **Replace all rows**: 60.2ms - Strong performance, faster than React (154.5ms), Svelte (98ms), Vue (105.8ms), and Mithril (116.1ms)
+- **Partial update**: 37ms - Good performance, competitive with major frameworks
+
+#### Areas for Improvement
+- **Swap rows**: 177.9ms - Currently slower than optimized frameworks (Solid: 23.4ms, Svelte: 28.6ms, Vue: 32.1ms). This is a known optimization opportunity in list diffing.
+
+### Detailed Results
+
+All times are median values in milliseconds from 15 runs.
+
+| Operation              | fun-web | React | Svelte | Solid | Vue | Preact | Mithril |
+|------------------------|---------|-------|--------|-------|-----|--------|---------|
+| **Create 1,000 rows**  | 49.5    | 93.8 | 83.6 | 83.5 | 93.3 | 42.4 | 50.8 |
+| **Replace all rows**   | 60.2    | 154.5 | 98.0 | 96.7 | 105.8 | 50.1 | 116.1 |
+| **Partial update**     | 37.0    | 24.9 | 19.7 | 26.3 | 32.1 | 42.6 | 55.7 |
+| **Select row**         | 8.5     | 10.3 | 9.4 | 7.6 | 8.3 | 23.8 | 22.2 |
+| **Swap rows**          | 177.9   | 158.1 | 28.6 | 23.4 | 32.1 | 44.5 | 52.9 |
+| **Remove row**         | 21.5    | - | - | - | - | - | 54.5 |
+| **Create 10,000 rows** | 962.8   | - | - | - | - | 436.1 | 468.6 |
+
+## Notes
+
+- Benchmarks run on An older MacBook Air with Chrome with CPU throttling
+- Results are from the js-framework-benchmark suite (January 2025)
+- Lower numbers are better
+- "-" indicates benchmark failed to complete for that framework
 
 ## Status
 
