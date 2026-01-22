@@ -104,6 +104,41 @@ npm run dev
 
 ## Custom Benchmarks
 
+### Microbench (accessor + fun-state)
+
+Run:
+
+```bash
+pnpm -C /Users/jethrolarson/develop/fun-land/packages/benchmarks run bench
+```
+
+Latest run (darwin 22.1.0, local machine; ops/sec, higher is better):
+
+Versions:
+- `@fun-land/fun-state` 9.2.0
+- `@fun-land/accessor` 4.0.2
+
+- `fun-state.get`: 104,037,719
+- `fun-state.mod`: 30,382,050
+- `fun-state.prop.get`: 39,475,301
+- `fun-state.derive.get`: 7,310,552
+- `fun-state.mapRead.get`: 38,762,638
+- `fun-state.mapRead.chain.get`: 4,998,331
+- `fun-state.focus.item.get`: 28,340,756
+- `fun-state.focus.item.prop.get`: 11,348,930
+- `fun-state.focus.item.mod`: 264,870
+- `fun-state.list.mod`: 30,997,304
+- `accessor.get:name`: 49,245,450
+- `accessor.mod:age+1`: 20,485,064
+- `accessor.query:tags`: 41,073,358
+- `accessor.query:tag0`: 17,325,697
+- `accessor.query:users10k`: 457,289
+- `baseline.map:users`: 211,679
+- `baseline.filter:users`: 218,738
+
+Notes:
+- Microbenchmarks are for relative tracking only, not cross-machine comparisons.
+
 Future micro-benchmarks for:
 
 - **fun-web**: DOM manipulation, component mounting, state updates
